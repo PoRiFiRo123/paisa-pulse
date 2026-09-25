@@ -5,7 +5,7 @@ See `SPEC.md` for the product spec and `CLAUDE.md` for project context.
 
 ```bash
 npm install
-npm start            # open in Expo Go
+npm run start:go     # open in Expo Go (plain `npm start` targets a development build)
 npm test             # unit + in-memory database tests
 npm run typecheck
 npm run lint
