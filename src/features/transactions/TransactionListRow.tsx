@@ -3,6 +3,7 @@ import { memo, useRef } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import ReanimatedSwipeable, { type SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable';
 
+import { useSelection } from '@/stores/selection';
 import { type } from '@/theme/typography';
 import { useTheme } from '@/theme/useTheme';
 import { Icon } from '@/ui/Icon';
@@ -20,9 +21,12 @@ import { useTransactionActions } from './useTransactionActions';
 export const TransactionListRow = memo(function TransactionListRow({
   item,
   showTime = true,
+  selectable = false,
 }: {
   item: TransactionItem;
   showTime?: boolean;
+  /** Offer "Select" in the context menu to start multi-select (Activity only). */
+  selectable?: boolean;
 }) {
   const { colors } = useTheme();
   const actions = useTransactionActions();
@@ -43,9 +47,12 @@ export const TransactionListRow = memo(function TransactionListRow({
     </Pressable>
   );
 
+  const startSelection = useSelection((s) => s.start);
+
+  // On iOS the Link handles the tap so the zoom transition can run.
   const row = (onLongPress?: () => void) => (
     <Pressable
-      onPress={() => actions.open(item.id)}
+      onPress={Platform.OS === 'ios' ? undefined : () => actions.open(item.id)}
       onLongPress={onLongPress}
       accessibilityRole="button"
       accessibilityHint="Swipe left to delete, right to duplicate"
@@ -69,9 +76,10 @@ export const TransactionListRow = memo(function TransactionListRow({
   const content =
     Platform.OS === 'ios' ? (
       <Link href={{ pathname: '/transaction/[id]', params: { id: item.id } }} asChild>
-        <Link.Trigger>{row()}</Link.Trigger>
+        <Link.Trigger withAppleZoom>{row()}</Link.Trigger>
         <Link.Preview />
         <Link.Menu>
+          {selectable ? <Link.MenuAction title="Select" icon="checkmark.circle" onPress={() => startSelection(item.id)} /> : null}
           <Link.MenuAction title="Edit" icon="pencil" onPress={() => actions.edit(item.id)} />
           <Link.MenuAction title="Duplicate" icon="doc.on.doc" onPress={() => actions.duplicate(item.id)} />
           {item.type !== 'transfer' ? (
@@ -84,6 +92,7 @@ export const TransactionListRow = memo(function TransactionListRow({
     ) : (
       <Menu
         items={[
+          ...(selectable ? [{ title: 'Select', icon: 'checkmark.circle', onPress: () => startSelection(item.id) }] : []),
           { title: 'Edit', icon: 'pencil', onPress: () => actions.edit(item.id) },
           { title: 'Duplicate', icon: 'doc.on.doc', onPress: () => actions.duplicate(item.id) },
           ...(item.type !== 'transfer'

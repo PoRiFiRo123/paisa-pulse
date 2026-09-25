@@ -12,6 +12,7 @@ import { GlassSurface } from './Glass';
 export function ToastHost() {
   const toast = useToast((s) => s.toast);
   const hide = useToast((s) => s.hide);
+  const undo = useToast((s) => s.undo);
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   if (!toast) return null;
@@ -32,8 +33,11 @@ export function ToastHost() {
             hitSlop={10}
             accessibilityRole="button"
             onPress={() => {
-              toast.onAction?.();
-              hide();
+              if (toast.actionLabel === 'Undo') undo();
+              else {
+                toast.onAction?.();
+                hide();
+              }
             }}
           >
             <Text style={[type.headline, { color: colors.accent }]}>{toast.actionLabel}</Text>

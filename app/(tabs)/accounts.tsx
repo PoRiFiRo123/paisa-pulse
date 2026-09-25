@@ -19,6 +19,7 @@ import { GlassButton, GlassGroup } from '@/ui/Glass';
 import { Icon } from '@/ui/Icon';
 import { GroupHeader, GroupRow, InsetGroup } from '@/ui/InsetGroup';
 import { LargeTitle, TopBar, useBottomSpace, useScrollHeader, useTitleTop } from '@/ui/Screen';
+import { SortableList } from '@/ui/SortableList';
 
 export default function AccountsScreen() {
   const scrollRef = useRef<ScrollView>(null);
@@ -41,12 +42,6 @@ export default function AccountsScreen() {
     .map((a) => ({ account: a, ...daysUntilDay(a.dueDay!) }))
     .sort((x, y) => x.days - y.days);
 
-  const move = (index: number, delta: number) => {
-    const ids = active.map((a) => a.id);
-    const [id] = ids.splice(index, 1);
-    ids.splice(index + delta, 0, id);
-    reorderAccounts(appDb, ids);
-  };
   const open = (id: string) => router.push({ pathname: '/account/[id]', params: { id } });
 
   return (
@@ -81,21 +76,21 @@ export default function AccountsScreen() {
             </View>
 
             {reordering ? (
-              <InsetGroup style={{ marginTop: 22 }} dividerInset={58}>
-                {active.map((a, i) => (
-                  <GroupRow
-                    key={a.id}
-                    title={accountLabel(a.name, a.last4)}
-                    leading={<CategoryIcon icon={accountIcon(a.type)} color={a.color} size={30} square />}
-                    trailing={
-                      <View style={styles.moveButtons}>
-                        <MoveButton icon="arrow.up" disabled={i === 0} onPress={() => move(i, -1)} label={`Move ${a.name} up`} />
-                        <MoveButton icon="arrow.down" disabled={i === active.length - 1} onPress={() => move(i, 1)} label={`Move ${a.name} down`} />
-                      </View>
-                    }
-                  />
-                ))}
-              </InsetGroup>
+              <View style={{ marginTop: 22 }}>
+                <SortableList
+                  data={active}
+                  keyOf={(a) => a.id}
+                  onReorder={(ids) => reorderAccounts(appDb, ids)}
+                  renderRow={(a) => (
+                    <View style={styles.sortRow}>
+                      <CategoryIcon icon={accountIcon(a.type)} color={a.color} size={30} square />
+                      <Text style={[type.body, { color: colors.label, flex: 1 }]} numberOfLines={1}>
+                        {accountLabel(a.name, a.last4)}
+                      </Text>
+                    </View>
+                  )}
+                />
+              </View>
             ) : (
               <View style={[styles.stack, { height: Math.max(0, active.length - 1) * CARD_PEEK + CARD_HEIGHT }]}>
                 {active.map((a, i) => (
@@ -174,21 +169,6 @@ export default function AccountsScreen() {
   );
 }
 
-function MoveButton({ icon, disabled, onPress, label }: { icon: string; disabled: boolean; onPress: () => void; label: string }) {
-  const { colors } = useTheme();
-  return (
-    <Pressable
-      disabled={disabled}
-      onPress={onPress}
-      accessibilityLabel={label}
-      hitSlop={6}
-      style={[styles.move, { backgroundColor: colors.fill, opacity: disabled ? 0.3 : 1 }]}
-    >
-      <Icon name={icon} size={14} color={colors.label} weight="semibold" />
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
   netWorth: { marginHorizontal: 16, marginTop: 15, borderRadius: 22, padding: 18, gap: 2 },
   stack: { marginHorizontal: 16, marginTop: 22 },
@@ -202,6 +182,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  moveButtons: { flexDirection: 'row', gap: 8 },
-  move: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  sortRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, paddingLeft: 16 },
 });

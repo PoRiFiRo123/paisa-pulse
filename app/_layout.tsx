@@ -7,8 +7,10 @@ import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { DatabaseProvider } from '@/db/DatabaseProvider';
+import { useA11yWatcher } from '@/stores/a11y';
 import { useTheme } from '@/theme/useTheme';
 import { PrivacyShield } from '@/ui/PrivacyShield';
+import { ShakeToUndo } from '@/ui/ShakeToUndo';
 import { ToastHost } from '@/ui/ToastHost';
 
 export default function RootLayout() {
@@ -22,6 +24,7 @@ export default function RootLayout() {
 }
 
 function AppShell() {
+  useA11yWatcher();
   const { dark, colors } = useTheme();
   const base = dark ? DarkTheme : DefaultTheme;
   const navTheme = {
@@ -56,6 +59,7 @@ function AppShell() {
           <Stack.Screen name="onboarding/index" options={{ gestureEnabled: false, animation: 'fade' }} />
         </Stack>
         <ToastHost />
+        <ShakeToUndo />
         <PrivacyShield />
       </View>
     </ThemeProvider>

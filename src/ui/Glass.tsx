@@ -3,7 +3,6 @@ import { GlassContainer, GlassView, isLiquidGlassAvailable } from 'expo-glass-ef
 import * as Haptics from 'expo-haptics';
 import type { ReactNode } from 'react';
 import {
-  AccessibilityInfo,
   Platform,
   Pressable,
   type PressableProps,
@@ -12,26 +11,13 @@ import {
   type ViewStyle,
   type StyleProp,
 } from 'react-native';
-import { useEffect, useState } from 'react';
 
+import { useA11y } from '@/stores/a11y';
 import { useTheme } from '@/theme/useTheme';
 
 import { Icon } from './Icon';
 
 const LIQUID_GLASS = isLiquidGlassAvailable();
-
-/** Honour Reduce Transparency: glass becomes a solid surface. */
-function useReduceTransparency(): boolean {
-  const [reduce, setReduce] = useState(false);
-  useEffect(() => {
-    // iOS-only API; other platforms keep the default.
-    if (Platform.OS !== 'ios') return;
-    AccessibilityInfo.isReduceTransparencyEnabled().then(setReduce).catch(() => {});
-    const sub = AccessibilityInfo.addEventListener('reduceTransparencyChanged', setReduce);
-    return () => sub.remove();
-  }, []);
-  return reduce;
-}
 
 export type GlassSurfaceProps = {
   children?: ReactNode;
@@ -50,7 +36,8 @@ export type GlassSurfaceProps = {
  */
 export function GlassSurface({ children, style, radius, tint, interactive }: GlassSurfaceProps) {
   const { dark, colors } = useTheme();
-  const reduce = useReduceTransparency();
+  // Reduce Transparency and Increase Contrast turn glass into a solid, outlined surface.
+  const reduce = useA11y((a) => a.reduceTransparency || a.increaseContrast);
   const shape: ViewStyle = { borderRadius: radius, overflow: 'hidden' };
 
   if (LIQUID_GLASS && !reduce) {
