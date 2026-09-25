@@ -1,6 +1,6 @@
 import { and, eq, isNotNull, lt, ne } from 'drizzle-orm';
 
-import { type Transaction, transactions } from '@/db/schema';
+import { type Transaction, type TransactionSource, transactions } from '@/db/schema';
 import type { DB } from '@/db/types';
 import { DAY_MS } from '@/lib/dates';
 import { newId } from '@/lib/ids';
@@ -33,9 +33,17 @@ export async function createTransaction(
   db: DB,
   input: TransactionInput,
   now: number = Date.now(),
+  origin: { source?: TransactionSource; recurringId?: string | null } = {},
 ): Promise<Transaction> {
   assertValidTransaction(input, now);
-  const row = { id: newId(), ...toRow(input, now), source: 'manual' as const, createdAt: now, updatedAt: now };
+  const row = {
+    id: newId(),
+    ...toRow(input, now),
+    source: origin.source ?? 'manual',
+    recurringId: origin.recurringId ?? null,
+    createdAt: now,
+    updatedAt: now,
+  };
   await db.insert(transactions).values(row);
   return { ...row, deletedAt: null };
 }
