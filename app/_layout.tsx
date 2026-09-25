@@ -7,11 +7,16 @@ import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { DatabaseProvider } from '@/db/DatabaseProvider';
+import { useRecurringProcessor } from '@/features/recurring/useRecurringProcessor';
+import { useWidgetSync } from '@/features/widgets/useWidgetSync';
 import { useA11yWatcher } from '@/stores/a11y';
 import { useTheme } from '@/theme/useTheme';
 import { PrivacyShield } from '@/ui/PrivacyShield';
 import { ShakeToUndo } from '@/ui/ShakeToUndo';
 import { ToastHost } from '@/ui/ToastHost';
+
+// Deep links (widgets, quick actions) open sheets over the tabs.
+export const unstable_settings = { initialRouteName: '(tabs)' };
 
 export default function RootLayout() {
   return (
@@ -25,6 +30,8 @@ export default function RootLayout() {
 
 function AppShell() {
   useA11yWatcher();
+  useRecurringProcessor();
+  useWidgetSync();
   const { dark, colors } = useTheme();
   const base = dark ? DarkTheme : DefaultTheme;
   const navTheme = {
@@ -52,6 +59,11 @@ function AppShell() {
           <Stack.Screen name="transaction/[id]" />
           <Stack.Screen name="account/[id]" />
           <Stack.Screen name="categories" />
+          <Stack.Screen name="budgets" />
+          <Stack.Screen name="recurring" />
+          <Stack.Screen name="insights" />
+          <Stack.Screen name="budget-form" options={sheet([0.6, 0.92])} />
+          <Stack.Screen name="recurring-form" options={sheet([0.92])} />
           <Stack.Screen name="add" options={sheet([0.92])} />
           <Stack.Screen name="account-form" options={sheet([0.92])} />
           <Stack.Screen name="category-form" options={sheet([0.92])} />

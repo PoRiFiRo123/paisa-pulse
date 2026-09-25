@@ -11,3 +11,15 @@ npm run typecheck
 npm run lint
 npm run db:generate  # after changing src/db/schema.ts
 ```
+
+## Development build (encryption, widgets, quick actions, app icons)
+
+Expo Go runs everything except SQLCipher encryption, widgets, quick actions and alternate icons.
+For those, make a development build with EAS:
+
+```bash
+npm i -g eas-cli && eas login
+# once: set ios.appleTeamId in app.json (Xcode → Signing & Capabilities)
+npm run build:dev:ios        # or build:dev:android
+npm run start:dev            # then open the dev build on your phone
+```

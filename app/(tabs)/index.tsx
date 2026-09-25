@@ -3,7 +3,11 @@ import { useMemo, useRef } from 'react';
 import { FlatList, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { appDb } from '@/db/client';
+import { BudgetRow } from '@/features/budgets/BudgetRow';
+import { budgetProgress } from '@/features/budgets/budgets';
 import { HeroCard } from '@/features/home/HeroCard';
+import { UpcomingRow } from '@/features/recurring/UpcomingRow';
+import { upcomingRecurring } from '@/features/recurring/recurring';
 import { listTransactions, topCategories } from '@/features/transactions/list';
 import { TransactionListRow } from '@/features/transactions/TransactionListRow';
 import { useMoney } from '@/hooks/useMoney';
@@ -45,6 +49,8 @@ export default function HomeScreen() {
   const month = monthAt(offset, monthStartDay);
 
   const { data: top } = useQuery(() => topCategories(appDb, month), [month.start], []);
+  const { data: upcoming } = useQuery(() => upcomingRecurring(appDb), [], []);
+  const { data: budgets } = useQuery(() => budgetProgress(appDb, month), [month.start], []);
   const { data: recent, loaded } = useQuery(() => listTransactions(appDb, { limit: 5 }), [], []);
 
   const jumpTo = (o: number) => {
@@ -128,6 +134,30 @@ export default function HomeScreen() {
               <Text style={[type.subhead, styles.muted, { color: colors.secondary }]}>No spending in {month.name} yet.</Text>
             )}
 
+            {upcoming.length ? (
+              <>
+                <SectionHeader title="Upcoming" action="Manage" onAction={() => router.push('/recurring')} />
+                <InsetGroup dividerInset={66}>
+                  {upcoming.slice(0, 3).map((r) => (
+                    <UpcomingRow key={r.id} rule={r} onPress={() => router.push({ pathname: '/recurring-form', params: { id: r.id } })} />
+                  ))}
+                </InsetGroup>
+              </>
+            ) : null}
+
+            <SectionHeader title="Budgets" action={budgets.length ? 'See all' : 'Add'} onAction={() => router.push(budgets.length ? '/budgets' : '/budget-form')} />
+            {budgets.length ? (
+              <InsetGroup dividerInset={62}>
+                {budgets.slice(0, 3).map((p) => (
+                  <BudgetRow key={p.budget.id} progress={p} onPress={() => router.push('/budgets')} />
+                ))}
+              </InsetGroup>
+            ) : (
+              <Text style={[type.subhead, styles.muted, { color: colors.secondary }]}>
+                Set a monthly limit to see how you’re pacing.
+              </Text>
+            )}
+
             <SectionHeader title="Recent" action="See all" onAction={() => router.navigate('/activity')} />
             <InsetGroup dividerInset={66}>
               {recent.map((t) => (
@@ -148,6 +178,9 @@ export default function HomeScreen() {
             </Menu>
             <Menu
               items={[
+                { title: 'Insights', icon: 'chart.bar.fill', onPress: () => router.push('/insights') },
+                { title: 'Budgets', icon: 'chart.pie.fill', onPress: () => router.push('/budgets') },
+                { title: 'Recurring', icon: 'repeat', onPress: () => router.push('/recurring') },
                 { title: 'Categories', icon: 'tag', onPress: () => router.push('/categories') },
                 { title: 'Add Account', icon: 'creditcard', onPress: () => router.push('/account-form') },
                 { title: 'Transfer', icon: 'arrow.left.arrow.right', onPress: () => router.push({ pathname: '/add', params: { type: 'transfer' } }) },

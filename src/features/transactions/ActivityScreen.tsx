@@ -1,15 +1,23 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { appDb } from '@/db/client';
 import { accountsWithBalance } from '@/features/accounts/queries';
+import {
+  deleteSavedFilter,
+  type FilterPayload,
+  listSavedFilters,
+  saveFilter,
+  updateSavedFilter,
+} from '@/features/savedFilters/savedFilters';
 import { categoriesByKind } from '@/features/categories/queries';
 import { useQuery } from '@/hooks/useQuery';
 import { accountLabel } from '@/lib/format';
 import { monthAt } from '@/lib/months';
 import { usePrefs } from '@/stores/prefs';
 import { useSelection } from '@/stores/selection';
+import { useToast } from '@/stores/toast';
 import { type ActivityFilters, useUi } from '@/stores/ui';
 import { type } from '@/theme/typography';
 import { useTheme } from '@/theme/useTheme';
@@ -18,6 +26,7 @@ import { EmptyState } from '@/ui/EmptyState';
 import { GlassButton, GlassGroup } from '@/ui/Glass';
 import { Icon } from '@/ui/Icon';
 import { Menu, type MenuItem } from '@/ui/Menu';
+import { NamePrompt } from '@/ui/NamePrompt';
 import { LargeTitle, TopBar, useBottomSpace, useScrollHeader, useTitleTop } from '@/ui/Screen';
 
 import { BulkActionBar } from './BulkActionBar';
@@ -43,6 +52,9 @@ export function ActivityScreen({ mode = 'activity' }: { mode?: 'activity' | 'sea
   useFocusEffect(useCallback(() => () => useSelection.getState().clear(), []));
 
   const [query, setQuery] = useState('');
+  const [prompt, setPrompt] = useState<{ mode: 'save' | 'rename'; id?: string; name: string } | null>(null);
+  const toast = useToast((s) => s.show);
+  const { data: saved } = useQuery(() => listSavedFilters(appDb), [], []);
   const [search, setSearch] = useState('');
   useEffect(() => {
     const t = setTimeout(() => setSearch(query), 150);
@@ -115,6 +127,11 @@ export function ActivityScreen({ mode = 'activity' }: { mode?: 'activity' | 'sea
   ];
   const allSelected = items.length > 0 && selectedIds.length === items.length;
   const anyFilter = filters.accountIds.length || filters.categoryIds.length || filters.types.length;
+  const currentPayload: FilterPayload = { filters, search: query.trim() };
+  const applySaved = (p: FilterPayload) => {
+    setFilters(p.filters);
+    setQuery(p.search);
+  };
 
   const header = (
     <View style={{ paddingTop: 6, paddingBottom: 8 }}>
@@ -133,6 +150,35 @@ export function ActivityScreen({ mode = 'activity' }: { mode?: 'activity' | 'sea
           accessibilityLabel="Search transactions"
         />
       </View>
+      {saved.length ? (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, marginTop: 12 }} contentContainerStyle={styles.saved}>
+          {saved.map((f) => (
+            <Menu
+              key={f.id}
+              items={[
+                { title: 'Apply', icon: 'bookmark', onPress: () => applySaved(f.payload) },
+                { title: 'Update with Current Filters', icon: 'arrow.clockwise', onPress: () => updateSavedFilter(appDb, f.id, { payload: currentPayload }) },
+                { title: 'Rename', icon: 'pencil', onPress: () => setPrompt({ mode: 'rename', id: f.id, name: f.name }) },
+                'separator',
+                { title: 'Delete', icon: 'trash', destructive: true, onPress: () => deleteSavedFilter(appDb, f.id) },
+              ]}
+            >
+              {(open) => (
+                <Pressable
+                  onPress={() => applySaved(f.payload)}
+                  onLongPress={open}
+                  accessibilityRole="button"
+                  accessibilityHint="Long-press to update, rename or delete"
+                  style={[styles.savedChip, { backgroundColor: `${colors.accent}1F` }]}
+                >
+                  <Icon name="bookmark.fill" size={12} color={colors.accent} />
+                  <Text style={[type.subhead, { color: colors.accent, fontWeight: '600' }]}>{f.name}</Text>
+                </Pressable>
+              )}
+            </Menu>
+          ))}
+        </ScrollView>
+      ) : null}
       <View style={styles.chips}>
         <Menu items={monthItems}>{(open) => <FilterChip label={monthLabel} active={filters.monthOffset !== 0 && mode === 'activity'} onPress={open} />}</Menu>
         <Menu items={accountItems}>{(open) => <FilterChip label={account ? account.name : 'All accounts'} active={!!account} onPress={open} />}</Menu>
@@ -185,6 +231,9 @@ export function ActivityScreen({ mode = 'activity' }: { mode?: 'activity' | 'sea
                   onPress={() => setFilters({ accountIds: [], categoryIds: [], types: [] })}
                 />
               ) : null}
+              {search || anyFilter ? (
+                <GlassButton icon="bookmark" accessibilityLabel="Save these filters" onPress={() => setPrompt({ mode: 'save', name: search })} />
+              ) : null}
               {mode === 'activity' && items.length ? (
                 <GlassButton icon="checkmark.circle" accessibilityLabel="Select transactions" onPress={() => selection.start()} />
               ) : null}
@@ -193,6 +242,22 @@ export function ActivityScreen({ mode = 'activity' }: { mode?: 'activity' | 'sea
         }
       />
       {mode === 'activity' ? selecting ? <BulkActionBar /> : <AddButton /> : null}
+      <NamePrompt
+        visible={prompt !== null}
+        title={prompt?.mode === 'rename' ? 'Rename Filter' : 'Save Filter'}
+        initial={prompt?.name ?? ''}
+        placeholder="e.g. Food delivery"
+        onCancel={() => setPrompt(null)}
+        onConfirm={async (name) => {
+          const p = prompt;
+          setPrompt(null);
+          if (p?.mode === 'rename' && p.id) await updateSavedFilter(appDb, p.id, { name });
+          else {
+            await saveFilter(appDb, name, currentPayload);
+            toast({ message: `Saved “${name.trim()}”` });
+          }
+        }}
+      />
     </View>
   );
 }
@@ -225,6 +290,8 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   searchInput: { flex: 1, paddingVertical: 0 },
+  saved: { paddingHorizontal: 16, gap: 8 },
+  savedChip: { height: 31, borderRadius: 16, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 6 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 16, marginTop: 12 },
   chip: { height: 31, borderRadius: 16, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 5 },
 });
