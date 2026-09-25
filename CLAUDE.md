@@ -59,4 +59,18 @@ Categories: Food #FF9500, Groceries #34C759, Transport #007AFF, Shopping #FF2D55
 - **Schema extras beyond SPEC §6:** `createdAt`/`updatedAt` on categories, `excludeFromTotals` on accounts, extra indexes on `transactions(toAccountId)`, `(type, occurredAt)` and `(payee)`, and CHECK constraints (amount > 0, transfer shape).
 - **Migrations:** edit `src/db/schema.ts`, then `npm run db:generate`. Never hand-edit files in `src/db/migrations/`.
 - **Feature code takes a `DB`** (`src/db/types.ts`) so it runs against the expo-sqlite DB in the app and an in-memory `node:sqlite` DB in tests (`src/db/__tests__/testDb.ts`, which runs the real migration SQL).
-- **Figma:** the Starter-plan MCP limit was already used up on 25 Sep 2026. Ask the user for screenshots per screen, or wait for the limit to reset.
+- **Figma:** use the `nishitkirani2020@gmail.com` account (Starter, 20 read calls/month; the college account's quota is used up). The full node tree of page `0:1` is saved in `design/figma-page-0-1.xml`, so don't spend a call re-reading it. Call `get_design_context` or `get_screenshot` once per node when you build it.
+
+### Figma node IDs (file `XuWxnYDOjJSg74G5iJ1UGr`, frames 402×874 = iPhone 17 Pro)
+| Node | ID |
+|---|---|
+| 01 Home — Light | `6:39` |
+| 02 Quick Add Sheet | `7:205` (sheet `7:272`) |
+| 03 Activity | `8:429` |
+| 04 Transaction Detail | `9:580` (context menu `9:728`) |
+| 05 Accounts | `9:762` |
+| 06 Settings | `10:950` |
+| 07 Home — Dark | `10:1210` |
+| Foundations | `5:3` |
+| Components: Transaction Row `5:136`, Row Divider `5:147`, Category Capsule `5:149`, Glass Button `5:159`, Tab Bar `5:164`, Add Button `5:195`, Keypad Key `5:200`, Settings Row `5:202` | |
+| Icons section | `4:160` |
