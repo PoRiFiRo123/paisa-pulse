@@ -68,7 +68,14 @@ All v1 screens are built: onboarding, Home, Quick Add/Edit sheet, Activity + Sea
 - **Live data:** use `useQuery` (`src/hooks/useQuery.ts`), which re-runs on any table change. Drizzle's `useLiveQuery` only watches the main table.
 - **Quick Add payee/note:** one field; text before `·` is the payee, after it the note.
 - **Keypad maths:** an operator strip (+ − × ÷) above the Figma 4×3 keypad.
-- **Not done yet:** multi-select bulk edit, shake-to-undo, zoom transition row → detail, drag-to-reorder (up/down buttons instead), app icon variants, widgets.
+- **Multi-select:** Activity → "Select" glass button (or "Select" in a row's context menu). The bulk bar changes category or account, or deletes; each is undoable (`src/features/transactions/bulk.ts` snapshots rows first).
+- **Undo:** `useToast` remembers the last undoable action for 2 minutes; shaking the phone (`src/ui/ShakeToUndo.tsx`, accelerometer only while an undo exists) asks "Undo …?".
+- **Zoom transition:** iOS rows use `Link.Trigger withAppleZoom`; the detail screen's icon is the `Link.AppleZoomTarget`.
+- **Drag-to-reorder:** `src/ui/SortableList.tsx` (Reanimated + Gesture Handler, fixed row height, VoiceOver move up/down actions). Used by Accounts and Categories reorder modes.
+- **App icons:** `assets/icon.png` (default), `icon-dark.png`, `icon-tinted.png` via `ios.icon`, plus Android adaptive foreground/background/monochrome. Generated from an SVG rupee mark. A true iOS 26 Liquid Glass `.icon` needs Apple's Icon Composer on a Mac.
+- **Accessibility:** `src/stores/a11y.ts` tracks Reduce Transparency and Increase Contrast (glass turns solid, stronger secondary and divider colours). Reanimated follows Reduce Motion by default.
+- **Splash screen:** held until the database is ready (`DatabaseProvider`).
+- **Needs a development build (v1.x per SPEC):** home/lock screen widgets, user-selectable alternate app icons, Control Center / App Intents, SQLCipher encryption.
 - **Web preview (not a product target):** `expo export -p web` works, but expo-sqlite 57's web worker writes the result length into a byte array (`WorkerChannel.ts`, `resultArray.set(new Uint32Array([length]), 0)`), so sync results over 255 bytes break. For Playwright previews, patch that line temporarily; never commit changes in `node_modules`.
 
 ### Figma node IDs (file `XuWxnYDOjJSg74G5iJ1UGr`, frames 402×874 = iPhone 17 Pro)

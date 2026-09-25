@@ -1,4 +1,5 @@
 import { useMigrations } from 'drizzle-orm/expo-sqlite/migrator';
+import * as SplashScreen from 'expo-splash-screen';
 import { type ReactNode, useEffect, useState } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 
@@ -8,6 +9,9 @@ import { usePrefs } from '@/stores/prefs';
 import { appDb, db, prepareDatabase } from './client';
 import migrations from './migrations/migrations';
 import { seedStarterCategories } from './seed';
+
+// Keep the splash screen up until the database is ready.
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 /** Runs migrations, seeds starter categories, purges old soft deletes and loads preferences before rendering the app. */
 export function DatabaseProvider({ children }: { children: ReactNode }) {
@@ -30,10 +34,12 @@ function DatabaseReady({ children }: { children: ReactNode }) {
       await purgeDeletedTransactions(appDb);
       await usePrefs.getState().hydrate();
       setReady(true);
+      SplashScreen.hideAsync().catch(() => {});
     })().catch(setError);
   }, [migration.success]);
 
   const failure = migration.error ?? error;
+  if (failure) SplashScreen.hideAsync().catch(() => {});
   if (failure) {
     return (
       <View style={styles.center}>
@@ -42,7 +48,7 @@ function DatabaseReady({ children }: { children: ReactNode }) {
       </View>
     );
   }
-  // Keep the splash-coloured screen until the database is ready (a few ms on a normal launch).
+  // The splash screen stays visible until the database is ready (a few ms on a normal launch).
   if (!ready) return null;
   return children;
 }

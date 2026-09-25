@@ -1,6 +1,6 @@
 import { format, isToday } from 'date-fns';
-import { router, useLocalSearchParams } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Link, router, useLocalSearchParams } from 'expo-router';
+import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { appDb } from '@/db/client';
 import { listTransactions } from '@/features/transactions/list';
@@ -67,7 +67,14 @@ export default function TransactionDetailScreen() {
         contentContainerStyle={{ paddingTop: top + 10, paddingBottom: 60 }}
       >
         <View style={styles.hero}>
-          <CategoryIcon icon={visual.icon} color={visual.color} size={72} />
+          {Platform.OS === 'ios' ? (
+            // The tapped row zooms into this icon (iOS 18+).
+            <Link.AppleZoomTarget>
+              <CategoryIcon icon={visual.icon} color={visual.color} size={72} />
+            </Link.AppleZoomTarget>
+          ) : (
+            <CategoryIcon icon={visual.icon} color={visual.color} size={72} />
+          )}
           <Text style={[type.title2, { color: colors.label, marginTop: 14 }]} numberOfLines={2}>
             {transactionTitle(t)}
           </Text>

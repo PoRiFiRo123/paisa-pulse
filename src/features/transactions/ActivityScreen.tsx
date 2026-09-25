@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { appDb } from '@/db/client';
@@ -8,6 +9,7 @@ import { useQuery } from '@/hooks/useQuery';
 import { accountLabel } from '@/lib/format';
 import { monthAt } from '@/lib/months';
 import { usePrefs } from '@/stores/prefs';
+import { useSelection } from '@/stores/selection';
 import { type ActivityFilters, useUi } from '@/stores/ui';
 import { type } from '@/theme/typography';
 import { useTheme } from '@/theme/useTheme';
@@ -18,6 +20,7 @@ import { Icon } from '@/ui/Icon';
 import { Menu, type MenuItem } from '@/ui/Menu';
 import { LargeTitle, TopBar, useBottomSpace, useScrollHeader, useTitleTop } from '@/ui/Screen';
 
+import { BulkActionBar } from './BulkActionBar';
 import { listTransactions } from './list';
 import { TransactionDayList } from './TransactionDayList';
 
@@ -32,6 +35,12 @@ export function ActivityScreen({ mode = 'activity' }: { mode?: 'activity' | 'sea
   const filters = mode === 'activity' ? shared : local;
   const setFilters = (patch: Partial<ActivityFilters>) =>
     mode === 'activity' ? setShared(patch) : setLocal((f) => ({ ...f, ...patch }));
+
+  const selection = useSelection();
+  const selecting = mode === 'activity' && selection.active;
+  const selectedIds = selection.ids;
+  // Leave multi-select when the tab loses focus.
+  useFocusEffect(useCallback(() => () => useSelection.getState().clear(), []));
 
   const [query, setQuery] = useState('');
   const [search, setSearch] = useState('');
@@ -104,6 +113,7 @@ export function ActivityScreen({ mode = 'activity' }: { mode?: 'activity' | 'sea
     { title: 'Income', checked: filters.types[0] === 'income', onPress: () => setFilters({ types: ['income'] }) },
     { title: 'Transfers', checked: filters.types[0] === 'transfer', onPress: () => setFilters({ types: ['transfer'] }) },
   ];
+  const allSelected = items.length > 0 && selectedIds.length === items.length;
   const anyFilter = filters.accountIds.length || filters.categoryIds.length || filters.types.length;
 
   const header = (
@@ -136,6 +146,7 @@ export function ActivityScreen({ mode = 'activity' }: { mode?: 'activity' | 'sea
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <TransactionDayList
         items={items}
+        selectable={mode === 'activity'}
         header={header}
         onScroll={onScroll}
         style={{ marginTop: titleTop - 6 }}
@@ -151,22 +162,37 @@ export function ActivityScreen({ mode = 'activity' }: { mode?: 'activity' | 'sea
         }
       />
       <TopBar
-        title={mode === 'search' ? 'Search' : 'Activity'}
+        title={selecting ? `${selectedIds.length} Selected` : mode === 'search' ? 'Search' : 'Activity'}
+        alwaysShowTitle={selecting}
         scrollY={scrollY}
         trailing={
-          anyFilter ? (
+          selecting ? (
             <GlassGroup>
               <GlassButton
-                icon="line.3.horizontal.decrease"
-                tint={colors.accent}
-                accessibilityLabel="Clear filters"
-                onPress={() => setFilters({ accountIds: [], categoryIds: [], types: [] })}
+                icon="checklist"
+                accessibilityLabel={allSelected ? 'Deselect all' : 'Select all'}
+                onPress={() => selection.setAll(allSelected ? [] : items.map((t) => t.id))}
               />
+              <GlassButton icon="checkmark" tint={colors.accent} accessibilityLabel="Done selecting" onPress={selection.clear} />
             </GlassGroup>
-          ) : null
+          ) : (
+            <GlassGroup>
+              {anyFilter ? (
+                <GlassButton
+                  icon="line.3.horizontal.decrease"
+                  tint={colors.accent}
+                  accessibilityLabel="Clear filters"
+                  onPress={() => setFilters({ accountIds: [], categoryIds: [], types: [] })}
+                />
+              ) : null}
+              {mode === 'activity' && items.length ? (
+                <GlassButton icon="checkmark.circle" accessibilityLabel="Select transactions" onPress={() => selection.start()} />
+              ) : null}
+            </GlassGroup>
+          )
         }
       />
-      {mode === 'activity' ? <AddButton /> : null}
+      {mode === 'activity' ? selecting ? <BulkActionBar /> : <AddButton /> : null}
     </View>
   );
 }
