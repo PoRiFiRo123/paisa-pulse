@@ -1,5 +1,207 @@
-import { Placeholder } from '@/ui/Placeholder';
+import { router, useScrollToTop } from 'expo-router';
+import { useRef, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+
+import { appDb } from '@/db/client';
+import { AccountCard, CARD_HEIGHT, CARD_PEEK } from '@/features/accounts/AccountCard';
+import { computeNetWorth } from '@/features/accounts/balance';
+import { reorderAccounts } from '@/features/accounts/mutations';
+import { accountIcon, daysUntilDay } from '@/features/accounts/presentation';
+import { accountsWithBalance } from '@/features/accounts/queries';
+import { useMoney } from '@/hooks/useMoney';
+import { useQuery } from '@/hooks/useQuery';
+import { accountLabel } from '@/lib/format';
+import { type } from '@/theme/typography';
+import { useTheme } from '@/theme/useTheme';
+import { CategoryIcon } from '@/ui/CategoryIcon';
+import { EmptyState } from '@/ui/EmptyState';
+import { GlassButton, GlassGroup } from '@/ui/Glass';
+import { Icon } from '@/ui/Icon';
+import { GroupHeader, GroupRow, InsetGroup } from '@/ui/InsetGroup';
+import { LargeTitle, TopBar, useBottomSpace, useScrollHeader, useTitleTop } from '@/ui/Screen';
 
 export default function AccountsScreen() {
-  return <Placeholder title="Accounts" />;
+  const scrollRef = useRef<ScrollView>(null);
+  useScrollToTop(scrollRef);
+  const { colors } = useTheme();
+  const money = useMoney();
+  const { scrollY, onScroll } = useScrollHeader();
+  const titleTop = useTitleTop();
+  const bottom = useBottomSpace();
+  const [reordering, setReordering] = useState(false);
+  const { data: all, loaded } = useQuery(() => accountsWithBalance(appDb, { includeArchived: true }), [], []);
+
+  const active = all.filter((a) => a.archivedAt === null);
+  const archived = all.filter((a) => a.archivedAt !== null);
+  const netWorth = computeNetWorth(active);
+  const counted = active.filter((a) => !a.excludeFromTotals).length;
+  const payFrom = active.find((a) => a.type === 'bank') ?? active.find((a) => a.type !== 'card');
+  const bills = active
+    .filter((a) => a.type === 'card' && a.dueDay && a.balance < 0)
+    .map((a) => ({ account: a, ...daysUntilDay(a.dueDay!) }))
+    .sort((x, y) => x.days - y.days);
+
+  const move = (index: number, delta: number) => {
+    const ids = active.map((a) => a.id);
+    const [id] = ids.splice(index, 1);
+    ids.splice(index + delta, 0, id);
+    reorderAccounts(appDb, ids);
+  };
+  const open = (id: string) => router.push({ pathname: '/account/[id]', params: { id } });
+
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <ScrollView
+        ref={scrollRef}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        contentInsetAdjustmentBehavior="never"
+        contentContainerStyle={{ paddingTop: titleTop, paddingBottom: bottom }}
+      >
+        <LargeTitle title="Accounts" />
+
+        {loaded && active.length === 0 ? (
+          <EmptyState
+            icon="creditcard"
+            title="No accounts yet"
+            message="Add your bank accounts, cards, cash and wallets."
+            actionLabel="Add Account"
+            onAction={() => router.push('/account-form')}
+          />
+        ) : (
+          <>
+            <View style={[styles.netWorth, { backgroundColor: colors.card }]}>
+              <Text style={[type.subhead, { color: colors.secondary }]}>Net worth</Text>
+              <Text style={[type.amountMedium, { color: netWorth < 0 ? colors.expense : colors.label }]} adjustsFontSizeToFit numberOfLines={1}>
+                {money.balance(netWorth)}
+              </Text>
+              <Text style={[type.footnote, { color: colors.secondary }]}>
+                Across {counted} account{counted === 1 ? '' : 's'} · updated just now
+              </Text>
+            </View>
+
+            {reordering ? (
+              <InsetGroup style={{ marginTop: 22 }} dividerInset={58}>
+                {active.map((a, i) => (
+                  <GroupRow
+                    key={a.id}
+                    title={accountLabel(a.name, a.last4)}
+                    leading={<CategoryIcon icon={accountIcon(a.type)} color={a.color} size={30} square />}
+                    trailing={
+                      <View style={styles.moveButtons}>
+                        <MoveButton icon="arrow.up" disabled={i === 0} onPress={() => move(i, -1)} label={`Move ${a.name} up`} />
+                        <MoveButton icon="arrow.down" disabled={i === active.length - 1} onPress={() => move(i, 1)} label={`Move ${a.name} down`} />
+                      </View>
+                    }
+                  />
+                ))}
+              </InsetGroup>
+            ) : (
+              <View style={[styles.stack, { height: Math.max(0, active.length - 1) * CARD_PEEK + CARD_HEIGHT }]}>
+                {active.map((a, i) => (
+                  <View key={a.id} style={[styles.stacked, { top: i * CARD_PEEK }]}>
+                    <AccountCard account={a} balance={a.balance} onPress={() => open(a.id)} showHeaderBalance={i < active.length - 1} />
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {bills.map(({ account, days }) => (
+              <Pressable
+                key={account.id}
+                accessibilityRole="button"
+                onPress={() =>
+                  router.push({
+                    pathname: '/add',
+                    params: { type: 'transfer', from: payFrom?.id, to: account.id, amount: String(-account.balance) },
+                  })
+                }
+                style={({ pressed }) => [styles.bill, { backgroundColor: colors.card, opacity: pressed ? 0.7 : 1 }]}
+              >
+                <CategoryIcon icon="bell.fill" color="#FF9500" size={32} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[type.headline, { color: colors.label }]} numberOfLines={1}>
+                    {account.name} bill {days === 0 ? 'due today' : `due in ${days} day${days === 1 ? '' : 's'}`}
+                  </Text>
+                  <Text style={[type.footnote, { color: colors.secondary }]} numberOfLines={1}>
+                    {money.amount(-account.balance)}
+                    {payFrom ? ` · Pay from ${accountLabel(payFrom.name, payFrom.last4)}` : ''}
+                  </Text>
+                </View>
+                <Icon name="chevron.right" size={13} color={colors.secondary} weight="semibold" />
+              </Pressable>
+            ))}
+
+            {archived.length ? (
+              <>
+                <GroupHeader title="Archived" style={{ marginTop: 12 }} />
+                <InsetGroup dividerInset={58}>
+                  {archived.map((a) => (
+                    <GroupRow
+                      key={a.id}
+                      title={accountLabel(a.name, a.last4)}
+                      value={money.balance(a.balance)}
+                      leading={<CategoryIcon icon={accountIcon(a.type)} color={a.color} size={30} square />}
+                      chevron
+                      onPress={() => open(a.id)}
+                    />
+                  ))}
+                </InsetGroup>
+              </>
+            ) : null}
+          </>
+        )}
+      </ScrollView>
+
+      <TopBar
+        title="Accounts"
+        scrollY={scrollY}
+        trailing={
+          <GlassGroup>
+            {active.length > 1 ? (
+              <GlassButton
+                icon={reordering ? 'checkmark' : 'arrow.up.arrow.down'}
+                tint={reordering ? colors.accent : undefined}
+                accessibilityLabel={reordering ? 'Done reordering' : 'Reorder accounts'}
+                onPress={() => setReordering(!reordering)}
+              />
+            ) : null}
+            <GlassButton icon="plus" accessibilityLabel="Add account" onPress={() => router.push('/account-form')} />
+          </GlassGroup>
+        }
+      />
+    </View>
+  );
 }
+
+function MoveButton({ icon, disabled, onPress, label }: { icon: string; disabled: boolean; onPress: () => void; label: string }) {
+  const { colors } = useTheme();
+  return (
+    <Pressable
+      disabled={disabled}
+      onPress={onPress}
+      accessibilityLabel={label}
+      hitSlop={6}
+      style={[styles.move, { backgroundColor: colors.fill, opacity: disabled ? 0.3 : 1 }]}
+    >
+      <Icon name={icon} size={14} color={colors.label} weight="semibold" />
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  netWorth: { marginHorizontal: 16, marginTop: 15, borderRadius: 22, padding: 18, gap: 2 },
+  stack: { marginHorizontal: 16, marginTop: 22 },
+  stacked: { position: 'absolute', left: 0, right: 0 },
+  bill: {
+    marginHorizontal: 16,
+    marginTop: 18,
+    borderRadius: 22,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  moveButtons: { flexDirection: 'row', gap: 8 },
+  move: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+});

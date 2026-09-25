@@ -1,4 +1,4 @@
-import { and, eq, isNotNull, lt } from 'drizzle-orm';
+import { and, eq, isNotNull, lt, ne } from 'drizzle-orm';
 
 import { type Transaction, transactions } from '@/db/schema';
 import type { DB } from '@/db/types';
@@ -77,4 +77,12 @@ export async function purgeDeletedTransactions(db: DB, now: number = Date.now())
   const doomed = await db.select({ id: transactions.id }).from(transactions).where(where).all();
   if (doomed.length) await db.delete(transactions).where(where);
   return doomed.length;
+}
+
+/** Quick recategorise from a context menu. Transfers never have a category. */
+export async function setTransactionCategory(db: DB, id: string, categoryId: string | null, now: number = Date.now()) {
+  await db
+    .update(transactions)
+    .set({ categoryId, updatedAt: now })
+    .where(and(eq(transactions.id, id), ne(transactions.type, 'transfer')));
 }

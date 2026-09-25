@@ -1,0 +1,944 @@
+<canvas id="0:1" name="Paisa Pulse" x="0" y="0" width="0" height="0">
+  <section id="4:160" name="Icons" x="0" y="1100" width="536" height="320">
+    <symbol id="4:165" name="Icon/search" x="40" y="40" width="24" height="24" />
+    <symbol id="4:170" name="Icon/plus" x="88" y="40" width="24" height="24" />
+    <symbol id="4:175" name="Icon/home" x="136" y="40" width="24" height="24" />
+    <symbol id="4:184" name="Icon/list" x="184" y="40" width="24" height="24" />
+    <symbol id="4:189" name="Icon/card" x="232" y="40" width="24" height="24" />
+    <symbol id="4:196" name="Icon/settings" x="280" y="40" width="24" height="24" />
+    <symbol id="4:203" name="Icon/calendar" x="328" y="40" width="24" height="24" />
+    <symbol id="4:209" name="Icon/more" x="376" y="40" width="24" height="24" />
+    <symbol id="4:213" name="Icon/chevronDown" x="424" y="40" width="24" height="24" />
+    <symbol id="4:217" name="Icon/chevronRight" x="472" y="40" width="24" height="24" />
+    <symbol id="4:222" name="Icon/arrowDownRight" x="40" y="88" width="24" height="24" />
+    <symbol id="4:227" name="Icon/arrowDownLeft" x="88" y="88" width="24" height="24" />
+    <symbol id="4:231" name="Icon/check" x="136" y="88" width="24" height="24" />
+    <symbol id="4:236" name="Icon/x" x="184" y="88" width="24" height="24" />
+    <symbol id="4:242" name="Icon/food" x="232" y="88" width="24" height="24" />
+    <symbol id="4:248" name="Icon/cart" x="280" y="88" width="24" height="24" />
+    <symbol id="4:255" name="Icon/car" x="328" y="88" width="24" height="24" />
+    <symbol id="4:261" name="Icon/bag" x="376" y="88" width="24" height="24" />
+    <symbol id="4:265" name="Icon/zap" x="424" y="88" width="24" height="24" />
+    <symbol id="4:272" name="Icon/film" x="472" y="88" width="24" height="24" />
+    <symbol id="4:276" name="Icon/heart" x="40" y="136" width="24" height="24" />
+    <symbol id="4:281" name="Icon/play" x="88" y="136" width="24" height="24" />
+    <symbol id="4:289" name="Icon/rupee" x="136" y="136" width="24" height="24" />
+    <symbol id="4:295" name="Icon/wallet" x="184" y="136" width="24" height="24" />
+    <symbol id="4:300" name="Icon/badge" x="232" y="136" width="24" height="24" />
+    <symbol id="4:309" name="Icon/bank" x="280" y="136" width="24" height="24" />
+    <symbol id="4:316" name="Icon/transfer" x="328" y="136" width="24" height="24" />
+    <symbol id="4:322" name="Icon/trash" x="376" y="136" width="24" height="24" />
+    <symbol id="4:327" name="Icon/copy" x="424" y="136" width="24" height="24" />
+    <symbol id="4:333" name="Icon/share" x="472" y="136" width="24" height="24" />
+    <symbol id="4:339" name="Icon/filter" x="40" y="184" width="24" height="24" />
+    <symbol id="4:345" name="Icon/backspace" x="88" y="184" width="24" height="24" />
+    <symbol id="4:350" name="Icon/lock" x="136" y="184" width="24" height="24" />
+    <symbol id="4:355" name="Icon/tag" x="184" y="184" width="24" height="24" />
+    <symbol id="4:361" name="Icon/download" x="232" y="184" width="24" height="24" />
+    <symbol id="4:365" name="Icon/moon" x="280" y="184" width="24" height="24" />
+    <symbol id="4:369" name="Icon/pencil" x="328" y="184" width="24" height="24" />
+    <symbol id="4:374" name="Icon/clock" x="376" y="184" width="24" height="24" />
+    <symbol id="4:382" name="Icon/note" x="424" y="184" width="24" height="24" />
+    <symbol id="4:389" name="Icon/wifi" x="472" y="184" width="24" height="24" />
+    <symbol id="4:396" name="Icon/signal" x="40" y="232" width="24" height="24" />
+    <symbol id="4:402" name="Icon/battery" x="88" y="232" width="24" height="24" />
+    <symbol id="4:412" name="Icon/faceid" x="136" y="232" width="24" height="24" />
+    <symbol id="4:417" name="Icon/bell" x="184" y="232" width="24" height="24" />
+    <symbol id="4:425" name="Icon/palette" x="232" y="232" width="24" height="24" />
+    <symbol id="9:579" name="Icon/chevronLeft" x="280" y="232" width="24" height="24" />
+  </section>
+  <section id="5:2" name="Foundations" x="600" y="1100" width="1280" height="1289">
+    <frame id="5:3" name="Foundations" x="40" y="40" width="1200" height="1209">
+      <text id="5:4" name="Paisa Pulse · Foundations" x="48" y="48" width="403" height="41" />
+      <text id="5:5" name="Design stand-ins: Inter + st" x="48" y="121" width="835" height="18" />
+      <frame id="5:6" name="Stack" x="48" y="171" width="880" height="143">
+        <text id="5:7" name="Light" x="0" y="0" width="49" height="24" />
+        <frame id="5:8" name="Stack" x="0" y="36" width="880" height="107">
+          <frame id="5:9" name="Stack" x="0" y="0" width="96" height="107">
+            <rounded-rectangle id="5:10" name="Rectangle" x="0" y="0" width="96" height="64" />
+            <text id="5:11" name="Background" x="0" y="70" width="74" height="16" />
+            <text id="5:12" name="#F2F2F7" x="0" y="92" width="49" height="15" />
+          </frame>
+          <frame id="5:13" name="Stack" x="112" y="0" width="96" height="107">
+            <rounded-rectangle id="5:14" name="Rectangle" x="0" y="0" width="96" height="64" />
+            <text id="5:15" name="Card" x="0" y="70" width="30" height="16" />
+            <text id="5:16" name="#FFFFFF" x="0" y="92" width="49" height="15" />
+          </frame>
+          <frame id="5:17" name="Stack" x="224" y="0" width="96" height="107">
+            <rounded-rectangle id="5:18" name="Rectangle" x="0" y="0" width="96" height="64" />
+            <text id="5:19" name="Label" x="0" y="70" width="34" height="16" />
+            <text id="5:20" name="#000000" x="0" y="92" width="52" height="15" />
+          </frame>
+          <frame id="5:21" name="Stack" x="336" y="0" width="96" height="107">
+            <rounded-rectangle id="5:22" name="Rectangle" x="0" y="0" width="96" height="64" />
+            <text id="5:23" name="Secondary" x="0" y="70" width="67" height="16" />
+            <text id="5:24" name="#8A8A8E" x="0" y="92" width="52" height="15" />
+          </frame>
+          <frame id="5:25" name="Stack" x="448" y="0" width="96" height="107">
+            <rounded-rectangle id="5:26" name="Rectangle" x="0" y="0" width="96" height="64" />
+            <text id="5:27" name="Separator" x="0" y="70" width="61" height="16" />
+            <text id="5:28" name="#E3E3E8" x="0" y="92" width="51" height="15" />
+          </frame>
+          <frame id="5:29" name="Stack" x="560" y="0" width="96" height="107">
+            <rounded-rectangle id="5:30" name="Rectangle" x="0" y="0" width="96" height="64" />
+            <text id="5:31" name="Accent" x="0" y="70" width="44" height="16" />
+            <text id="5:32" name="#5E5CE6" x="0" y="92" width="52" height="15" />
+          </frame>
+          <frame id="5:33" name="Stack" x="672" y="0" width="96" height="107">
+            <rounded-rectangle id="5:34" name="Rectangle" x="0" y="0" width="96" height="64" />
+            <text id="5:35" name="Expense" x="0" y="70" width="53" height="16" />
+            <text id="5:36" name="#FF3B30" x="0" y="92" width="52" height="15" />
+          </frame>
+          <frame id="5:37" name="Stack" x="784" y="0" width="96" height="107">
+            <rounded-rectangle id="5:38" name="Rectangle" x="0" y="0" width="96" height="64" />
+            <text id="5:39" name="Income" x="0" y="70" width="46" height="16" />
+            <text id="5:40" name="#34C759" x="0" y="92" width="52" height="15" />
+          </frame>
+        </frame>
+      </frame>
+      <frame id="5:41" name="Stack" x="48" y="346" width="880" height="143">
+        <text id="5:42" name="Dark" x="0" y="0" width="45" height="24" />
+        <frame id="5:43" name="Stack" x="0" y="36" width="880" height="107">
+          <frame id="5:44" name="Stack" x="0" y="0" width="96" height="107">
+            <rounded-rectangle id="5:45" name="Rectangle" x="0" y="0" width="96" height="64" />
+            <text id="5:46" name="Background" x="0" y="70" width="74" height="16" />
+            <text id="5:47" name="#000000" x="0" y="92" width="52" height="15" />
+          </frame>
+          <frame id="5:48" name="Stack" x="112" y="0" width="96" height="107">
+            <rounded-rectangle id="5:49" name="Rectangle" x="0" y="0" width="96" height="64" />
+            <text id="5:50" name="Card" x="0" y="70" width="30" height="16" />
+            <text id="5:51" name="#1C1C1E" x="0" y="92" width="48" height="15" />
+          </frame>
+          <frame id="5:52" name="Stack" x="224" y="0" width="96" height="107">
+            <rounded-rectangle id="5:53" name="Rectangle" x="0" y="0" width="96" height="64" />
+            <text id="5:54" name="Label" x="0" y="70" width="34" height="16" />
+            <text id="5:55" name="#FFFFFF" x="0" y="92" width="49" height="15" />
+          </frame>
+          <frame id="5:56" name="Stack" x="336" y="0" width="96" height="107">
+            <rounded-rectangle id="5:57" name="Rectangle" x="0" y="0" width="96" height="64" />
+            <text id="5:58" name="Secondary" x="0" y="70" width="67" height="16" />
+            <text id="5:59" name="#8E8E93" x="0" y="92" width="51" height="15" />
+          </frame>
+          <frame id="5:60" name="Stack" x="448" y="0" width="96" height="107">
+            <rounded-rectangle id="5:61" name="Rectangle" x="0" y="0" width="96" height="64" />
+            <text id="5:62" name="Separator" x="0" y="70" width="61" height="16" />
+            <text id="5:63" name="#2C2C2E" x="0" y="92" width="53" height="15" />
+          </frame>
+          <frame id="5:64" name="Stack" x="560" y="0" width="96" height="107">
+            <rounded-rectangle id="5:65" name="Rectangle" x="0" y="0" width="96" height="64" />
+            <text id="5:66" name="Accent" x="0" y="70" width="44" height="16" />
+            <text id="5:67" name="#7D7AFF" x="0" y="92" width="50" height="15" />
+          </frame>
+          <frame id="5:68" name="Stack" x="672" y="0" width="96" height="107">
+            <rounded-rectangle id="5:69" name="Rectangle" x="0" y="0" width="96" height="64" />
+            <text id="5:70" name="Expense" x="0" y="70" width="53" height="16" />
+            <text id="5:71" name="#FF453A" x="0" y="92" width="52" height="15" />
+          </frame>
+          <frame id="5:72" name="Stack" x="784" y="0" width="96" height="107">
+            <rounded-rectangle id="5:73" name="Rectangle" x="0" y="0" width="96" height="64" />
+            <text id="5:74" name="Income" x="0" y="70" width="46" height="16" />
+            <text id="5:75" name="#30D158" x="0" y="92" width="51" height="15" />
+          </frame>
+        </frame>
+      </frame>
+      <frame id="5:76" name="Stack" x="48" y="521" width="1104" height="143">
+        <text id="5:77" name="Categories" x="0" y="0" width="105" height="24" />
+        <frame id="5:78" name="Stack" x="0" y="36" width="1104" height="107">
+          <frame id="5:79" name="Stack" x="0" y="0" width="96" height="107">
+            <rounded-rectangle id="5:80" name="Rectangle" x="0" y="0" width="96" height="64" />
+            <text id="5:81" name="Food" x="0" y="70" width="31" height="16" />
+            <text id="5:82" name="#FF9500" x="0" y="92" width="51" height="15" />
+          </frame>
+          <frame id="5:83" name="Stack" x="112" y="0" width="96" height="107">
+            <rounded-rectangle id="5:84" name="Rectangle" x="0" y="0" width="96" height="64" />
+            <text id="5:85" name="Groceries" x="0" y="70" width="60" height="16" />
+            <text id="5:86" name="#34C759" x="0" y="92" width="52" height="15" />
+          </frame>
+          <frame id="5:87" name="Stack" x="224" y="0" width="96" height="107">
+            <rounded-rectangle id="5:88" name="Rectangle" x="0" y="0" width="96" height="64" />
+            <text id="5:89" name="Transport" x="0" y="70" width="61" height="16" />
+            <text id="5:90" name="#007AFF" x="0" y="92" width="49" height="15" />
+          </frame>
+          <frame id="5:91" name="Stack" x="336" y="0" width="96" height="107">
+            <rounded-rectangle id="5:92" name="Rectangle" x="0" y="0" width="96" height="64" />
+            <text id="5:93" name="Shopping" x="0" y="70" width="59" height="16" />
+            <text id="5:94" name="#FF2D55" x="0" y="92" width="51" height="15" />
+          </frame>
+          <frame id="5:95" name="Stack" x="448" y="0" width="96" height="107">
+            <rounded-rectangle id="5:96" name="Rectangle" x="0" y="0" width="96" height="64" />
+            <text id="5:97" name="Bills" x="0" y="70" width="26" height="16" />
+            <text id="5:98" name="#FFB800" x="0" y="92" width="51" height="15" />
+          </frame>
+          <frame id="5:99" name="Stack" x="560" y="0" width="96" height="107">
+            <rounded-rectangle id="5:100" name="Rectangle" x="0" y="0" width="96" height="64" />
+            <text id="5:101" name="Rent" x="0" y="70" width="29" height="16" />
+            <text id="5:102" name="#AF52DE" x="0" y="92" width="52" height="15" />
+          </frame>
+          <frame id="5:103" name="Stack" x="672" y="0" width="96" height="107">
+            <rounded-rectangle id="5:104" name="Rectangle" x="0" y="0" width="96" height="64" />
+            <text id="5:105" name="Fun" x="0" y="70" width="23" height="16" />
+            <text id="5:106" name="#5856D6" x="0" y="92" width="52" height="15" />
+          </frame>
+          <frame id="5:107" name="Stack" x="784" y="0" width="96" height="107">
+            <rounded-rectangle id="5:108" name="Rectangle" x="0" y="0" width="96" height="64" />
+            <text id="5:109" name="Health" x="0" y="70" width="41" height="16" />
+            <text id="5:110" name="#FF3B30" x="0" y="92" width="52" height="15" />
+          </frame>
+          <frame id="5:111" name="Stack" x="896" y="0" width="96" height="107">
+            <rounded-rectangle id="5:112" name="Rectangle" x="0" y="0" width="96" height="64" />
+            <text id="5:113" name="Subs" x="0" y="70" width="32" height="16" />
+            <text id="5:114" name="#32ADE6" x="0" y="92" width="53" height="15" />
+          </frame>
+          <frame id="5:115" name="Stack" x="1008" y="0" width="96" height="107">
+            <rounded-rectangle id="5:116" name="Rectangle" x="0" y="0" width="96" height="64" />
+            <text id="5:117" name="Salary" x="0" y="70" width="39" height="16" />
+            <text id="5:118" name="#30B0C7" x="0" y="92" width="53" height="15" />
+          </frame>
+        </frame>
+      </frame>
+      <frame id="5:119" name="Stack" x="48" y="696" width="709" height="289">
+        <text id="5:120" name="Type scale (iOS)" x="0" y="0" width="156" height="24" />
+        <text id="5:121" name="₹38,450 — Amount · Bold 52" x="0" y="34" width="709" height="63" />
+        <text id="5:122" name="Large Title · Bold 34" x="0" y="107" width="315" height="41" />
+        <text id="5:123" name="Title 3 · Semibold 20" x="0" y="158" width="195" height="24" />
+        <text id="5:124" name="Body · Regular 17" x="0" y="192" width="136" height="21" />
+        <text id="5:125" name="Subhead · Regular 15" x="0" y="223" width="146" height="18" />
+        <text id="5:126" name="Footnote · Regular 13" x="0" y="251" width="127" height="16" />
+        <text id="5:127" name="Caption · Medium 10" x="0" y="277" width="95" height="12" />
+      </frame>
+      <frame id="5:128" name="Stack" x="48" y="1017" width="668" height="144">
+        <text id="5:129" name="Liquid Glass rules" x="0" y="0" width="168" height="24" />
+        <text id="5:130" name="1. Glass only for controls f" x="0" y="30" width="668" height="18" />
+        <text id="5:131" name="2. Content (lists, cards, am" x="0" y="54" width="404" height="18" />
+        <text id="5:132" name="3. Never stack glass on glas" x="0" y="78" width="402" height="18" />
+        <text id="5:133" name="4. Concentric rounded corner" x="0" y="102" width="334" height="18" />
+        <text id="5:134" name="5. Honour Reduce Transparenc" x="0" y="126" width="429" height="18" />
+      </frame>
+    </frame>
+  </section>
+  <section id="5:135" name="Components" x="1960" y="1100" width="640" height="420">
+    <symbol id="5:136" name="Transaction Row" x="40" y="40" width="370" height="61" />
+    <symbol id="5:147" name="Row Divider" x="40" y="130" width="370" height="1" />
+    <symbol id="5:149" name="Category Capsule" x="40" y="170" width="125" height="49" />
+    <symbol id="5:159" name="Glass Button" x="240" y="170" width="44" height="44" />
+    <symbol id="5:164" name="Tab Bar" x="40" y="240" width="307.5" height="65.5" />
+    <symbol id="5:195" name="Add Button" x="380" y="240" width="56" height="56" />
+    <symbol id="5:200" name="Keypad Key" x="460" y="240" width="112" height="54" />
+    <symbol id="5:202" name="Settings Row" x="40" y="330" width="370" height="50" />
+  </section>
+  <frame id="6:39" name="01 Home — Light" x="0" y="0" width="402" height="874">
+    <rounded-rectangle id="6:40" name="Aurora" x="0" y="0" width="402" height="540" />
+    <ellipse id="6:41" name="Blob Warm" x="200" y="140" width="260" height="220" />
+    <ellipse id="6:42" name="Blob Pink" x="-70" y="220" width="220" height="200" />
+    <frame id="6:43" name="Status Bar" x="0" y="0" width="402" height="54">
+      <text id="6:44" name="9:41" x="56" y="18" width="36" height="21" />
+      <frame id="6:45" name="Stack" x="306" y="17" width="72" height="26">
+        <instance id="6:46" name="Glyph" x="0" y="4" width="18" height="18" />
+        <instance id="6:52" name="Glyph" x="23" y="4" width="18" height="18" />
+        <instance id="6:58" name="Glyph" x="46" y="0" width="26" height="26" />
+      </frame>
+    </frame>
+    <frame id="6:63" name="Toolbar (Glass)" x="288" y="58" width="98" height="44">
+      <instance id="6:64" name="Glass Button" x="0" y="0" width="44" height="44" />
+      <instance id="6:74" name="Glass Button" x="54" y="0" width="44" height="44" />
+    </frame>
+    <frame id="6:83" name="Large Title" x="20" y="108" width="204" height="41">
+      <text id="6:84" name="September" x="0" y="0" width="178" height="41" />
+      <instance id="6:85" name="Glyph" x="184" y="10.5" width="20" height="20" />
+    </frame>
+    <frame id="6:88" name="Hero Card (Glass)" x="16" y="164" width="370" height="209">
+      <text id="6:89" name="Spent this month" x="20.75" y="20.75" width="120" height="18" />
+      <text id="6:90" name="₹38,450" x="20.75" y="42.75" width="209" height="63" />
+      <frame id="6:91" name="Trend" x="20.75" y="109.75" width="147" height="16">
+        <instance id="6:92" name="Glyph" x="0" y="1" width="14" height="14" />
+        <text id="6:96" name="12% less than August" x="18" y="0" width="129" height="16" />
+      </frame>
+      <frame id="6:97" name="Divider" x="20.75" y="129.75" width="328.5" height="20.5">
+        <rounded-rectangle id="6:98" name="Rectangle" x="0" y="10" width="328.5" height="0.5" />
+      </frame>
+      <frame id="6:99" name="Stats" x="20.75" y="154.25" width="328.5" height="36">
+        <frame id="6:100" name="Stack" x="0" y="0" width="158.25" height="36">
+          <frame id="6:101" name="Stack" x="0" y="3" width="30" height="30">
+            <instance id="6:102" name="Glyph" x="7" y="7" width="16" height="16" />
+          </frame>
+          <frame id="6:106" name="Stack" x="40" y="0" width="69" height="36">
+            <text id="6:107" name="Income" x="0" y="0" width="41" height="15" />
+            <text id="6:108" name="₹90,000" x="0" y="15" width="69" height="21" />
+          </frame>
+        </frame>
+        <frame id="6:109" name="Stack" x="170.25" y="0" width="158.25" height="36">
+          <frame id="6:110" name="Stack" x="0" y="3" width="30" height="30">
+            <instance id="6:111" name="Glyph" x="7" y="7" width="16" height="16" />
+          </frame>
+          <frame id="6:115" name="Stack" x="40" y="0" width="65" height="36">
+            <text id="6:116" name="Saved" x="0" y="0" width="35" height="15" />
+            <text id="6:117" name="₹51,550" x="0" y="15" width="65" height="21" />
+          </frame>
+        </frame>
+      </frame>
+    </frame>
+    <frame id="6:118" name="Month Dots" x="186" y="383" width="30" height="6">
+      <ellipse id="6:119" name="Ellipse" x="0" y="0" width="6" height="6" />
+      <ellipse id="6:120" name="Ellipse" x="12" y="0" width="6" height="6" />
+      <ellipse id="6:121" name="Ellipse" x="24" y="0" width="6" height="6" />
+    </frame>
+    <frame id="6:122" name="Section Header" x="20" y="407" width="362" height="24">
+      <text id="6:123" name="Top categories" x="0" y="0" width="144" height="24" />
+      <text id="6:124" name="This month" x="284" y="3" width="78" height="18" />
+    </frame>
+    <frame id="6:125" name="Category Capsules (scroll)" x="16" y="443" width="518" height="49">
+      <instance id="6:126" name="Category Capsule" x="0" y="0" width="124" height="49" />
+      <instance id="6:139" name="Category Capsule" x="134" y="0" width="125" height="49" />
+      <instance id="6:149" name="Category Capsule" x="269" y="0" width="120" height="49" />
+      <instance id="6:164" name="Category Capsule" x="399" y="0" width="119" height="49" />
+    </frame>
+    <frame id="6:178" name="Section Header" x="20" y="518" width="362" height="24">
+      <text id="6:179" name="Recent" x="0" y="0" width="68" height="24" />
+      <text id="6:180" name="See all" x="316" y="3" width="46" height="18" />
+    </frame>
+    <frame id="6:181" name="Recent (Inset Grouped)" x="16" y="554" width="370" height="309">
+      <instance id="6:182" name="Transaction Row" x="0" y="0" width="370" height="61" />
+      <instance id="6:193" name="Row Divider" x="0" y="61" width="370" height="1" />
+      <instance id="6:195" name="Transaction Row" x="0" y="62" width="370" height="61" />
+      <instance id="6:211" name="Row Divider" x="0" y="123" width="370" height="1" />
+      <instance id="6:213" name="Transaction Row" x="0" y="124" width="370" height="61" />
+      <instance id="6:228" name="Row Divider" x="0" y="185" width="370" height="1" />
+      <instance id="6:230" name="Transaction Row" x="0" y="186" width="370" height="61" />
+      <instance id="6:244" name="Row Divider" x="0" y="247" width="370" height="1" />
+      <instance id="6:246" name="Transaction Row" x="0" y="248" width="370" height="61" />
+    </frame>
+    <instance id="6:263" name="Tab Bar" x="16" y="784.5" width="307.5" height="65.5" />
+    <instance id="6:294" name="Glass Button" x="320.5" y="784.5" width="65.5" height="65.5" />
+    <instance id="6:299" name="Add Button" x="325.25" y="714.5" width="56" height="56" />
+    <rounded-rectangle id="6:304" name="Home Indicator" x="131.5" y="861" width="139" height="5" />
+  </frame>
+  <frame id="7:205" name="02 Quick Add Sheet" x="482" y="0" width="402" height="874">
+    <rounded-rectangle id="7:206" name="Aurora" x="0" y="0" width="402" height="540" />
+    <ellipse id="7:207" name="Blob Warm" x="200" y="140" width="260" height="220" />
+    <ellipse id="7:208" name="Blob Pink" x="-70" y="220" width="220" height="200" />
+    <frame id="7:209" name="Status Bar" x="0" y="0" width="402" height="54">
+      <text id="7:210" name="9:41" x="56" y="18" width="36" height="21" />
+      <frame id="7:211" name="Stack" x="306" y="17" width="72" height="26">
+        <instance id="7:212" name="Glyph" x="0" y="4" width="18" height="18" />
+        <instance id="7:213" name="Glyph" x="23" y="4" width="18" height="18" />
+        <instance id="7:214" name="Glyph" x="46" y="0" width="26" height="26" />
+      </frame>
+    </frame>
+    <frame id="7:215" name="Toolbar (Glass)" x="288" y="58" width="98" height="44">
+      <instance id="7:216" name="Glass Button" x="0" y="0" width="44" height="44" />
+      <instance id="7:217" name="Glass Button" x="54" y="0" width="44" height="44" />
+    </frame>
+    <frame id="7:218" name="Large Title" x="20" y="108" width="204" height="41">
+      <text id="7:219" name="September" x="0" y="0" width="178" height="41" />
+      <instance id="7:220" name="Glyph" x="184" y="10.5" width="20" height="20" />
+    </frame>
+    <frame id="7:221" name="Hero Card (Glass)" x="16" y="164" width="370" height="209">
+      <text id="7:222" name="Spent this month" x="20.75" y="20.75" width="120" height="18" />
+      <text id="7:223" name="₹38,450" x="20.75" y="42.75" width="209" height="63" />
+      <frame id="7:224" name="Trend" x="20.75" y="109.75" width="147" height="16">
+        <instance id="7:225" name="Glyph" x="0" y="1" width="14" height="14" />
+        <text id="7:226" name="12% less than August" x="18" y="0" width="129" height="16" />
+      </frame>
+      <frame id="7:227" name="Divider" x="20.75" y="129.75" width="328.5" height="20.5">
+        <rounded-rectangle id="7:228" name="Rectangle" x="0" y="10" width="328.5" height="0.5" />
+      </frame>
+      <frame id="7:229" name="Stats" x="20.75" y="154.25" width="328.5" height="36">
+        <frame id="7:230" name="Stack" x="0" y="0" width="158.25" height="36">
+          <frame id="7:231" name="Stack" x="0" y="3" width="30" height="30">
+            <instance id="7:232" name="Glyph" x="7" y="7" width="16" height="16" />
+          </frame>
+          <frame id="7:233" name="Stack" x="40" y="0" width="69" height="36">
+            <text id="7:234" name="Income" x="0" y="0" width="41" height="15" />
+            <text id="7:235" name="₹90,000" x="0" y="15" width="69" height="21" />
+          </frame>
+        </frame>
+        <frame id="7:236" name="Stack" x="170.25" y="0" width="158.25" height="36">
+          <frame id="7:237" name="Stack" x="0" y="3" width="30" height="30">
+            <instance id="7:238" name="Glyph" x="7" y="7" width="16" height="16" />
+          </frame>
+          <frame id="7:239" name="Stack" x="40" y="0" width="65" height="36">
+            <text id="7:240" name="Saved" x="0" y="0" width="35" height="15" />
+            <text id="7:241" name="₹51,550" x="0" y="15" width="65" height="21" />
+          </frame>
+        </frame>
+      </frame>
+    </frame>
+    <frame id="7:242" name="Month Dots" x="186" y="383" width="30" height="6">
+      <ellipse id="7:243" name="Ellipse" x="0" y="0" width="6" height="6" />
+      <ellipse id="7:244" name="Ellipse" x="12" y="0" width="6" height="6" />
+      <ellipse id="7:245" name="Ellipse" x="24" y="0" width="6" height="6" />
+    </frame>
+    <frame id="7:246" name="Section Header" x="20" y="407" width="362" height="24">
+      <text id="7:247" name="Top categories" x="0" y="0" width="144" height="24" />
+      <text id="7:248" name="This month" x="284" y="3" width="78" height="18" />
+    </frame>
+    <frame id="7:249" name="Category Capsules (scroll)" x="16" y="443" width="518" height="49">
+      <instance id="7:250" name="Category Capsule" x="0" y="0" width="124" height="49" />
+      <instance id="7:251" name="Category Capsule" x="134" y="0" width="125" height="49" />
+      <instance id="7:252" name="Category Capsule" x="269" y="0" width="120" height="49" />
+      <instance id="7:253" name="Category Capsule" x="399" y="0" width="119" height="49" />
+    </frame>
+    <frame id="7:254" name="Section Header" x="20" y="518" width="362" height="24">
+      <text id="7:255" name="Recent" x="0" y="0" width="68" height="24" />
+      <text id="7:256" name="See all" x="316" y="3" width="46" height="18" />
+    </frame>
+    <frame id="7:257" name="Recent (Inset Grouped)" x="16" y="554" width="370" height="309">
+      <instance id="7:258" name="Transaction Row" x="0" y="0" width="370" height="61" />
+      <instance id="7:259" name="Row Divider" x="0" y="61" width="370" height="1" />
+      <instance id="7:260" name="Transaction Row" x="0" y="62" width="370" height="61" />
+      <instance id="7:261" name="Row Divider" x="0" y="123" width="370" height="1" />
+      <instance id="7:262" name="Transaction Row" x="0" y="124" width="370" height="61" />
+      <instance id="7:263" name="Row Divider" x="0" y="185" width="370" height="1" />
+      <instance id="7:264" name="Transaction Row" x="0" y="186" width="370" height="61" />
+      <instance id="7:265" name="Row Divider" x="0" y="247" width="370" height="1" />
+      <instance id="7:266" name="Transaction Row" x="0" y="248" width="370" height="61" />
+    </frame>
+    <instance id="7:267" name="Tab Bar" x="16" y="784.5" width="307.5" height="65.5" />
+    <instance id="7:268" name="Glass Button" x="320.5" y="784.5" width="65.5" height="65.5" />
+    <instance id="7:269" name="Add Button" x="325.25" y="714.5" width="56" height="56" />
+    <rounded-rectangle id="7:271" name="Dim" x="0" y="0" width="402" height="874" />
+    <frame id="7:272" name="Sheet (Glass)" x="8" y="176" width="386" height="690">
+      <rounded-rectangle id="7:273" name="Grabber" x="175" y="8.75" width="36" height="5" />
+      <frame id="7:274" name="gap" x="188" y="13.75" width="10" height="8" />
+      <frame id="7:275" name="Sheet Toolbar" x="16.75" y="21.75" width="352.5" height="44">
+        <instance id="7:276" name="Glass Button" x="0" y="0" width="44" height="44" />
+        <text id="7:284" name="New Expense" x="121.25" y="11.5" width="110" height="21" />
+        <instance id="7:285" name="Glass Button" x="308.5" y="0" width="44" height="44" />
+      </frame>
+      <frame id="7:292" name="gap" x="188" y="65.75" width="10" height="14" />
+      <frame id="7:293" name="Segmented Control" x="16.75" y="79.75" width="352.5" height="38">
+        <frame id="7:294" name="Segment/Expense" x="3" y="3" width="115.5" height="32">
+          <text id="7:295" name="Expense" x="29.25" y="7.5" width="57" height="17" />
+        </frame>
+        <frame id="7:296" name="Segment/Income" x="118.5" y="3" width="115.5" height="32">
+          <text id="7:297" name="Income" x="33.25" y="7.5" width="49" height="17" />
+        </frame>
+        <frame id="7:298" name="Segment/Transfer" x="234" y="3" width="115.5" height="32">
+          <text id="7:299" name="Transfer" x="30.25" y="7.5" width="55" height="17" />
+        </frame>
+      </frame>
+      <frame id="7:300" name="gap" x="188" y="117.75" width="10" height="22" />
+      <frame id="7:301" name="Amount Display" x="120.5" y="139.75" width="145" height="73">
+        <text id="7:302" name="₹" x="0" y="16" width="20" height="41" />
+        <text id="7:303" name="250" x="24" y="0" width="114" height="73" />
+        <rounded-rectangle id="7:304" name="Caret" x="142" y="9.5" width="3" height="54" />
+      </frame>
+      <frame id="7:305" name="gap" x="188" y="212.75" width="10" height="4" />
+      <frame id="7:306" name="Note Field" x="96.5" y="216.75" width="193" height="18">
+        <instance id="7:307" name="Glyph" x="0" y="2" width="14" height="14" />
+        <text id="7:310" name="Swiggy · lunch with team" x="20" y="0" width="173" height="18" />
+      </frame>
+      <frame id="7:311" name="gap" x="188" y="234.75" width="10" height="18" />
+      <frame id="7:579" name="Recent Categories (scroll)" x="16.75" y="252.75" width="352.5" height="39">
+        <frame id="7:312" name="Recent Categories" x="0" y="0" width="443" height="39">
+          <frame id="7:313" name="Chip/Food" x="0" y="0" width="84" height="39">
+            <frame id="7:314" name="Stack" x="7.5" y="7.5" width="24" height="24">
+              <instance id="7:315" name="Glyph" x="5.5" y="5.5" width="13" height="13" />
+            </frame>
+            <text id="7:320" name="Food" x="37.5" y="11" width="33" height="17" />
+          </frame>
+          <frame id="7:321" name="Chip/Groceries" x="92" y="0" width="112" height="36">
+            <frame id="7:322" name="Stack" x="6" y="6" width="24" height="24">
+              <instance id="7:323" name="Glyph" x="5.5" y="5.5" width="13" height="13" />
+            </frame>
+            <text id="7:328" name="Groceries" x="36" y="9.5" width="64" height="17" />
+          </frame>
+          <frame id="7:329" name="Chip/Transport" x="212" y="0" width="112" height="36">
+            <frame id="7:330" name="Stack" x="6" y="6" width="24" height="24">
+              <instance id="7:331" name="Glyph" x="5.5" y="5.5" width="13" height="13" />
+            </frame>
+            <text id="7:337" name="Transport" x="36" y="9.5" width="64" height="17" />
+          </frame>
+          <frame id="7:338" name="Chip/Shopping" x="332" y="0" width="111" height="36">
+            <frame id="7:339" name="Stack" x="6" y="6" width="24" height="24">
+              <instance id="7:340" name="Glyph" x="5.5" y="5.5" width="13" height="13" />
+            </frame>
+            <text id="7:345" name="Shopping" x="36" y="9.5" width="63" height="17" />
+          </frame>
+        </frame>
+      </frame>
+      <frame id="7:346" name="gap" x="188" y="291.75" width="10" height="14" />
+      <frame id="7:347" name="Account &amp; Date (Inset Grouped)" x="16.75" y="305.75" width="352.5" height="104.5">
+        <frame id="7:348" name="Stack" x="0" y="0" width="352.5" height="52">
+          <frame id="7:349" name="Stack" x="14" y="12" width="28" height="28">
+            <instance id="7:350" name="Glyph" x="6" y="6" width="16" height="16" />
+          </frame>
+          <text id="7:354" name="Account" x="54" y="16.5" width="156.5" height="19" />
+          <text id="7:355" name="Axis ••4521" x="222.5" y="16.5" width="90" height="19" />
+          <instance id="7:356" name="Glyph" x="324.5" y="19" width="14" height="14" />
+        </frame>
+        <rounded-rectangle id="7:372" name="Divider" x="0" y="52" width="352.5" height="0.5" />
+        <frame id="7:359" name="Stack" x="0" y="52.5" width="352.5" height="52">
+          <frame id="7:360" name="Stack" x="14" y="12" width="28" height="28">
+            <instance id="7:361" name="Glyph" x="6" y="6" width="16" height="16" />
+          </frame>
+          <text id="7:367" name="Date" x="54" y="16.5" width="133.5" height="19" />
+          <text id="7:368" name="Today, 1:24 PM" x="199.5" y="16.5" width="113" height="19" />
+          <instance id="7:369" name="Glyph" x="324.5" y="19" width="14" height="14" />
+        </frame>
+      </frame>
+      <frame id="7:373" name="gap" x="188" y="410.25" width="10" height="14" />
+      <frame id="7:374" name="Keypad" x="16" y="424.25" width="354" height="243">
+        <frame id="7:375" name="Stack" x="0" y="0" width="354" height="54">
+          <instance id="7:376" name="Keypad Key" x="0" y="0" width="112" height="54" />
+          <instance id="7:378" name="Keypad Key" x="121" y="0" width="112" height="54" />
+          <instance id="7:380" name="Keypad Key" x="242" y="0" width="112" height="54" />
+        </frame>
+        <frame id="7:382" name="Stack" x="0" y="63" width="354" height="54">
+          <instance id="7:383" name="Keypad Key" x="0" y="0" width="112" height="54" />
+          <instance id="7:385" name="Keypad Key" x="121" y="0" width="112" height="54" />
+          <instance id="7:387" name="Keypad Key" x="242" y="0" width="112" height="54" />
+        </frame>
+        <frame id="7:389" name="Stack" x="0" y="126" width="354" height="54">
+          <instance id="7:390" name="Keypad Key" x="0" y="0" width="112" height="54" />
+          <instance id="7:392" name="Keypad Key" x="121" y="0" width="112" height="54" />
+          <instance id="7:394" name="Keypad Key" x="242" y="0" width="112" height="54" />
+        </frame>
+        <frame id="7:396" name="Stack" x="0" y="189" width="354" height="54">
+          <instance id="7:397" name="Keypad Key" x="0" y="0" width="112" height="54" />
+          <instance id="7:399" name="Keypad Key" x="121" y="0" width="112" height="54" />
+          <instance id="7:401" name="Keypad Key" x="242" y="0" width="112" height="54" />
+        </frame>
+      </frame>
+    </frame>
+    <instance id="7:408" name="Glyph" x="309" y="803.25" width="26" height="26" />
+    <rounded-rectangle id="7:270" name="Home Indicator" x="131.5" y="861" width="139" height="5" />
+  </frame>
+  <frame id="8:429" name="03 Activity" x="964" y="0" width="402" height="874">
+    <frame id="8:430" name="Scroll Content" x="0" y="0" width="402" height="932">
+      <frame id="8:432" name="Title Row" x="16" y="100" width="132" height="41">
+        <text id="8:431" name="Large Title" x="4" y="0" width="124" height="41" />
+      </frame>
+      <frame id="8:433" name="gap" x="16" y="141" width="10" height="10" />
+      <frame id="8:434" name="Search Bar" x="16" y="151" width="370" height="39">
+        <instance id="8:435" name="Glyph" x="12" y="11" width="17" height="17" />
+        <text id="8:439" name="Search transactions" x="37" y="9" width="157" height="21" />
+      </frame>
+      <frame id="8:440" name="gap" x="16" y="190" width="10" height="12" />
+      <frame id="8:441" name="Filter Chips" x="16" y="202" width="375" height="31">
+        <frame id="8:442" name="Stack" x="0" y="0" width="112" height="31">
+          <text id="8:443" name="September" x="12" y="7" width="73" height="17" />
+          <instance id="8:444" name="Glyph" x="89" y="9" width="13" height="13" />
+        </frame>
+        <frame id="8:447" name="Stack" x="120" y="0" width="119" height="31">
+          <text id="8:448" name="All accounts" x="12" y="7" width="80" height="17" />
+          <instance id="8:449" name="Glyph" x="96" y="9" width="13" height="13" />
+        </frame>
+        <frame id="8:452" name="Stack" x="247" y="0" width="128" height="31">
+          <text id="8:453" name="All categories" x="12" y="7" width="89" height="17" />
+          <instance id="8:454" name="Glyph" x="105" y="9" width="13" height="13" />
+        </frame>
+      </frame>
+      <frame id="8:457" name="gap" x="16" y="233" width="10" height="8" />
+      <frame id="8:458" name="gap" x="16" y="241" width="10" height="18" />
+      <frame id="8:459" name="Day Header" x="16" y="259" width="370" height="22">
+        <text id="8:460" name="TODAY" x="16" y="0" width="46" height="16" />
+        <text id="8:461" name="−₹606" x="313" y="0" width="41" height="16" />
+      </frame>
+      <frame id="8:462" name="Day Card (Inset Grouped)" x="16" y="281" width="370" height="123">
+        <instance id="8:463" name="Transaction Row" x="0" y="0" width="370" height="61" />
+        <instance id="8:474" name="Row Divider" x="0" y="61" width="370" height="1" />
+        <frame id="8:476" name="Swiped Row (Delete action)" x="0" y="62" width="370" height="61">
+          <rounded-rectangle id="8:666" name="Delete Background" x="278" y="0" width="92" height="61" />
+          <instance id="8:477" name="Transaction Row" x="-92" y="0" width="370" height="61" />
+          <frame id="8:493" name="Delete Action" x="305" y="11.5" width="38" height="38">
+            <instance id="8:494" name="Glyph" x="9" y="0" width="20" height="20" />
+            <text id="8:499" name="Delete" x="0" y="23" width="38" height="15" />
+          </frame>
+        </frame>
+      </frame>
+      <frame id="8:500" name="gap" x="16" y="404" width="10" height="18" />
+      <frame id="8:501" name="Day Header" x="16" y="422" width="370" height="22">
+        <text id="8:502" name="YESTERDAY" x="16" y="0" width="80" height="16" />
+        <text id="8:503" name="−₹1,894" x="304" y="0" width="50" height="16" />
+      </frame>
+      <frame id="8:504" name="Day Card (Inset Grouped)" x="16" y="444" width="370" height="123">
+        <instance id="8:505" name="Transaction Row" x="0" y="0" width="370" height="61" />
+        <instance id="8:520" name="Row Divider" x="0" y="61" width="370" height="1" />
+        <instance id="8:522" name="Transaction Row" x="0" y="62" width="370" height="61" />
+      </frame>
+      <frame id="8:536" name="gap" x="16" y="567" width="10" height="18" />
+      <frame id="8:537" name="Day Header" x="16" y="585" width="370" height="22">
+        <text id="8:538" name="SAT, 20 SEP" x="16" y="0" width="80" height="16" />
+        <text id="8:539" name="−₹3,120" x="305" y="0" width="49" height="16" />
+      </frame>
+      <frame id="8:540" name="Day Card (Inset Grouped)" x="16" y="607" width="370" height="185">
+        <instance id="8:541" name="Transaction Row" x="0" y="0" width="370" height="61" />
+        <instance id="8:556" name="Row Divider" x="0" y="61" width="370" height="1" />
+        <instance id="8:558" name="Transaction Row" x="0" y="62" width="370" height="61" />
+        <instance id="8:569" name="Row Divider" x="0" y="123" width="370" height="1" />
+        <instance id="8:571" name="Transaction Row" x="0" y="124" width="370" height="61" />
+      </frame>
+    </frame>
+    <rounded-rectangle id="8:584" name="Scroll Edge (top)" x="0" y="0" width="402" height="150" />
+    <frame id="8:585" name="Status Bar" x="0" y="0" width="402" height="54">
+      <text id="8:586" name="9:41" x="56" y="18" width="36" height="21" />
+      <frame id="8:587" name="Stack" x="306" y="17" width="72" height="26">
+        <instance id="8:588" name="Glyph" x="0" y="4" width="18" height="18" />
+        <instance id="8:594" name="Glyph" x="23" y="4" width="18" height="18" />
+        <instance id="8:600" name="Glyph" x="46" y="0" width="26" height="26" />
+      </frame>
+    </frame>
+    <frame id="8:605" name="Toolbar (Glass)" x="288" y="54" width="98" height="44">
+      <instance id="8:606" name="Glass Button" x="0" y="0" width="44" height="44" />
+      <instance id="8:615" name="Glass Button" x="54" y="0" width="44" height="44" />
+    </frame>
+    <instance id="8:624" name="Tab Bar" x="16" y="784.5" width="307.5" height="65.5" />
+    <instance id="8:655" name="Glass Button" x="320.5" y="784.5" width="65.5" height="65.5" />
+    <instance id="8:660" name="Add Button" x="325.25" y="714.5" width="56" height="56" />
+    <rounded-rectangle id="8:665" name="Home Indicator" x="131.5" y="861" width="139" height="5" />
+  </frame>
+  <frame id="9:580" name="04 Transaction Detail" x="1446" y="0" width="402" height="874">
+    <frame id="9:581" name="Content" x="0" y="0" width="402" height="824.5">
+      <frame id="9:582" name="Category Icon" x="165" y="118" width="72" height="72">
+        <instance id="9:583" name="Glyph" x="18" y="18" width="36" height="36" />
+      </frame>
+      <frame id="9:588" name="gap" x="196" y="190" width="10" height="14" />
+      <text id="9:589" name="Swiggy" x="162" y="204" width="78" height="27" />
+      <frame id="9:590" name="gap" x="196" y="231" width="10" height="4" />
+      <text id="9:591" name="−₹420" x="119.5" y="235" width="163" height="63" />
+      <frame id="9:592" name="gap" x="196" y="298" width="10" height="8" />
+      <frame id="9:593" name="Type Pill" x="156" y="306" width="90" height="26">
+        <ellipse id="9:594" name="Ellipse" x="10" y="9" width="8" height="8" />
+        <text id="9:595" name="Expense" x="24" y="5" width="54" height="16" />
+      </frame>
+      <frame id="9:596" name="gap" x="196" y="332" width="10" height="26" />
+      <frame id="9:597" name="Details (Inset Grouped)" x="16" y="358" width="370" height="282">
+        <frame id="9:598" name="Detail/Category" x="0" y="0" width="370" height="56">
+          <frame id="9:599" name="Stack" x="16" y="13" width="30" height="30">
+            <instance id="9:600" name="Glyph" x="7" y="7" width="16" height="16" />
+          </frame>
+          <text id="9:604" name="Category" x="58" y="17.5" width="244" height="21" />
+          <text id="9:605" name="Food" x="314" y="17.5" width="40" height="21" />
+        </frame>
+        <frame id="9:606" name="Divider" x="0" y="56" width="370" height="0.5">
+          <rounded-rectangle id="9:607" name="Rectangle" x="58" y="0" width="312" height="0.5" />
+        </frame>
+        <frame id="9:608" name="Detail/Account" x="0" y="56.5" width="370" height="56">
+          <frame id="9:609" name="Stack" x="16" y="13" width="30" height="30">
+            <instance id="9:610" name="Glyph" x="7" y="7" width="16" height="16" />
+          </frame>
+          <text id="9:618" name="Account" x="58" y="17.5" width="189" height="21" />
+          <text id="9:619" name="Axis ••4521" x="259" y="17.5" width="95" height="21" />
+        </frame>
+        <frame id="9:620" name="Divider" x="0" y="112.5" width="370" height="0.5">
+          <rounded-rectangle id="9:621" name="Rectangle" x="58" y="0" width="312" height="0.5" />
+        </frame>
+        <frame id="9:622" name="Detail/Date" x="0" y="113" width="370" height="56">
+          <frame id="9:623" name="Stack" x="16" y="13" width="30" height="30">
+            <instance id="9:624" name="Glyph" x="7" y="7" width="16" height="16" />
+          </frame>
+          <text id="9:630" name="Date" x="58" y="17.5" width="138" height="21" />
+          <text id="9:631" name="Wed, 24 Sep 2026" x="208" y="17.5" width="146" height="21" />
+        </frame>
+        <frame id="9:632" name="Divider" x="0" y="169" width="370" height="0.5">
+          <rounded-rectangle id="9:633" name="Rectangle" x="58" y="0" width="312" height="0.5" />
+        </frame>
+        <frame id="9:634" name="Detail/Time" x="0" y="169.5" width="370" height="56">
+          <frame id="9:635" name="Stack" x="16" y="13" width="30" height="30">
+            <instance id="9:636" name="Glyph" x="7" y="7" width="16" height="16" />
+          </frame>
+          <text id="9:640" name="Time" x="58" y="17.5" width="220" height="21" />
+          <text id="9:641" name="1:24 PM" x="290" y="17.5" width="64" height="21" />
+        </frame>
+        <frame id="9:642" name="Divider" x="0" y="225.5" width="370" height="0.5">
+          <rounded-rectangle id="9:643" name="Rectangle" x="58" y="0" width="312" height="0.5" />
+        </frame>
+        <frame id="9:644" name="Detail/Note" x="0" y="226" width="370" height="56">
+          <frame id="9:645" name="Stack" x="16" y="13" width="30" height="30">
+            <instance id="9:646" name="Glyph" x="7" y="7" width="16" height="16" />
+          </frame>
+          <text id="9:653" name="Note" x="58" y="17.5" width="153" height="21" />
+          <text id="9:654" name="Lunch with team" x="223" y="17.5" width="131" height="21" />
+        </frame>
+      </frame>
+      <frame id="9:655" name="gap" x="196" y="640" width="10" height="8" />
+      <frame id="9:656" name="Footnote" x="16" y="648" width="370" height="16">
+        <text id="9:657" name="Added manually · Edited toda" x="16" y="0" width="249" height="16" />
+      </frame>
+      <frame id="9:658" name="gap" x="196" y="664" width="10" height="22" />
+      <frame id="9:659" name="Actions (Inset Grouped)" x="16" y="686" width="370" height="98.5">
+        <frame id="9:660" name="Stack" x="0" y="0" width="370" height="49">
+          <instance id="9:661" name="Glyph" x="16" y="14.5" width="20" height="20" />
+          <text id="9:665" name="Duplicate" x="48" y="14" width="74" height="21" />
+        </frame>
+        <frame id="9:666" name="Divider" x="0" y="49" width="370" height="0.5">
+          <rounded-rectangle id="9:667" name="Rectangle" x="48" y="0" width="322" height="0.5" />
+        </frame>
+        <frame id="9:668" name="Stack" x="0" y="49.5" width="370" height="49">
+          <instance id="9:669" name="Glyph" x="16" y="14.5" width="20" height="20" />
+          <text id="9:674" name="Delete Transaction" x="48" y="14" width="148" height="21" />
+        </frame>
+      </frame>
+    </frame>
+    <frame id="9:675" name="Status Bar" x="0" y="0" width="402" height="54">
+      <text id="9:676" name="9:41" x="56" y="18" width="36" height="21" />
+      <frame id="9:677" name="Stack" x="306" y="17" width="72" height="26">
+        <instance id="9:678" name="Glyph" x="0" y="4" width="18" height="18" />
+        <instance id="9:684" name="Glyph" x="23" y="4" width="18" height="18" />
+        <instance id="9:690" name="Glyph" x="46" y="0" width="26" height="26" />
+      </frame>
+    </frame>
+    <instance id="9:695" name="Glass Button" x="16" y="58" width="44" height="44" />
+    <frame id="9:702" name="Toolbar (Glass)" x="234" y="58" width="152" height="44">
+      <instance id="9:703" name="Glass Button" x="0" y="0" width="44" height="44" />
+      <instance id="9:710" name="Glass Button" x="54" y="0" width="44" height="44" />
+      <instance id="9:719" name="Glass Button" x="108" y="0" width="44" height="44" />
+    </frame>
+    <frame id="9:728" name="Context Menu (Glass)" x="136" y="110" width="250" height="234.5">
+      <frame id="9:729" name="Menu/Edit" x="0.75" y="6.75" width="248.5" height="43">
+        <text id="9:730" name="Edit" x="18" y="11" width="181.5" height="21" />
+        <instance id="9:731" name="Glyph" x="211.5" y="12" width="19" height="19" />
+      </frame>
+      <frame id="9:734" name="Menu/Duplicate" x="0.75" y="49.75" width="248.5" height="43">
+        <text id="9:735" name="Duplicate" x="18" y="11" width="181.5" height="21" />
+        <instance id="9:736" name="Glyph" x="211.5" y="12" width="19" height="19" />
+      </frame>
+      <frame id="9:740" name="Menu/Change Category" x="0.75" y="92.75" width="248.5" height="43">
+        <text id="9:741" name="Change Category" x="18" y="11" width="181.5" height="21" />
+        <instance id="9:742" name="Glyph" x="211.5" y="12" width="19" height="19" />
+      </frame>
+      <frame id="9:746" name="Menu/Share" x="0.75" y="135.75" width="248.5" height="43">
+        <text id="9:747" name="Share" x="18" y="11" width="181.5" height="21" />
+        <instance id="9:748" name="Glyph" x="211.5" y="12" width="19" height="19" />
+      </frame>
+      <rounded-rectangle id="9:753" name="Group Separator" x="0.75" y="178.75" width="248.5" height="6" />
+      <frame id="9:754" name="Menu/Delete" x="0.75" y="184.75" width="248.5" height="43">
+        <text id="9:755" name="Delete" x="18" y="11" width="181.5" height="21" />
+        <instance id="9:756" name="Glyph" x="211.5" y="12" width="19" height="19" />
+      </frame>
+    </frame>
+    <rounded-rectangle id="9:761" name="Home Indicator" x="131.5" y="861" width="139" height="5" />
+  </frame>
+  <frame id="9:762" name="05 Accounts" x="1928" y="0" width="402" height="874">
+    <text id="9:763" name="Large Title" x="20" y="100" width="155" height="41" />
+    <frame id="9:764" name="Net Worth" x="16" y="156" width="370" height="111">
+      <text id="9:765" name="Net worth" x="18" y="16" width="70" height="18" />
+      <text id="9:766" name="₹2,48,300" x="18" y="36" width="169" height="41" />
+      <text id="9:767" name="Across 4 accounts · updated " x="18" y="79" width="225" height="16" />
+    </frame>
+    <frame id="9:768" name="Account Card/Axis Bank" x="16" y="289" width="370" height="200">
+      <text id="9:769" name="Axis Bank" x="20" y="18" width="80" height="21" />
+      <text id="9:770" name="Savings ••4521" x="20" y="40" width="94" height="16" />
+      <instance id="9:771" name="Glyph" x="328" y="20" width="22" height="22" hidden="true" />
+      <text id="9:779" name="₹1,82,450" x="20" y="128" width="131" height="34" />
+      <text id="9:780" name="Available balance" x="20" y="166" width="104" height="16" />
+      <text id="10:947" name="Header Balance" x="270" y="18" width="80" height="21" />
+    </frame>
+    <frame id="9:781" name="Account Card/Bank of Baroda" x="16" y="353" width="370" height="200">
+      <text id="9:782" name="Bank of Baroda" x="20" y="18" width="122" height="21" />
+      <text id="9:783" name="Savings ••9910" x="20" y="40" width="95" height="16" />
+      <instance id="9:784" name="Glyph" x="328" y="20" width="22" height="22" hidden="true" />
+      <text id="9:792" name="₹64,210" x="20" y="128" width="108" height="34" />
+      <text id="9:793" name="Available balance" x="20" y="166" width="104" height="16" />
+      <text id="10:948" name="Header Balance" x="284" y="18" width="66" height="21" />
+    </frame>
+    <frame id="9:794" name="Account Card/Axis MyZone" x="16" y="417" width="370" height="200">
+      <text id="9:795" name="Axis MyZone" x="20" y="18" width="105" height="21" />
+      <text id="9:796" name="Credit Card ••3307" x="20" y="40" width="118" height="16" />
+      <instance id="9:797" name="Glyph" x="328" y="20" width="22" height="22" hidden="true" />
+      <text id="9:801" name="−₹8,360" x="20" y="128" width="113" height="34" />
+      <text id="9:802" name="Due 5 Oct · limit ₹1,50,000" x="20" y="166" width="156" height="16" />
+      <text id="10:949" name="Header Balance" x="281" y="18" width="69" height="21" />
+    </frame>
+    <frame id="9:803" name="Account Card/Cash" x="16" y="481" width="370" height="200">
+      <text id="9:804" name="Cash" x="20" y="18" width="42" height="21" />
+      <text id="9:805" name="Wallet" x="20" y="40" width="37" height="16" />
+      <instance id="9:806" name="Glyph" x="328" y="20" width="22" height="22" />
+      <text id="9:811" name="₹10,000" x="20" y="128" width="109" height="34" />
+      <text id="9:812" name="Cash in hand" x="20" y="166" width="78" height="16" />
+    </frame>
+    <frame id="9:813" name="Upcoming Bill" x="16" y="699" width="370" height="64">
+      <frame id="9:814" name="Stack" x="16" y="16" width="32" height="32">
+        <instance id="9:815" name="Glyph" x="7" y="7" width="18" height="18" />
+      </frame>
+      <frame id="9:819" name="Stack" x="60" y="14" width="266" height="36">
+        <text id="9:820" name="MyZone bill due in 10 days" x="0" y="0" width="198" height="19" />
+        <text id="9:821" name="₹8,360 · Pay from Axis ••452" x="0" y="20" width="181" height="16" />
+      </frame>
+      <instance id="9:822" name="Glyph" x="338" y="24" width="16" height="16" />
+    </frame>
+    <frame id="9:825" name="Status Bar" x="0" y="0" width="402" height="54">
+      <text id="9:826" name="9:41" x="56" y="18" width="36" height="21" />
+      <frame id="9:827" name="Stack" x="306" y="17" width="72" height="26">
+        <instance id="9:828" name="Glyph" x="0" y="4" width="18" height="18" />
+        <instance id="9:834" name="Glyph" x="23" y="4" width="18" height="18" />
+        <instance id="9:840" name="Glyph" x="46" y="0" width="26" height="26" />
+      </frame>
+    </frame>
+    <frame id="9:845" name="Toolbar (Glass)" x="288" y="54" width="98" height="44">
+      <instance id="9:846" name="Glass Button" x="0" y="0" width="44" height="44" />
+      <instance id="9:856" name="Glass Button" x="54" y="0" width="44" height="44" />
+    </frame>
+    <instance id="9:864" name="Tab Bar" x="16" y="784.5" width="307.5" height="65.5" />
+    <instance id="9:895" name="Glass Button" x="320.5" y="784.5" width="65.5" height="65.5" />
+    <rounded-rectangle id="9:900" name="Home Indicator" x="131.5" y="861" width="139" height="5" />
+  </frame>
+  <frame id="10:950" name="06 Settings" x="2410" y="0" width="402" height="874">
+    <frame id="10:951" name="Content" x="0" y="0" width="402" height="1048.5">
+      <frame id="10:952" name="Title Row" x="16" y="100" width="143" height="45">
+        <text id="10:953" name="Large Title" x="4" y="0" width="135" height="41" />
+      </frame>
+      <frame id="10:954" name="Group Header" x="16" y="145" width="122" height="40">
+        <text id="10:955" name="APPEARANCE" x="16" y="18" width="90" height="16" />
+      </frame>
+      <frame id="10:956" name="Group (Inset Grouped)" x="16" y="185" width="370" height="151">
+        <instance id="10:957" name="Settings Row" x="0" y="0" width="370" height="50" />
+        <frame id="10:974" name="Divider" x="0" y="50" width="370" height="0.5">
+          <rounded-rectangle id="10:975" name="Rectangle" x="58" y="0" width="312" height="0.5" />
+        </frame>
+        <instance id="10:976" name="Settings Row" x="0" y="50.5" width="370" height="50" />
+        <frame id="10:987" name="Divider" x="0" y="100.5" width="370" height="0.5">
+          <rounded-rectangle id="10:988" name="Rectangle" x="58" y="0" width="312" height="0.5" />
+        </frame>
+        <instance id="10:989" name="Settings Row" x="0" y="101" width="370" height="50" />
+      </frame>
+      <frame id="10:1002" name="Group Header" x="16" y="336" width="82" height="40">
+        <text id="10:1003" name="MONEY" x="16" y="18" width="50" height="16" />
+      </frame>
+      <frame id="10:1004" name="Group (Inset Grouped)" x="16" y="376" width="370" height="201.5">
+        <instance id="10:1005" name="Settings Row" x="0" y="0" width="370" height="50" />
+        <frame id="10:1016" name="Divider" x="0" y="50" width="370" height="0.5">
+          <rounded-rectangle id="10:1017" name="Rectangle" x="58" y="0" width="312" height="0.5" />
+        </frame>
+        <instance id="10:1018" name="Settings Row" x="0" y="50.5" width="370" height="50" />
+        <frame id="10:1036" name="Divider" x="0" y="100.5" width="370" height="0.5">
+          <rounded-rectangle id="10:1037" name="Rectangle" x="58" y="0" width="312" height="0.5" />
+        </frame>
+        <instance id="10:1038" name="Settings Row" x="0" y="101" width="370" height="50" />
+        <frame id="10:1054" name="Divider" x="0" y="151" width="370" height="0.5">
+          <rounded-rectangle id="10:1055" name="Rectangle" x="58" y="0" width="312" height="0.5" />
+        </frame>
+        <instance id="10:1056" name="Settings Row" x="0" y="151.5" width="370" height="50" />
+      </frame>
+      <frame id="10:1073" name="Group Header" x="16" y="577.5" width="90" height="40">
+        <text id="10:1074" name="PRIVACY" x="16" y="18" width="58" height="16" />
+      </frame>
+      <frame id="10:1075" name="Group (Inset Grouped)" x="16" y="617.5" width="370" height="100.5">
+        <instance id="10:1076" name="Settings Row" x="0" y="0" width="370" height="50" />
+        <frame id="10:1095" name="Toggle" x="303" y="9.5" width="51" height="31">
+          <ellipse id="10:1096" name="Knob" x="22" y="2" width="27" height="27" />
+        </frame>
+        <frame id="10:1097" name="Divider" x="0" y="50" width="370" height="0.5">
+          <rounded-rectangle id="10:1098" name="Rectangle" x="58" y="0" width="312" height="0.5" />
+        </frame>
+        <instance id="10:1099" name="Settings Row" x="0" y="50.5" width="370" height="50" />
+        <frame id="10:1113" name="Toggle" x="303" y="60" width="51" height="31">
+          <ellipse id="10:1114" name="Knob" x="2" y="2" width="27" height="27" />
+        </frame>
+      </frame>
+      <frame id="10:1115" name="Group Header" x="16" y="718" width="67" height="40">
+        <text id="10:1116" name="DATA" x="16" y="18" width="35" height="16" />
+      </frame>
+      <frame id="10:1117" name="Group (Inset Grouped)" x="16" y="758" width="370" height="100.5">
+        <instance id="10:1118" name="Settings Row" x="0" y="0" width="370" height="50" />
+        <frame id="10:1133" name="Divider" x="0" y="50" width="370" height="0.5">
+          <rounded-rectangle id="10:1134" name="Rectangle" x="58" y="0" width="312" height="0.5" />
+        </frame>
+        <instance id="10:1135" name="Settings Row" x="0" y="50.5" width="370" height="50" />
+      </frame>
+      <frame id="10:1150" name="Footer" x="16" y="858.5" width="370" height="50">
+        <text id="10:1151" name="Paisa Pulse 1.0" x="140.5" y="16" width="89" height="16" />
+        <text id="10:1152" name="No account. No servers. Your" x="19.5" y="34" width="331" height="16" />
+      </frame>
+    </frame>
+    <frame id="10:1153" name="Status Bar" x="0" y="0" width="402" height="54">
+      <text id="10:1154" name="9:41" x="56" y="18" width="36" height="21" />
+      <frame id="10:1155" name="Stack" x="306" y="17" width="72" height="26">
+        <instance id="10:1156" name="Glyph" x="0" y="4" width="18" height="18" />
+        <instance id="10:1162" name="Glyph" x="23" y="4" width="18" height="18" />
+        <instance id="10:1168" name="Glyph" x="46" y="0" width="26" height="26" />
+      </frame>
+    </frame>
+    <instance id="10:1173" name="Tab Bar" x="16" y="784.5" width="307.5" height="65.5" />
+    <instance id="10:1204" name="Glass Button" x="320.5" y="784.5" width="65.5" height="65.5" />
+    <rounded-rectangle id="10:1209" name="Home Indicator" x="131.5" y="861" width="139" height="5" />
+  </frame>
+  <frame id="10:1210" name="07 Home — Dark" x="2892" y="0" width="402" height="874">
+    <rounded-rectangle id="10:1211" name="Aurora" x="0" y="0" width="402" height="540" />
+    <ellipse id="10:1212" name="Blob Warm" x="200" y="140" width="260" height="220" />
+    <ellipse id="10:1213" name="Blob Pink" x="-70" y="220" width="220" height="200" />
+    <frame id="10:1214" name="Status Bar" x="0" y="0" width="402" height="54">
+      <text id="10:1215" name="9:41" x="56" y="18" width="36" height="21" />
+      <frame id="10:1216" name="Stack" x="306" y="17" width="72" height="26">
+        <instance id="10:1217" name="Glyph" x="0" y="4" width="18" height="18" />
+        <instance id="10:1218" name="Glyph" x="23" y="4" width="18" height="18" />
+        <instance id="10:1219" name="Glyph" x="46" y="0" width="26" height="26" />
+      </frame>
+    </frame>
+    <frame id="10:1220" name="Toolbar (Glass)" x="288" y="58" width="98" height="44">
+      <instance id="10:1221" name="Glass Button" x="0" y="0" width="44" height="44" />
+      <instance id="10:1222" name="Glass Button" x="54" y="0" width="44" height="44" />
+    </frame>
+    <frame id="10:1223" name="Large Title" x="20" y="108" width="204" height="41">
+      <text id="10:1224" name="September" x="0" y="0" width="178" height="41" />
+      <instance id="10:1225" name="Glyph" x="184" y="10.5" width="20" height="20" />
+    </frame>
+    <frame id="10:1226" name="Hero Card (Glass)" x="16" y="164" width="370" height="209">
+      <text id="10:1227" name="Spent this month" x="20.75" y="20.75" width="120" height="18" />
+      <text id="10:1228" name="₹38,450" x="20.75" y="42.75" width="209" height="63" />
+      <frame id="10:1229" name="Trend" x="20.75" y="109.75" width="147" height="16">
+        <instance id="10:1230" name="Glyph" x="0" y="1" width="14" height="14" />
+        <text id="10:1231" name="12% less than August" x="18" y="0" width="129" height="16" />
+      </frame>
+      <frame id="10:1232" name="Divider" x="20.75" y="129.75" width="328.5" height="20.5">
+        <rounded-rectangle id="10:1233" name="Rectangle" x="0" y="10" width="328.5" height="0.5" />
+      </frame>
+      <frame id="10:1234" name="Stats" x="20.75" y="154.25" width="328.5" height="36">
+        <frame id="10:1235" name="Stack" x="0" y="0" width="158.25" height="36">
+          <frame id="10:1236" name="Stack" x="0" y="3" width="30" height="30">
+            <instance id="10:1237" name="Glyph" x="7" y="7" width="16" height="16" />
+          </frame>
+          <frame id="10:1238" name="Stack" x="40" y="0" width="69" height="36">
+            <text id="10:1239" name="Income" x="0" y="0" width="41" height="15" />
+            <text id="10:1240" name="₹90,000" x="0" y="15" width="69" height="21" />
+          </frame>
+        </frame>
+        <frame id="10:1241" name="Stack" x="170.25" y="0" width="158.25" height="36">
+          <frame id="10:1242" name="Stack" x="0" y="3" width="30" height="30">
+            <instance id="10:1243" name="Glyph" x="7" y="7" width="16" height="16" />
+          </frame>
+          <frame id="10:1244" name="Stack" x="40" y="0" width="65" height="36">
+            <text id="10:1245" name="Saved" x="0" y="0" width="35" height="15" />
+            <text id="10:1246" name="₹51,550" x="0" y="15" width="65" height="21" />
+          </frame>
+        </frame>
+      </frame>
+    </frame>
+    <frame id="10:1247" name="Month Dots" x="186" y="383" width="30" height="6">
+      <ellipse id="10:1248" name="Ellipse" x="0" y="0" width="6" height="6" />
+      <ellipse id="10:1249" name="Ellipse" x="12" y="0" width="6" height="6" />
+      <ellipse id="10:1250" name="Ellipse" x="24" y="0" width="6" height="6" />
+    </frame>
+    <frame id="10:1251" name="Section Header" x="20" y="407" width="362" height="24">
+      <text id="10:1252" name="Top categories" x="0" y="0" width="144" height="24" />
+      <text id="10:1253" name="This month" x="284" y="3" width="78" height="18" />
+    </frame>
+    <frame id="10:1254" name="Category Capsules (scroll)" x="16" y="443" width="518" height="49">
+      <instance id="10:1255" name="Category Capsule" x="0" y="0" width="124" height="49" />
+      <instance id="10:1256" name="Category Capsule" x="134" y="0" width="125" height="49" />
+      <instance id="10:1257" name="Category Capsule" x="269" y="0" width="120" height="49" />
+      <instance id="10:1258" name="Category Capsule" x="399" y="0" width="119" height="49" />
+    </frame>
+    <frame id="10:1259" name="Section Header" x="20" y="518" width="362" height="24">
+      <text id="10:1260" name="Recent" x="0" y="0" width="68" height="24" />
+      <text id="10:1261" name="See all" x="316" y="3" width="46" height="18" />
+    </frame>
+    <frame id="10:1262" name="Recent (Inset Grouped)" x="16" y="554" width="370" height="309">
+      <instance id="10:1263" name="Transaction Row" x="0" y="0" width="370" height="61" />
+      <instance id="10:1264" name="Row Divider" x="0" y="61" width="370" height="1" />
+      <instance id="10:1265" name="Transaction Row" x="0" y="62" width="370" height="61" />
+      <instance id="10:1266" name="Row Divider" x="0" y="123" width="370" height="1" />
+      <instance id="10:1267" name="Transaction Row" x="0" y="124" width="370" height="61" />
+      <instance id="10:1268" name="Row Divider" x="0" y="185" width="370" height="1" />
+      <instance id="10:1269" name="Transaction Row" x="0" y="186" width="370" height="61" />
+      <instance id="10:1270" name="Row Divider" x="0" y="247" width="370" height="1" />
+      <instance id="10:1271" name="Transaction Row" x="0" y="248" width="370" height="61" />
+    </frame>
+    <instance id="10:1272" name="Tab Bar" x="16" y="784.5" width="307.5" height="65.5" />
+    <instance id="10:1273" name="Glass Button" x="320.5" y="784.5" width="65.5" height="65.5" />
+    <instance id="10:1274" name="Add Button" x="325.25" y="714.5" width="56" height="56" />
+    <rounded-rectangle id="10:1275" name="Home Indicator" x="131.5" y="861" width="139" height="5" />
+  </frame>
+</canvas>
+IMPORTANT: After you call this tool, you MUST call get_design_context if trying to implement the design, since this tool only returns metadata. If you do not call get_design_context, the agent will not be able to implement the design.
