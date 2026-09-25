@@ -59,7 +59,17 @@ Categories: Food #FF9500, Groceries #34C759, Transport #007AFF, Shopping #FF2D55
 - **Schema extras beyond SPEC §6:** `createdAt`/`updatedAt` on categories, `excludeFromTotals` on accounts, extra indexes on `transactions(toAccountId)`, `(type, occurredAt)` and `(payee)`, and CHECK constraints (amount > 0, transfer shape).
 - **Migrations:** edit `src/db/schema.ts`, then `npm run db:generate`. Never hand-edit files in `src/db/migrations/`.
 - **Feature code takes a `DB`** (`src/db/types.ts`) so it runs against the expo-sqlite DB in the app and an in-memory `node:sqlite` DB in tests (`src/db/__tests__/testDb.ts`, which runs the real migration SQL).
-- **Figma:** use the `nishitkirani2020@gmail.com` account (Starter, 20 read calls/month; the college account's quota is used up). The full node tree of page `0:1` is saved in `design/figma-page-0-1.xml`, so don't spend a call re-reading it. Call `get_design_context` or `get_screenshot` once per node when you build it.
+- **Figma:** use the `nishitkirani2020@gmail.com` account (Starter, 20 read calls/month; the college account's quota is used up). The full node tree of page `0:1` is saved in `design/figma-page-0-1.xml`, so don't spend a call re-reading it. Sep 2026 usage: 3 read calls (page metadata, Components section, which only returns a sparse outline for sections, and Home `6:39` design context). Home's design context gave every component's exact styling; the other screens were built from the saved node tree plus those styles. Only spend more calls to check a specific screen visually.
+
+## Status (Sep 2026)
+All v1 screens are built: onboarding, Home, Quick Add/Edit sheet, Activity + Search tab, Transaction Detail, Accounts (+ account detail and form), Settings, Categories manager (+ form, and a Change Category sheet).
+- **Glass:** `src/ui/Glass.tsx` → `GlassView` on iOS 26, `BlurView` on older iOS, solid tonal surface on Android and with Reduce Transparency.
+- **Menus:** `src/ui/Menu.tsx` is a cross-platform glass popover (matches Figma "Context Menu (Glass)"). Transaction rows on iOS use native `Link.Menu` + `Link.Preview`.
+- **Live data:** use `useQuery` (`src/hooks/useQuery.ts`), which re-runs on any table change. Drizzle's `useLiveQuery` only watches the main table.
+- **Quick Add payee/note:** one field; text before `·` is the payee, after it the note.
+- **Keypad maths:** an operator strip (+ − × ÷) above the Figma 4×3 keypad.
+- **Not done yet:** multi-select bulk edit, shake-to-undo, zoom transition row → detail, drag-to-reorder (up/down buttons instead), app icon variants, widgets.
+- **Web preview (not a product target):** `expo export -p web` works, but expo-sqlite 57's web worker writes the result length into a byte array (`WorkerChannel.ts`, `resultArray.set(new Uint32Array([length]), 0)`), so sync results over 255 bytes break. For Playwright previews, patch that line temporarily; never commit changes in `node_modules`.
 
 ### Figma node IDs (file `XuWxnYDOjJSg74G5iJ1UGr`, frames 402×874 = iPhone 17 Pro)
 | Node | ID |

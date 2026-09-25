@@ -1,15 +1,24 @@
 import { useMigrations } from 'drizzle-orm/expo-sqlite/migrator';
 import { type ReactNode, useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import { purgeDeletedTransactions } from '@/features/transactions/mutations';
+import { usePrefs } from '@/stores/prefs';
 
-import { appDb, db } from './client';
+import { appDb, db, prepareDatabase } from './client';
 import migrations from './migrations/migrations';
 import { seedStarterCategories } from './seed';
 
-/** Runs migrations, seeds starter categories and purges old soft deletes before rendering the app. */
+/** Runs migrations, seeds starter categories, purges old soft deletes and loads preferences before rendering the app. */
 export function DatabaseProvider({ children }: { children: ReactNode }) {
+  const [prepared, setPrepared] = useState(Platform.OS !== 'web');
+  useEffect(() => {
+    if (!prepared) prepareDatabase().then(() => setPrepared(true));
+  }, [prepared]);
+  return prepared ? <DatabaseReady>{children}</DatabaseReady> : null;
+}
+
+function DatabaseReady({ children }: { children: ReactNode }) {
   const migration = useMigrations(db, migrations);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<Error | undefined>();
@@ -19,6 +28,7 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
     (async () => {
       await seedStarterCategories(appDb);
       await purgeDeletedTransactions(appDb);
+      await usePrefs.getState().hydrate();
       setReady(true);
     })().catch(setError);
   }, [migration.success]);

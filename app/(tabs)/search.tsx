@@ -1,5 +1,5 @@
-import { Placeholder } from '@/ui/Placeholder';
+import { ActivityScreen } from '@/features/transactions/ActivityScreen';
 
-export default function SearchScreen() {
-  return <Placeholder title="Search" />;
+export default function Search() {
+  return <ActivityScreen mode="search" />;
 }
