@@ -33,7 +33,7 @@ export async function createTransaction(
   db: DB,
   input: TransactionInput,
   now: number = Date.now(),
-  origin: { source?: TransactionSource; recurringId?: string | null } = {},
+  origin: { source?: TransactionSource; recurringId?: string | null; importBatchId?: string | null; externalId?: string | null } = {},
 ): Promise<Transaction> {
   assertValidTransaction(input, now);
   const row = {
@@ -41,6 +41,8 @@ export async function createTransaction(
     ...toRow(input, now),
     source: origin.source ?? 'manual',
     recurringId: origin.recurringId ?? null,
+    importBatchId: origin.importBatchId ?? null,
+    externalId: origin.externalId ?? null,
     createdAt: now,
     updatedAt: now,
   };

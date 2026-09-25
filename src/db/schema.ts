@@ -83,6 +83,10 @@ export const transactions = sqliteTable(
     note: text('note'),
     occurredAt: integer('occurred_at').notNull(),
     source: text('source', { enum: TRANSACTION_SOURCES }).notNull().default('manual'),
+    // Statement import: the batch it came from (for Undo import) and a stable
+    // fingerprint of the statement row (so re-importing the same file is detected).
+    importBatchId: text('import_batch_id'),
+    externalId: text('external_id'),
     // Set when the transaction was added by a recurring rule.
     recurringId: text('recurring_id').references((): AnySQLiteColumn => recurringRules.id, { onDelete: 'set null' }),
     deletedAt: integer('deleted_at'),
@@ -97,6 +101,8 @@ export const transactions = sqliteTable(
     index('transactions_type_occurred_at_idx').on(t.type, t.occurredAt),
     index('transactions_payee_idx').on(t.payee),
     index('transactions_recurring_idx').on(t.recurringId),
+    index('transactions_import_batch_idx').on(t.importBatchId),
+    index('transactions_external_idx').on(t.accountId, t.externalId),
     check('transactions_amount_positive', sql`${t.amount} > 0`),
     check(
       'transactions_transfer_shape',
@@ -156,6 +162,20 @@ export const budgets = sqliteTable(
   (t) => [uniqueIndex('budgets_category_idx').on(t.categoryId), check('budgets_amount_positive', sql`${t.amount} > 0`)],
 );
 
+/** One statement import (for history and Undo). */
+export const importBatches = sqliteTable('import_batches', {
+  id: text('id').primaryKey(),
+  accountId: text('account_id')
+    .notNull()
+    .references(() => accounts.id),
+  fileName: text('file_name').notNull(),
+  /** Detected bank/statement template, e.g. 'axis-bank'. */
+  template: text('template'),
+  count: integer('count').notNull(),
+  createdAt: integer('created_at').notNull(),
+  undoneAt: integer('undone_at'),
+});
+
 /** Named Activity filters (search + filters as JSON). */
 export const savedFilters = sqliteTable('saved_filters', {
   id: text('id').primaryKey(),
@@ -182,3 +202,4 @@ export type Setting = typeof settings.$inferSelect;
 export type RecurringRule = typeof recurringRules.$inferSelect;
 export type Budget = typeof budgets.$inferSelect;
 export type SavedFilter = typeof savedFilters.$inferSelect;
+export type ImportBatch = typeof importBatches.$inferSelect;

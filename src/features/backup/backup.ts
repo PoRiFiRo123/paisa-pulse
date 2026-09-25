@@ -1,10 +1,10 @@
-import { accounts, budgets, categories, recurringRules, savedFilters, settings, transactions } from '@/db/schema';
+import { accounts, budgets, categories, importBatches, recurringRules, savedFilters, settings, transactions } from '@/db/schema';
 import type { DB } from '@/db/types';
 import { formatINR } from '@/lib/money';
 
 export const BACKUP_FORMAT = 'paisa-pulse-backup';
-/** v2 adds recurring rules, budgets and saved filters. v1 files still restore. */
-export const BACKUP_VERSION = 2;
+/** v2 adds recurring rules, budgets and saved filters; v3 statement imports. Older files still restore. */
+export const BACKUP_VERSION = 3;
 
 export type Backup = {
   format: typeof BACKUP_FORMAT;
@@ -17,6 +17,7 @@ export type Backup = {
   recurringRules: (typeof recurringRules.$inferSelect)[];
   budgets: (typeof budgets.$inferSelect)[];
   savedFilters: (typeof savedFilters.$inferSelect)[];
+  importBatches: (typeof importBatches.$inferSelect)[];
 };
 
 export class BackupError extends Error {
@@ -25,7 +26,7 @@ export class BackupError extends Error {
 
 /** Everything in the database, including soft-deleted rows and archived items. */
 export async function exportBackup(db: DB, now: number = Date.now()): Promise<Backup> {
-  const [a, c, t, s, r, b, f] = await Promise.all([
+  const [a, c, t, s, r, b, f, ib] = await Promise.all([
     db.select().from(accounts).all(),
     db.select().from(categories).all(),
     db.select().from(transactions).all(),
@@ -33,6 +34,7 @@ export async function exportBackup(db: DB, now: number = Date.now()): Promise<Ba
     db.select().from(recurringRules).all(),
     db.select().from(budgets).all(),
     db.select().from(savedFilters).all(),
+    db.select().from(importBatches).all(),
   ]);
   return {
     format: BACKUP_FORMAT,
@@ -45,6 +47,7 @@ export async function exportBackup(db: DB, now: number = Date.now()): Promise<Ba
     recurringRules: r,
     budgets: b,
     savedFilters: f,
+    importBatches: ib,
   };
 }
 
@@ -65,8 +68,11 @@ export function parseBackup(json: string): Backup {
   b.recurringRules ??= [];
   b.budgets ??= [];
   b.savedFilters ??= [];
+  b.importBatches ??= [];
   for (const t of b.transactions!) {
     t.recurringId ??= null;
+    t.importBatchId ??= null;
+    t.externalId ??= null;
     if (!Number.isSafeInteger(t.amount) || t.amount <= 0) throw new BackupError('Backup contains an invalid amount.');
   }
   return b as Backup;
@@ -81,6 +87,7 @@ export async function restoreBackup(db: DB, backup: Backup): Promise<void> {
   await db.delete(budgets);
   await db.delete(recurringRules);
   await db.delete(savedFilters);
+  await db.delete(importBatches);
   await db.delete(categories);
   await db.delete(accounts);
   await db.delete(settings);
@@ -92,6 +99,7 @@ export async function restoreBackup(db: DB, backup: Backup): Promise<void> {
   const parentsFirst = [...backup.categories].sort((x, y) => Number(x.parentId !== null) - Number(y.parentId !== null));
   for (const rows of chunk(parentsFirst)) await db.insert(categories).values(rows);
   for (const rows of chunk(backup.recurringRules)) await db.insert(recurringRules).values(rows);
+  for (const rows of chunk(backup.importBatches)) await db.insert(importBatches).values(rows);
   for (const rows of chunk(backup.transactions)) await db.insert(transactions).values(rows);
   for (const rows of chunk(backup.budgets)) await db.insert(budgets).values(rows);
   for (const rows of chunk(backup.savedFilters)) await db.insert(savedFilters).values(rows);
