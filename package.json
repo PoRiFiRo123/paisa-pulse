@@ -17,7 +17,8 @@
     "build:preview": "eas build --profile preview --platform all",
     "start:dev": "expo start --dev-client",
     "run:ios": "expo run:ios",
-    "run:android": "expo run:android"
+    "run:android": "expo run:android",
+    "start:go": "expo start --go"
   },
   "dependencies": {
     "@bacons/apple-targets": "^5.0.0",
