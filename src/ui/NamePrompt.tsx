@@ -44,7 +44,7 @@ export function NamePrompt({
             accessibilityLabel={title}
           />
           <View style={styles.buttons}>
-            <Pressable onPress={onCancel} style={[styles.button, { backgroundColor: colors.fill }]} accessibilityRole="button">
+            <Pressable onPress={onCancel} style={[styles.button, { backgroundColor: colors.fill }]} accessibilityRole="button" accessibilityLabel="Cancel">
               <Text style={[type.headline, { color: colors.label }]}>Cancel</Text>
             </Pressable>
             <Pressable
@@ -52,6 +52,7 @@ export function NamePrompt({
               onPress={() => onConfirm(value)}
               style={[styles.button, { backgroundColor: colors.accent, opacity: value.trim() ? 1 : 0.4 }]}
               accessibilityRole="button"
+              accessibilityLabel={confirmLabel}
             >
               <Text style={[type.headline, { color: '#FFFFFF' }]}>{confirmLabel}</Text>
             </Pressable>

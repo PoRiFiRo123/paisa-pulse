@@ -1,4 +1,5 @@
 import {
+  formatINRAxis,
   CRORE,
   LAKH,
   MoneyParseError,
@@ -113,4 +114,14 @@ describe('evaluateAmountExpression', () => {
   it.each(['', '+', '+5', '5++5', '1.234+1', '10÷0', 'abc'])('returns null for %p', (expr) => {
     expect(evaluateAmountExpression(expr)).toBeNull();
   });
+});
+
+describe('formatINRAxis', () => {
+  it.each([
+    [0, '₹0'],
+    [50_000, '₹500'],
+    [20_00_000, '₹20K'],
+    [1_50_000_00, '₹1.5L'],
+    [2 * CRORE, '₹2Cr'],
+  ])('%p → %p', (paise, expected) => expect(formatINRAxis(paise)).toBe(expected));
 });

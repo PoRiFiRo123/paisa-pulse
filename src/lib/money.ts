@@ -176,3 +176,15 @@ function roundDiv(n: number, d: number): number {
   const q = Math.round(Math.abs(n) / Math.abs(d));
   return Math.sign(n) * Math.sign(d) < 0 ? -q : q;
 }
+
+/** Very short axis labels: "₹500", "₹20K", "₹1.5L", "₹2Cr". */
+export function formatINRAxis(paise: number): string {
+  assertPaise(paise);
+  const rupees = Math.abs(paise) / PAISE_PER_RUPEE;
+  const sign = paise < 0 ? '-' : '';
+  const short = (v: number) => String(Math.round(v * 10) / 10);
+  if (rupees >= 1_00_00_000) return `${sign}₹${short(rupees / 1_00_00_000)}Cr`;
+  if (rupees >= 1_00_000) return `${sign}₹${short(rupees / 1_00_000)}L`;
+  if (rupees >= 1_000) return `${sign}₹${short(rupees / 1_000)}K`;
+  return `${sign}₹${Math.round(rupees)}`;
+}

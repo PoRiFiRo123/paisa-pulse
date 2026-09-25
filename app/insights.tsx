@@ -8,7 +8,7 @@ import { biggestExpenses, categoryBreakdown, daysElapsed, monthlyTotals, percent
 import { useMoney } from '@/hooks/useMoney';
 import { useQuery } from '@/hooks/useQuery';
 import { chartColor } from '@/lib/color';
-import { formatINRCompact } from '@/lib/money';
+import { formatINRAxis } from '@/lib/money';
 import { monthAt } from '@/lib/months';
 import { usePrefs } from '@/stores/prefs';
 import { useUi } from '@/stores/ui';
@@ -46,7 +46,8 @@ export default function InsightsScreen() {
 
   const current = points.find((p) => p.start === month.start) ?? { spent: 0, received: 0, net: 0 };
   const change = percentChange(current.spent, prevPoint[0]?.spent ?? 0);
-  const perDay = Math.round(current.spent / daysElapsed(month, now));
+  // Whole rupees: a per-day average doesn't need paise.
+  const perDay = Math.round(current.spent / daysElapsed(month, now) / 100) * 100;
 
   const openCategory = (categoryId: string | null) => {
     setActivity({ monthOffset: offset, categoryIds: [categoryId], accountIds: [], types: [] });
@@ -101,7 +102,7 @@ export default function InsightsScreen() {
             color={colors.accent}
             selectedKey={String(offset)}
             onSelect={(k) => setOffset(Number(k))}
-            formatTick={(v) => (money.hidden ? '' : formatINRCompact(v))}
+            formatTick={(v) => (money.hidden ? '' : formatINRAxis(v))}
           />
           <Text style={[type.footnote, { color: colors.secondary, marginTop: 8 }]}>
             Tap a month to see its breakdown. Transfers and card bill payments aren’t counted as spending.
