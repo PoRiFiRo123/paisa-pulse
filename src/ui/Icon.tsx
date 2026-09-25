@@ -62,6 +62,8 @@ const ANDROID: Record<string, AndroidSymbol> = {
   'textformat': 'text_fields',
   'shield.lefthalf.filled': 'shield',
   'square.grid.2x2': 'grid_view',
+  'exclamationmark.triangle.fill': 'warning',
+  'doc.text.magnifyingglass': 'plagiarism',
   'chart.pie.fill': 'pie_chart',
   'chart.bar.fill': 'bar_chart',
   'arrow.clockwise': 'refresh',

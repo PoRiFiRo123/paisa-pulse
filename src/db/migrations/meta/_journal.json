@@ -15,6 +15,13 @@
       "when": 1790343497167,
       "tag": "0001_phase2",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1790345497537,
+      "tag": "0002_statement_import",
+      "breakpoints": true
     }
   ]
 }

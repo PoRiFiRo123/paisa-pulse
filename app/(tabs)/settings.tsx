@@ -181,6 +181,7 @@ export default function SettingsScreen() {
 
         <GroupHeader title="Data" />
         <InsetGroup>
+          <GroupRow title="Import Statement" leading={icon('doc.text.magnifyingglass', '#34C759')} chevron onPress={() => router.push('/import')} />
           <GroupRow title="Export CSV" leading={icon('square.and.arrow.up', '#007AFF')} chevron onPress={() => run(shareCsvExport, 'Couldn’t export')} />
           <Menu
             items={[

@@ -87,6 +87,11 @@ export default function AccountDetailScreen() {
                     icon: 'arrow.down.left',
                     onPress: () => router.push({ pathname: '/add', params: { type: 'transfer', to: id } }),
                   },
+                  {
+                    title: 'Import Statement',
+                    icon: 'square.and.arrow.down',
+                    onPress: () => router.push({ pathname: '/import', params: { accountId: id } }),
+                  },
                   'separator',
                   account.archivedAt
                     ? { title: 'Unarchive', icon: 'archivebox', onPress: () => setAccountArchived(appDb, id, false) }

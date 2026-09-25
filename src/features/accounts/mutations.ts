@@ -1,6 +1,6 @@
 import { eq, or, sql } from 'drizzle-orm';
 
-import { type Account, type AccountType, accounts, transactions } from '@/db/schema';
+import { type Account, type AccountType, accounts, importBatches, transactions } from '@/db/schema';
 import type { DB } from '@/db/types';
 import { newId } from '@/lib/ids';
 
@@ -104,6 +104,7 @@ export async function removeAccount(db: DB, id: string, now: number = Date.now()
     await setAccountArchived(db, id, true, now);
     return 'archived';
   }
+  await db.delete(importBatches).where(eq(importBatches.accountId, id));
   await db.delete(accounts).where(eq(accounts.id, id));
   return 'deleted';
 }

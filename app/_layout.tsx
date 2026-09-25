@@ -7,6 +7,7 @@ import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { DatabaseProvider } from '@/db/DatabaseProvider';
+import { PdfExtractorProvider } from '@/features/import/PdfExtractor';
 import { useRecurringProcessor } from '@/features/recurring/useRecurringProcessor';
 import { useWidgetSync } from '@/features/widgets/useWidgetSync';
 import { useA11yWatcher } from '@/stores/a11y';
@@ -22,7 +23,9 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <DatabaseProvider>
-        <AppShell />
+        <PdfExtractorProvider>
+          <AppShell />
+        </PdfExtractorProvider>
       </DatabaseProvider>
     </GestureHandlerRootView>
   );
@@ -62,6 +65,7 @@ function AppShell() {
           <Stack.Screen name="budgets" />
           <Stack.Screen name="recurring" />
           <Stack.Screen name="insights" />
+          <Stack.Screen name="import" />
           <Stack.Screen name="budget-form" options={sheet([0.6, 0.92])} />
           <Stack.Screen name="recurring-form" options={sheet([0.92])} />
           <Stack.Screen name="add" options={sheet([0.92])} />
