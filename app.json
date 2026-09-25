@@ -14,7 +14,12 @@
         "dark": "./assets/icon-dark.png",
         "tinted": "./assets/icon-tinted.png"
       },
-      "bundleIdentifier": "com.paisapulse.app"
+      "bundleIdentifier": "com.paisapulse.app",
+      "entitlements": {
+        "com.apple.security.application-groups": [
+          "group.com.paisapulse.app"
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -59,6 +64,65 @@
             "backgroundColor": "#000000"
           }
         }
+      ],
+      "@bacons/apple-targets",
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "Spending",
+              "label": "Month Spend",
+              "description": "What you have spent this month, your budget and a quick Add button.",
+              "minWidth": "180dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "maxResizeWidth": "400dp",
+              "maxResizeHeight": "250dp",
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            }
+          ]
+        }
+      ],
+      "expo-quick-actions",
+      [
+        "expo-alternate-app-icons",
+        [
+          {
+            "name": "Midnight",
+            "ios": "./assets/icons/midnight.png",
+            "android": {
+              "foregroundImage": "./assets/icons/fg-accent.png",
+              "backgroundColor": "#000000"
+            }
+          },
+          {
+            "name": "Saffron",
+            "ios": "./assets/icons/saffron.png",
+            "android": {
+              "foregroundImage": "./assets/icons/fg-white.png",
+              "backgroundColor": "#FF8A1F"
+            }
+          },
+          {
+            "name": "Mint",
+            "ios": "./assets/icons/mint.png",
+            "android": {
+              "foregroundImage": "./assets/icons/fg-white.png",
+              "backgroundColor": "#3CC7BC"
+            }
+          },
+          {
+            "name": "Mono",
+            "ios": "./assets/icons/mono.png",
+            "android": {
+              "foregroundImage": "./assets/icons/fg-black.png",
+              "backgroundColor": "#FFFFFF"
+            }
+          }
+        ]
       ]
     ],
     "experiments": {

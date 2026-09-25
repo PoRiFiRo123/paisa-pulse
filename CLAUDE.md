@@ -75,7 +75,23 @@ All v1 screens are built: onboarding, Home, Quick Add/Edit sheet, Activity + Sea
 - **App icons:** `assets/icon.png` (default), `icon-dark.png`, `icon-tinted.png` via `ios.icon`, plus Android adaptive foreground/background/monochrome. Generated from an SVG rupee mark. A true iOS 26 Liquid Glass `.icon` needs Apple's Icon Composer on a Mac.
 - **Accessibility:** `src/stores/a11y.ts` tracks Reduce Transparency and Increase Contrast (glass turns solid, stronger secondary and divider colours). Reanimated follows Reduce Motion by default.
 - **Splash screen:** held until the database is ready (`DatabaseProvider`).
-- **Needs a development build (v1.x per SPEC):** home/lock screen widgets, user-selectable alternate app icons, Control Center / App Intents, SQLCipher encryption.
+
+## Phase 2 + development build (Sep 2026)
+- **Dev build:** `eas.json` profiles (development, development-simulator, preview, production); `npm run build:dev:ios|android`, then `npm run start:dev`. Bundle id / package `com.paisapulse.app`. **Set `ios.appleTeamId` in app.json** before the first iOS build (the widget extension needs it for signing).
+- **Encryption:** expo-sqlite is built with SQLCipher (`src/db/encryption.ts`). Dev/store builds use `paisa-pulse.enc.db` with a per-install key in SecureStore; an old plaintext `paisa-pulse.db` is exported into it once and deleted. Expo Go (no SQLCipher) keeps the plaintext DB.
+- **Custom native modules** (widgets, alternate icons) don't exist in Expo Go: gate them with `HAS_CUSTOM_NATIVE` (`src/lib/native.ts`) and `require` them lazily. `index.js` is the entry (Expo Router + Android widget task handler).
+- **Budgets** (`src/features/budgets`): overall or per category (parents include subcategories); Home section, `/budgets`, `/budget-form`.
+- **Recurring** (`src/features/recurring`): rules with daily/weekly/monthly/yearly × interval, end date, pause; `processDueRecurring` runs at launch and on foreground (catch-up cap 60), anchored to the start day. `/recurring`, `/recurring-form`, "Repeat…" on the transaction detail, Home "Upcoming".
+- **Insights** (`/insights`): single-hue monthly bars, labelled category breakdown, biggest expenses. Chart marks use `chartColor()` (OKLCH lightness clamp, `src/lib/color.ts`).
+- **Saved filters** in Activity (bookmark button; chips to apply; long-press to update/rename/delete).
+- **Widgets:** one `WidgetSnapshot` (`src/features/widgets/snapshot.ts`) feeds both platforms, refreshed on DB changes (debounced), settings changes and backgrounding.
+  - iOS: `targets/widget` (SwiftUI via @bacons/apple-targets): small/medium Home Screen, Lock Screen circular/rectangular/inline, and an iOS 18 Control Center / Action Button "Add Expense" control. Data via App Group `group.com.paisapulse.app`.
+  - Android: react-native-android-widget `Spending` widget (`SpendingWidget.tsx`, headless `taskHandler.tsx`, snapshot file).
+  - The Swift code has not been compiled in this environment (no Xcode); expect to fix small issues on the first EAS/Xcode build.
+- **Quick actions** (long-press app icon) via expo-quick-actions, routed with `useQuickActionRouting` in `(tabs)/_layout`.
+- **Alternate app icons** (Midnight, Saffron, Mint, Mono) via expo-alternate-app-icons; Settings › App Icon (hidden in Expo Go).
+- **Deep links:** `paisapulse://add?type=expense|income|transfer`; root `unstable_settings.initialRouteName = '(tabs)'` keeps tabs under sheets.
+- **Still to do:** Siri phrases / App Shortcuts ("Log ₹250 for lunch") need an App Intents extension; a Liquid Glass `.icon` needs Icon Composer on a Mac. Roadmap Phase 3 (statement import) and 4 (auto-capture) are next.
 - **Web preview (not a product target):** `expo export -p web` works, but expo-sqlite 57's web worker writes the result length into a byte array (`WorkerChannel.ts`, `resultArray.set(new Uint32Array([length]), 0)`), so sync results over 255 bytes break. For Playwright previews, patch that line temporarily; never commit changes in `node_modules`.
 
 ### Figma node IDs (file `XuWxnYDOjJSg74G5iJ1UGr`, frames 402×874 = iPhone 17 Pro)

@@ -1,7 +1,7 @@
 {
   "name": "paisa-pulse",
   "version": "0.1.0",
-  "main": "expo-router/entry",
+  "main": "index.js",
   "private": true,
   "scripts": {
     "start": "expo start",
@@ -20,11 +20,13 @@
     "run:android": "expo run:android"
   },
   "dependencies": {
+    "@bacons/apple-targets": "^5.0.0",
     "@react-native-community/datetimepicker": "9.1.0",
     "@shopify/flash-list": "2.0.2",
     "date-fns": "^4.4.0",
     "drizzle-orm": "^0.45.3",
     "expo": "~57.0.25",
+    "expo-alternate-app-icons": "^8.0.0",
     "expo-blur": "~57.0.3",
     "expo-constants": "~57.0.19",
     "expo-crypto": "~57.0.3",
@@ -37,6 +39,7 @@
     "expo-linear-gradient": "~57.0.2",
     "expo-linking": "~57.0.11",
     "expo-local-authentication": "~57.0.3",
+    "expo-quick-actions": "^6.0.2",
     "expo-router": "~57.0.23",
     "expo-secure-store": "~57.0.4",
     "expo-sensors": "~57.0.3",
@@ -48,6 +51,7 @@
     "expo-system-ui": "~57.0.4",
     "react": "19.2.3",
     "react-native": "0.86.3",
+    "react-native-android-widget": "^0.22.1",
     "react-native-gesture-handler": "~2.32.0",
     "react-native-reanimated": "4.5.1",
     "react-native-safe-area-context": "~5.7.0",

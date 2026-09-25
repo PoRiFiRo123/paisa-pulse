@@ -1,10 +1,11 @@
 import Constants from 'expo-constants';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { router, useScrollToTop } from 'expo-router';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { pickAndRestoreBackup, shareCsvExport, shareJsonBackup } from '@/features/backup/share';
+import { APP_ICONS, type AppIconName, appIconsSupported, currentAppIcon, setAppIcon } from '@/features/settings/appIcon';
 import { usePrefs } from '@/stores/prefs';
 import { useToast } from '@/stores/toast';
 import { ACCENTS, type AccentKey } from '@/theme/tokens';
@@ -32,6 +33,8 @@ export default function SettingsScreen() {
   const { scrollY, onScroll } = useScrollHeader();
   const titleTop = useTitleTop();
   const bottom = useBottomSpace();
+  const [iconsSupported] = useState(appIconsSupported);
+  const [appIcon, setAppIconState] = useState<AppIconName>(currentAppIcon);
   const icon = (name: string, color: string) => <CategoryIcon icon={name} color={color} size={30} square />;
 
   const toggleLock = async (on: boolean) => {
@@ -102,6 +105,28 @@ export default function SettingsScreen() {
               />
             )}
           </Menu>
+          {iconsSupported ? (
+            <Menu
+              items={APP_ICONS.map((i) => ({
+                title: i.title,
+                checked: i.name === appIcon,
+                onPress: () =>
+                  setAppIcon(i.name)
+                    .then(() => setAppIconState(i.name))
+                    .catch((e: Error) => Alert.alert('Couldn’t change the icon', e.message)),
+              }))}
+            >
+              {(open) => (
+                <GroupRow
+                  title="App Icon"
+                  value={APP_ICONS.find((i) => i.name === appIcon)?.title ?? 'Default'}
+                  leading={icon('app.badge', '#FF2D55')}
+                  chevron
+                  onPress={open}
+                />
+              )}
+            </Menu>
+          ) : null}
           <GroupRow title="Currency" value="₹ · Lakh, Crore" leading={icon('indianrupeesign', '#34C759')} />
         </InsetGroup>
 
