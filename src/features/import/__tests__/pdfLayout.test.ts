@@ -30,7 +30,6 @@ describe('layoutToSheet on a real pdf.js extraction', () => {
   // Items extracted by assets/pdf/extractor.html from a printed Axis-style statement whose
   // cells are vertically centred (narrations wrap above and below the date line).
   it('keeps each wrapped narration with its own row', () => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const items = require('./fixtures/axis-pdf-items.json') as TextItem[];
     const sheet = layoutToSheet(items);
     expect(sheet[0]).toEqual(['Tran Date', 'Particulars', 'Debit', 'Credit', 'Balance']);

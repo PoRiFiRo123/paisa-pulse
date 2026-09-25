@@ -13,6 +13,7 @@ export function NamePrompt({
   initial = '',
   placeholder,
   confirmLabel = 'Save',
+  secure = false,
   onCancel,
   onConfirm,
 }: {
@@ -21,6 +22,8 @@ export function NamePrompt({
   initial?: string;
   placeholder?: string;
   confirmLabel?: string;
+  /** Hide the text (passwords). */
+  secure?: boolean;
   onCancel: () => void;
   onConfirm: (value: string) => void;
 }) {
@@ -38,6 +41,9 @@ export function NamePrompt({
             placeholder={placeholder}
             placeholderTextColor={colors.secondary}
             autoFocus
+            secureTextEntry={secure}
+            autoCapitalize={secure ? 'none' : 'sentences'}
+            autoCorrect={!secure}
             returnKeyType="done"
             onSubmitEditing={() => value.trim() && onConfirm(value)}
             style={[type.body, styles.input, { color: colors.label, backgroundColor: colors.fill }]}

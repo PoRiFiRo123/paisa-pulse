@@ -91,7 +91,16 @@ All v1 screens are built: onboarding, Home, Quick Add/Edit sheet, Activity + Sea
 - **Quick actions** (long-press app icon) via expo-quick-actions, routed with `useQuickActionRouting` in `(tabs)/_layout`.
 - **Alternate app icons** (Midnight, Saffron, Mint, Mono) via expo-alternate-app-icons; Settings › App Icon (hidden in Expo Go).
 - **Deep links:** `paisapulse://add?type=expense|income|transfer`; root `unstable_settings.initialRouteName = '(tabs)'` keeps tabs under sheets.
-- **Still to do:** Siri phrases / App Shortcuts ("Log ₹250 for lunch") need an App Intents extension; a Liquid Glass `.icon` needs Icon Composer on a Mac. Roadmap Phase 3 (statement import) and 4 (auto-capture) are next.
+- **Still to do:** Siri phrases / App Shortcuts ("Log ₹250 for lunch") need an App Intents extension (user asked to skip for now); a Liquid Glass `.icon` needs Icon Composer on a Mac.
+
+## Phase 3: statement import (Sep 2026)
+`/import` (Settings › Import Statement, or an account's ••• menu). Flow: pick file → (PDF password) → setup (account, detected bank, column roles, date order) → review (include/exclude, type, category, transfer account) → import as one batch with Undo; recent imports can be undone/restored.
+- **Readers** (`src/features/import/readers`): all produce `Sheet` (rows of text cells). CSV (delimiter auto-detect), XLSX via `fflate` + XML (npm `xlsx` was avoided: known CVEs, CDN blocked), HTML tables saved as `.xls`. Binary BIFF `.xls` is not supported (user is told to use PDF/CSV/XLSX). File type is sniffed from bytes, not the extension.
+- **PDF:** pdf.js runs in a hidden WebView (`PdfExtractorProvider`, `assets/pdf/extractor.html`, rebuilt with `node scripts/build-pdf-extractor.mjs` from the `pdfjs-dist` devDependency). `layoutToSheet` rebuilds the table: header cells are column anchors; dated lines start rows; text-only lines in description columns (wrapped narrations) join the nearest dated row. The fixture `axis-pdf-items.json` is a real pdf.js extraction from Chromium.
+- **Normaliser** (`parse.ts`): header detection, bank templates (Axis, BoB, HDFC, ICICI, SBI + cards; detected from the preamble, then header shape), Indian dates (day-first, named months, Excel serials) and amounts (lakh commas, Dr/Cr, brackets), running-balance check.
+- **Narrations** (`narration.ts`): UPI/NEFT/IMPS/POS/ATM/NACH per bank format, Indian merchant names, keyword category rules.
+- **Planning** (`plan.ts`): categories learned from past payees first, then rules; card bill payment → transfer to the card (matched by last 4), ATM → transfer to Cash, other own accounts by last 4 or name. Exact re-import via a row fingerprint in `transactions.external_id`; likely duplicates (same account, amount, direction, ±1 day) of manual entries or the other side of a transfer are unticked. `import_batches` + `transactions.import_batch_id` power undo. Backups are v3.
+- Test fixtures (`__tests__/fixtures/statements.ts`) are synthetic statements shaped like each bank's export; real exports may differ, which the column-mapping step covers. Ask the user for a (redacted) real statement to tighten a template.
 - **Web preview (not a product target):** `expo export -p web` works, but expo-sqlite 57's web worker writes the result length into a byte array (`WorkerChannel.ts`, `resultArray.set(new Uint32Array([length]), 0)`), so sync results over 255 bytes break. For Playwright previews, patch that line temporarily; never commit changes in `node_modules`.
 
 ### Figma node IDs (file `XuWxnYDOjJSg74G5iJ1UGr`, frames 402×874 = iPhone 17 Pro)
