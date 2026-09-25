@@ -60,6 +60,7 @@ export async function listTransactions(db: DB, f: TransactionFilters = {}) {
       createdAt: transactions.createdAt,
       updatedAt: transactions.updatedAt,
       source: transactions.source,
+      recurringRuleId: transactions.recurringId,
       accountId: transactions.accountId,
       toAccountId: transactions.toAccountId,
       categoryId: transactions.categoryId,

@@ -108,6 +108,8 @@ export default function SettingsScreen() {
         <GroupHeader title="Money" />
         <InsetGroup>
           <GroupRow title="Categories" leading={icon('tag.fill', '#FF9500')} chevron onPress={() => router.push('/categories')} />
+          <GroupRow title="Budgets" leading={icon('chart.pie.fill', '#5E5CE6')} chevron onPress={() => router.push('/budgets')} />
+          <GroupRow title="Recurring" leading={icon('repeat', '#30B0C7')} chevron onPress={() => router.push('/recurring')} />
           <Menu
             items={Array.from({ length: 28 }, (_, i) => ({
               title: i === 0 ? '1st (calendar month)' : `${ordinal(i + 1)} (e.g. salary day)`,

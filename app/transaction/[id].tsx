@@ -21,6 +21,7 @@ import { transactionTitle } from '@/ui/TransactionRow';
 
 const SOURCE_LABEL: Record<string, string> = {
   manual: 'Added manually',
+  recurring: 'Added by a recurring rule',
   notification: 'Captured from a notification',
   sms: 'Captured from SMS',
   shortcut: 'Added with Shortcuts',
@@ -120,6 +121,19 @@ export default function TransactionDetailScreen() {
             leading={<Icon name="doc.on.doc" size={18} color={colors.accent} />}
             height={49}
             onPress={() => actions.duplicate(t.id)}
+          />
+          <GroupRow
+            title={t.recurringRuleId ? 'Edit Repeat Rule' : 'Repeat…'}
+            tinted
+            leading={<Icon name="repeat" size={18} color={colors.accent} />}
+            height={49}
+            onPress={() =>
+              router.push(
+                t.recurringRuleId
+                  ? { pathname: '/recurring-form', params: { id: t.recurringRuleId } }
+                  : { pathname: '/recurring-form', params: { fromTransaction: t.id } },
+              )
+            }
           />
           <GroupRow
             title="Delete Transaction"
