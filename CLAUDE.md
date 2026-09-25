@@ -51,3 +51,12 @@ Categories: Food #FF9500, Groceries #34C759, Transport #007AFF, Shopping #FF2D55
 2. Build the DB layer: Drizzle schema (`SPEC.md` §6), migrations, starter category seed, money helpers + unit tests.
 3. Build screens in order: Home → Quick Add sheet → Activity → Detail → Accounts → Settings, matching the Figma designs.
 4. Check against the Definition of Done in `SPEC.md` §10.
+
+## Implementation decisions (made with the user, Sep 2026)
+- **Expo SDK 57** (RN 0.86, React 19.2, TypeScript 6). Native tabs import from `expo-router/unstable-native-tabs` on this SDK. Routes live in root `app/`, everything else in `src/` (`@/` alias → `src/`).
+- **Uncategorised = `categoryId` null.** No special seeded row. Transfers always have a null category.
+- **Balances are signed.** Credit cards go negative when you owe; a bill payment is a transfer into the card. Net worth is a plain sum of non-archived, non-excluded accounts.
+- **Schema extras beyond SPEC §6:** `createdAt`/`updatedAt` on categories, `excludeFromTotals` on accounts, extra indexes on `transactions(toAccountId)`, `(type, occurredAt)` and `(payee)`, and CHECK constraints (amount > 0, transfer shape).
+- **Migrations:** edit `src/db/schema.ts`, then `npm run db:generate`. Never hand-edit files in `src/db/migrations/`.
+- **Feature code takes a `DB`** (`src/db/types.ts`) so it runs against the expo-sqlite DB in the app and an in-memory `node:sqlite` DB in tests (`src/db/__tests__/testDb.ts`, which runs the real migration SQL).
+- **Figma:** the Starter-plan MCP limit was already used up on 25 Sep 2026. Ask the user for screenshots per screen, or wait for the limit to reset.
