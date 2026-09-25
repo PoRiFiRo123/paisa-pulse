@@ -2,16 +2,22 @@ import { drizzle, type ExpoSQLiteDatabase } from 'drizzle-orm/expo-sqlite';
 import { openDatabaseAsync, openDatabaseSync } from 'expo-sqlite';
 import { Platform } from 'react-native';
 
+import { openEncryptedDatabase } from './encryption';
 import * as schema from './schema';
 import type { DB } from './types';
 
 export const DATABASE_NAME = 'paisa-pulse.db';
+/** SQLCipher-encrypted database used by development and store builds. */
+export const ENCRYPTED_DATABASE_NAME = 'paisa-pulse.enc.db';
 
 type AppDrizzle = ExpoSQLiteDatabase<typeof schema>;
 
 function open(): AppDrizzle {
   // enableChangeListener powers live queries.
-  const expoDb = openDatabaseSync(DATABASE_NAME, { enableChangeListener: true });
+  const expoDb =
+    Platform.OS === 'web'
+      ? openDatabaseSync(DATABASE_NAME, { enableChangeListener: true })
+      : openEncryptedDatabase(DATABASE_NAME, ENCRYPTED_DATABASE_NAME, { enableChangeListener: true });
   // WAL is not supported by the browser storage backend (web is only used for previews).
   expoDb.execSync(Platform.OS === 'web' ? 'PRAGMA foreign_keys = ON;' : 'PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
   return drizzle(expoDb, { schema });

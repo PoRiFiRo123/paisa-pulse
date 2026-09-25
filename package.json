@@ -11,7 +11,13 @@
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "test": "jest",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "build:dev:ios": "eas build --profile development --platform ios",
+    "build:dev:android": "eas build --profile development --platform android",
+    "build:preview": "eas build --profile preview --platform all",
+    "start:dev": "expo start --dev-client",
+    "run:ios": "expo run:ios",
+    "run:android": "expo run:android"
   },
   "dependencies": {
     "@react-native-community/datetimepicker": "9.1.0",
@@ -22,6 +28,7 @@
     "expo-blur": "~57.0.3",
     "expo-constants": "~57.0.19",
     "expo-crypto": "~57.0.3",
+    "expo-dev-client": "~57.0.19",
     "expo-document-picker": "~57.0.2",
     "expo-file-system": "~57.0.7",
     "expo-font": "~57.0.4",
