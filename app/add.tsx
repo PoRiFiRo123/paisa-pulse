@@ -7,9 +7,12 @@ import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withTiming } fr
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { appDb } from '@/db/client';
+import { getSetting, setSetting } from '@/db/settings';
 import type { TransactionType } from '@/db/schema';
 import { accountIcon } from '@/features/accounts/presentation';
 import { accountsWithBalance } from '@/features/accounts/queries';
+import { convertToPaise, CURRENCIES, currencyInfo, formatRate, hundredthsToMinor, minorDigits, minorToHundredths } from '@/features/currency/currency';
+import { getRates } from '@/features/currency/rates';
 import { categoriesByKind } from '@/features/categories/queries';
 import { listTransactions, recentCategoryIds } from '@/features/transactions/list';
 import { createTransaction, updateTransaction } from '@/features/transactions/mutations';
@@ -23,14 +26,15 @@ import { useTheme } from '@/theme/useTheme';
 import { CategoryChip } from '@/ui/CategoryCapsule';
 import { CategoryIcon } from '@/ui/CategoryIcon';
 import { DateTimeSheet, pickDateTimeAndroid } from '@/ui/DateTimeSheet';
-import { GlassButton } from '@/ui/Glass';
+import { GlassButton, GlassGroup } from '@/ui/Glass';
 import { Icon } from '@/ui/Icon';
 import { GroupRow, InsetGroup } from '@/ui/InsetGroup';
 import { applyKey, Keypad } from '@/ui/Keypad';
 import { Menu } from '@/ui/Menu';
+import { NamePrompt } from '@/ui/NamePrompt';
 import { SegmentedControl } from '@/ui/SegmentedControl';
 
-type Params = { id?: string; type?: TransactionType; from?: string; to?: string; amount?: string };
+type Params = { id?: string; type?: TransactionType; from?: string; to?: string; amount?: string; at?: string };
 
 /** "Swiggy · lunch with team" → payee "Swiggy", note "lunch with team". */
 function splitPayeeNote(text: string): { payee: string | null; note: string | null } {
@@ -38,11 +42,11 @@ function splitPayeeNote(text: string): { payee: string | null; note: string | nu
   return { payee: payee.trim() || null, note: rest.join('·').trim() || null };
 }
 
-/** "125000+45.5" → "1,25,000+45.5" for the amount display. */
-function groupExpression(expr: string): string {
+/** "125000+45.5" → "1,25,000+45.5" for the amount display (Western grouping for other currencies). */
+function groupExpression(expr: string, locale = 'en-IN'): string {
   return expr.replace(/\d+(\.\d*)?/g, (num) => {
     const [whole, frac] = num.split('.');
-    return Number(whole).toLocaleString('en-IN') + (frac !== undefined ? `.${frac}` : '');
+    return Number(whole).toLocaleString(locale) + (frac !== undefined ? `.${frac}` : '');
   });
 }
 
@@ -63,9 +67,17 @@ export default function QuickAddScreen() {
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [accountId, setAccountId] = useState<string | undefined>(params.from);
   const [toAccountId, setToAccountId] = useState<string | undefined>(params.to);
-  const [occurredAt, setOccurredAt] = useState(() => Date.now());
+  const [occurredAt, setOccurredAt] = useState(() => (params.at && Number(params.at) > 0 ? Number(params.at) : Date.now()));
   const [showAll, setShowAll] = useState(false);
   const [picking, setPicking] = useState(false);
+  // Foreign currency: the keypad amount is in `currency`, saved as INR at `rate` (rupees per unit).
+  const [currency, setCurrency] = useState('INR');
+  const [rate, setRate] = useState<number | null>(null);
+  const [editingRate, setEditingRate] = useState(false);
+  const [recentCurrencies, setRecentCurrencies] = useState<string[]>([]);
+  useEffect(() => {
+    getSetting(appDb, 'recentCurrencies').then((r) => r && setRecentCurrencies(r));
+  }, []);
 
   const { data: accounts } = useQuery(() => accountsWithBalance(appDb), [], []);
   const categoryKind = kind === 'income' ? 'income' : 'expense';
@@ -78,7 +90,13 @@ export default function QuickAddScreen() {
     listTransactions(appDb, { id: params.id }).then(([t]) => {
       if (!t) return;
       setKind(t.type);
-      setExpr(paiseToExpr(t.amount));
+      if (t.currency && t.originalAmount) {
+        setCurrency(t.currency);
+        setExpr(paiseToExpr(minorToHundredths(t.originalAmount, t.currency)));
+        setRate(t.amount / 100 / (t.originalAmount / 10 ** minorDigits(t.currency)));
+      } else {
+        setExpr(paiseToExpr(t.amount));
+      }
       setText([t.payee, t.note].filter(Boolean).join(' · '));
       setCategoryId(t.categoryId);
       setAccountId(t.accountId);
@@ -95,7 +113,12 @@ export default function QuickAddScreen() {
       ? (accounts.find((a) => a.id !== fromId && a.type === 'card')?.id ?? accounts.find((a) => a.id !== fromId)?.id)
       : undefined);
 
-  const amount = evaluateAmountExpression(expr);
+  const entered = evaluateAmountExpression(expr);
+  const foreign = currency !== 'INR';
+  const originalMinor = foreign && entered !== null ? hundredthsToMinor(entered, currency) : null;
+  // What gets saved: INR paise. For a foreign amount that needs a rate.
+  const amount = !foreign ? entered : originalMinor && rate ? convertToPaise(originalMinor, currency, rate) : null;
+  const symbol = currencyInfo(currency).symbol;
   const hasOperator = /[+−×÷]/.test(expr);
   const kindColor = kind === 'expense' ? colors.expense : kind === 'income' ? colors.income : colors.accent;
 
@@ -113,7 +136,17 @@ export default function QuickAddScreen() {
   const account = accounts.find((a) => a.id === fromId);
   const toAccount = accounts.find((a) => a.id === toId);
 
+  const chooseCurrency = async (code: string) => {
+    setCurrency(code);
+    if (code === 'INR') return setRate(null);
+    const rates = await getRates(appDb);
+    const r = rates?.inrPer[code] ?? null;
+    setRate(r);
+    if (!r) setEditingRate(true);
+  };
+
   const save = async () => {
+    if (foreign && entered && !rate) return setEditingRate(true);
     if (!amount || amount <= 0) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       return;
@@ -135,11 +168,14 @@ export default function QuickAddScreen() {
       payee,
       note,
       occurredAt,
+      currency: foreign ? currency : null,
+      originalAmount: foreign ? originalMinor : null,
     };
     try {
       if (params.id) await updateTransaction(appDb, params.id, input);
       else await createTransaction(appDb, input);
       usePrefs.getState().set('lastAccountId', fromId);
+      if (foreign) setSetting(appDb, 'recentCurrencies', [currency, ...recentCurrencies.filter((c) => c !== currency)].slice(0, 4)).catch(() => {});
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       router.back();
     } catch (e) {
@@ -157,20 +193,50 @@ export default function QuickAddScreen() {
       .filter((a) => a.id !== exclude)
       .map((a) => ({ title: accountLabel(a.name, a.last4), icon: accountIcon(a.type), onPress: () => select(a.id) }));
 
+  const currencyMenu = (() => {
+    const recent = recentCurrencies.filter((c) => c !== 'INR');
+    const pick = (code: string) => ({
+      title: `${currencyInfo(code).flag}  ${code} · ${currencyInfo(code).name}`,
+      checked: code === currency,
+      onPress: () => chooseCurrency(code),
+    });
+    return [
+      pick('INR'),
+      ...(recent.length ? (['separator'] as const) : []),
+      ...recent.map(pick),
+      'separator' as const,
+      ...CURRENCIES.filter((c) => c.code !== 'INR' && !recent.includes(c.code)).map((c) => pick(c.code)),
+    ];
+  })();
+
   const onPickDate = () => (Platform.OS === 'ios' ? setPicking(true) : pickDateTimeAndroid(occurredAt, setOccurredAt));
 
   return (
     <View style={[styles.sheet, { backgroundColor: isLiquidGlassAvailable() ? 'transparent' : colors.background, paddingBottom: Math.max(insets.bottom, 16) }]}>
       <View style={styles.toolbar}>
-        <GlassButton icon="xmark" accessibilityLabel="Cancel" onPress={() => router.back()} />
+        <GlassGroup>
+          <GlassButton icon="xmark" accessibilityLabel="Cancel" onPress={() => router.back()} />
+          {editing ? null : (
+            <GlassButton
+              icon="photo.on.rectangle"
+              accessibilityLabel="Add from screenshots"
+              onPress={() => router.replace({ pathname: '/capture', params: { mode: 'screenshot' } })}
+            />
+          )}
+        </GlassGroup>
         <Text style={[type.headline, { color: colors.label }]}>{title}</Text>
-        <GlassButton
-          icon="checkmark"
-          accessibilityLabel="Save"
-          tint={amount && amount > 0 ? colors.accent : undefined}
-          iconColor={amount && amount > 0 ? '#FFFFFF' : colors.secondary}
-          onPress={save}
-        />
+        <GlassGroup>
+          {editing ? null : (
+            <GlassButton icon="mic.fill" accessibilityLabel="Say it instead" onPress={() => router.replace({ pathname: '/capture', params: { mode: 'voice' } })} />
+          )}
+          <GlassButton
+            icon="checkmark"
+            accessibilityLabel="Save"
+            tint={amount && amount > 0 ? colors.accent : undefined}
+            iconColor={amount && amount > 0 ? '#FFFFFF' : colors.secondary}
+            onPress={save}
+          />
+        </GlassGroup>
       </View>
 
       <View style={styles.pad}>
@@ -191,15 +257,31 @@ export default function QuickAddScreen() {
 
       <View style={styles.amountWrap} accessibilityLabel={`Amount ${amount ? formatINR(amount, { decimals: 'auto' }) : 'empty'}`}>
         <View style={styles.amountRow}>
-          <Text style={[styles.rupee, { color: expr ? colors.label : colors.secondary }]}>₹</Text>
+          <Menu items={currencyMenu}>
+            {(open) => (
+              <Pressable onPress={open} accessibilityRole="button" accessibilityLabel={`Currency ${currencyInfo(currency).name}. Change currency`} hitSlop={10}>
+                <Text style={[styles.rupee, symbol.length > 2 && styles.symbolLong, { color: foreign ? kindColor : expr ? colors.label : colors.secondary }]}>{symbol}</Text>
+              </Pressable>
+            )}
+          </Menu>
           <Text style={[styles.amount, { color: expr ? colors.label : colors.secondary }]} numberOfLines={1} adjustsFontSizeToFit>
-            {expr ? groupExpression(expr) : '0'}
+            {expr ? groupExpression(expr, foreign ? 'en-US' : 'en-IN') : '0'}
           </Text>
           <Caret color={kindColor} />
         </View>
-        <Text style={[type.subhead, { color: colors.secondary, height: 20 }]}>
-          {hasOperator && amount !== null ? `= ${formatINR(amount, { decimals: 'auto' })}` : ''}
-        </Text>
+        {foreign ? (
+          <Pressable onPress={() => setEditingRate(true)} accessibilityRole="button" accessibilityLabel="Edit exchange rate" hitSlop={6}>
+            <Text style={[type.subhead, { color: colors.secondary, height: 20 }]}>
+              {amount ? `≈ ${formatINR(amount, { decimals: 'auto' })} · ` : ''}
+              {rate ? `${formatRate(rate)} per ${currency}` : 'Set exchange rate'}
+              <Text style={{ color: colors.accent }}>  Edit</Text>
+            </Text>
+          </Pressable>
+        ) : (
+          <Text style={[type.subhead, { color: colors.secondary, height: 20 }]}>
+            {hasOperator && amount !== null ? `= ${formatINR(amount, { decimals: 'auto' })}` : ''}
+          </Text>
+        )}
       </View>
 
       <View style={[styles.note]}>
@@ -302,6 +384,21 @@ export default function QuickAddScreen() {
         )}
       </View>
 
+      <NamePrompt
+        visible={editingRate}
+        title={`Rupees per 1 ${currency}`}
+        message="Use the rate on your card statement or forex card for an exact match."
+        initial={rate ? String(Math.round(rate * 10000) / 10000) : ''}
+        placeholder="e.g. 83.25"
+        keyboardType="decimal-pad"
+        confirmLabel="Use Rate"
+        onCancel={() => setEditingRate(false)}
+        onConfirm={(v) => {
+          const n = Number(v.replace(/[,₹\s]/g, ''));
+          if (Number.isFinite(n) && n > 0) setRate(n);
+          setEditingRate(false);
+        }}
+      />
       <DateTimeSheet visible={picking} value={occurredAt} onClose={() => setPicking(false)} onChange={setOccurredAt} />
     </View>
   );
@@ -356,6 +453,7 @@ const VALIDATION_MESSAGES: Record<string, string> = {
   to_account_not_allowed: 'Only transfers have a destination account.',
   category_not_allowed: 'Transfers don’t have a category.',
   date_too_far_in_future: 'The date can’t be more than a year ahead.',
+  original_amount_invalid: 'Enter the amount in the foreign currency.',
 };
 
 const styles = StyleSheet.create({
@@ -366,6 +464,7 @@ const styles = StyleSheet.create({
   amountRow: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 24 },
   rupee: { ...type.amount, fontSize: 34, fontWeight: '600', letterSpacing: 0, lineHeight: 44 },
   amount: { ...type.amount, fontSize: 60, lineHeight: 72, flexShrink: 1 },
+  symbolLong: { fontSize: 24 },
   caret: { width: 3, height: 54, borderRadius: 2 },
   note: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 40 },
   noteInput: { minWidth: 120, maxWidth: 280, paddingVertical: 4, textAlign: 'center' },

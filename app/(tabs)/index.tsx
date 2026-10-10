@@ -12,6 +12,7 @@ import { listTransactions, topCategories } from '@/features/transactions/list';
 import { TransactionListRow } from '@/features/transactions/TransactionListRow';
 import { useMoney } from '@/hooks/useMoney';
 import { useQuery } from '@/hooks/useQuery';
+import { weekRange } from '@/lib/dates';
 import { monthAt } from '@/lib/months';
 import { usePrefs } from '@/stores/prefs';
 import { useUi } from '@/stores/ui';
@@ -36,6 +37,7 @@ export default function HomeScreen() {
   const money = useMoney();
   const { width } = useWindowDimensions();
   const monthStartDay = usePrefs((s) => s.monthStartDay);
+  const weekStartDay = usePrefs((s) => s.weekStartDay);
   const offset = useUi((s) => s.homeMonthOffset);
   const setOffset = useUi((s) => s.setHomeMonthOffset);
   const setActivity = useUi((s) => s.setActivity);
@@ -50,7 +52,16 @@ export default function HomeScreen() {
 
   const { data: top } = useQuery(() => topCategories(appDb, month), [month.start], []);
   const { data: upcoming } = useQuery(() => upcomingRecurring(appDb), [], []);
-  const { data: budgets } = useQuery(() => budgetProgress(appDb, month), [month.start], []);
+  // Weekly budgets only make sense for the current month.
+  const { data: budgets } = useQuery(
+    async () => {
+      const now = Date.now();
+      const all = await budgetProgress(appDb, month, now, weekRange(now, weekStartDay));
+      return offset === 0 ? all : all.filter((b) => b.budget.period === 'monthly');
+    },
+    [month.start, weekStartDay, offset],
+    [],
+  );
   const { data: recent, loaded } = useQuery(() => listTransactions(appDb, { limit: 5 }), [], []);
 
   const jumpTo = (o: number) => {

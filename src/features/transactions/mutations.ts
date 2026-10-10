@@ -26,7 +26,15 @@ function toRow(input: TransactionInput, now: number) {
     payee: clean(input.payee),
     note: clean(input.note),
     occurredAt: input.occurredAt ?? now,
+    ...foreign(input),
   };
+}
+
+/** INR (or no currency) stores nulls; anything else keeps the original amount. */
+function foreign(input: TransactionInput): { currency: string | null; originalAmount: number | null } {
+  const code = input.currency?.trim().toUpperCase();
+  if (!code || code === 'INR' || !input.originalAmount) return { currency: null, originalAmount: null };
+  return { currency: code, originalAmount: input.originalAmount };
 }
 
 export async function createTransaction(

@@ -9,6 +9,8 @@ export type ActivityFilters = {
   /** `null` inside the list = Uncategorised. */
   categoryIds: (string | null)[];
   types: TransactionType[];
+  /** A custom date range (Insights week/quarter/year, a calendar day). Overrides `monthOffset`. */
+  range?: { start: number; end: number; label: string } | null;
 };
 
 type UiState = {

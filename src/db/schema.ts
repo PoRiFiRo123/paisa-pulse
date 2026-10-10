@@ -24,7 +24,7 @@ export const TRANSACTION_TYPES = ['expense', 'income', 'transfer'] as const;
 export type TransactionType = (typeof TRANSACTION_TYPES)[number];
 
 // Auto-capture (later phases) writes into the same table with a different source.
-export const TRANSACTION_SOURCES = ['manual', 'recurring', 'notification', 'sms', 'shortcut', 'import'] as const;
+export const TRANSACTION_SOURCES = ['manual', 'recurring', 'notification', 'sms', 'shortcut', 'import', 'voice', 'screenshot'] as const;
 export type TransactionSource = (typeof TRANSACTION_SOURCES)[number];
 
 export const accounts = sqliteTable('accounts', {
@@ -87,6 +87,10 @@ export const transactions = sqliteTable(
     // fingerprint of the statement row (so re-importing the same file is detected).
     importBatchId: text('import_batch_id'),
     externalId: text('external_id'),
+    // Foreign-currency spend: the original amount in that currency's minor units
+    // (cents, yen…). `amount` is always the converted INR paise. Null for INR.
+    currency: text('currency'),
+    originalAmount: integer('original_amount'),
     // Set when the transaction was added by a recurring rule.
     recurringId: text('recurring_id').references((): AnySQLiteColumn => recurringRules.id, { onDelete: 'set null' }),
     deletedAt: integer('deleted_at'),
@@ -149,17 +153,21 @@ export const recurringRules = sqliteTable(
   ],
 );
 
-/** Monthly spending limit: overall (categoryId null) or for one category and its subcategories. */
+export const BUDGET_PERIODS = ['weekly', 'monthly'] as const;
+export type BudgetPeriod = (typeof BUDGET_PERIODS)[number];
+
+/** Spending limit per week or month: overall (categoryId null) or for one category and its subcategories. */
 export const budgets = sqliteTable(
   'budgets',
   {
     id: text('id').primaryKey(),
     categoryId: text('category_id').references(() => categories.id),
+    period: text('period', { enum: BUDGET_PERIODS }).notNull().default('monthly'),
     amount: integer('amount').notNull(),
     createdAt: integer('created_at').notNull(),
     updatedAt: integer('updated_at').notNull(),
   },
-  (t) => [uniqueIndex('budgets_category_idx').on(t.categoryId), check('budgets_amount_positive', sql`${t.amount} > 0`)],
+  (t) => [uniqueIndex('budgets_category_period_idx').on(t.categoryId, t.period), check('budgets_amount_positive', sql`${t.amount} > 0`)],
 );
 
 /** One statement import (for history and Undo). */

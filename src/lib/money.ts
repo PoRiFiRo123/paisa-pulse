@@ -188,3 +188,17 @@ export function formatINRAxis(paise: number): string {
   if (rupees >= 1_000) return `${sign}₹${short(rupees / 1_000)}K`;
   return `${sign}₹${Math.round(rupees)}`;
 }
+
+/** Tiniest form, for calendar cells: "950", "12.5k", "1.2L", "3.4Cr" (no symbol, rounded down). */
+export function formatINRTiny(paise: number): string {
+  assertPaise(paise);
+  const rupees = Math.floor(Math.abs(paise) / PAISE_PER_RUPEE);
+  const one = (n: number) => {
+    const t = Math.floor(n * 10) / 10;
+    return t >= 100 ? String(Math.floor(t)) : String(t).replace(/\.0$/, '');
+  };
+  if (rupees >= 1_00_00_000) return `${one(rupees / 1_00_00_000)}Cr`;
+  if (rupees >= 1_00_000) return `${one(rupees / 1_00_000)}L`;
+  if (rupees >= 1000) return `${one(rupees / 1000)}k`;
+  return String(rupees);
+}

@@ -12,10 +12,11 @@ npm run lint
 npm run db:generate  # after changing src/db/schema.ts
 ```
 
-## Development build (encryption, widgets, quick actions, app icons)
+## Development build (encryption, voice, screenshots, widgets, Siri, iCloud backups)
 
-Expo Go runs everything except SQLCipher encryption, widgets, quick actions and alternate icons.
-For those, make a development build with EAS:
+Expo Go runs everything except SQLCipher encryption, live voice entry, screenshot reading, widgets,
+Siri & Shortcuts, iCloud Drive backups, quick actions and alternate icons. For those, make a
+development build with EAS:
 
 ```bash
 npm i -g eas-cli && eas login
@@ -23,3 +24,8 @@ npm i -g eas-cli && eas login
 npm run build:dev:ios        # or build:dev:android
 npm run start:dev            # then open the dev build on your phone
 ```
+
+iOS also needs the App Group `group.com.paisapulse.app` and the iCloud container
+`iCloud.com.paisapulse.app` enabled for `com.paisapulse.app` (EAS offers to sync capabilities on the
+first build). The widget and Siri extensions' Swift code hasn't been compiled outside Xcode yet, so
+expect small fixes on the first build.

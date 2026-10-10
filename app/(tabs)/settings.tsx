@@ -2,12 +2,11 @@ import Constants from 'expo-constants';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { router, useScrollToTop } from 'expo-router';
 import { useRef, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, Platform, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
-import { pickAndRestoreBackup, shareCsvExport, shareJsonBackup } from '@/features/backup/share';
+import { shareCsvExport } from '@/features/backup/share';
 import { APP_ICONS, type AppIconName, appIconsSupported, currentAppIcon, setAppIcon } from '@/features/settings/appIcon';
 import { usePrefs } from '@/stores/prefs';
-import { useToast } from '@/stores/toast';
 import { ACCENTS, type AccentKey } from '@/theme/tokens';
 import { type } from '@/theme/typography';
 import { useTheme } from '@/theme/useTheme';
@@ -29,7 +28,6 @@ export default function SettingsScreen() {
   useScrollToTop(scrollRef);
   const { colors } = useTheme();
   const prefs = usePrefs();
-  const toast = useToast((s) => s.show);
   const { scrollY, onScroll } = useScrollHeader();
   const titleTop = useTitleTop();
   const bottom = useBottomSpace();
@@ -49,22 +47,6 @@ export default function SettingsScreen() {
   };
 
   const run = (task: () => Promise<unknown>, failure: string) => task().catch((e: Error) => Alert.alert(failure, e.message));
-
-  const restore = () =>
-    Alert.alert('Restore from backup?', 'This replaces everything in Paisa Pulse with the backup’s data.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Choose File',
-        style: 'destructive',
-        onPress: () =>
-          run(async () => {
-            if (await pickAndRestoreBackup()) {
-              await usePrefs.getState().hydrate();
-              toast({ message: 'Backup restored' });
-            }
-          }, 'Couldn’t restore'),
-      },
-    ]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -128,6 +110,7 @@ export default function SettingsScreen() {
             </Menu>
           ) : null}
           <GroupRow title="Currency" value="₹ · Lakh, Crore" leading={icon('indianrupeesign', '#34C759')} />
+          <GroupRow title="Currency Converter" leading={icon('globe', '#32ADE6')} chevron onPress={() => router.push('/converter')} />
         </InsetGroup>
 
         <GroupHeader title="Money" />
@@ -135,6 +118,8 @@ export default function SettingsScreen() {
           <GroupRow title="Categories" leading={icon('tag.fill', '#FF9500')} chevron onPress={() => router.push('/categories')} />
           <GroupRow title="Budgets" leading={icon('chart.pie.fill', '#5E5CE6')} chevron onPress={() => router.push('/budgets')} />
           <GroupRow title="Recurring" leading={icon('repeat', '#30B0C7')} chevron onPress={() => router.push('/recurring')} />
+          <GroupRow title="Subscriptions" leading={icon('repeat.circle.fill', '#FF2D55')} chevron onPress={() => router.push('/subscriptions')} />
+          <GroupRow title="Calendar" leading={icon('calendar', '#FF9500')} chevron onPress={() => router.push('/calendar')} />
           <Menu
             items={Array.from({ length: 28 }, (_, i) => ({
               title: i === 0 ? '1st (calendar month)' : `${ordinal(i + 1)} (e.g. salary day)`,
@@ -177,20 +162,25 @@ export default function SettingsScreen() {
             leading={icon('eye.slash.fill', '#8E8E93')}
             trailing={<Switch value={prefs.hideAmounts} onValueChange={(v) => prefs.set('hideAmounts', v)} trackColor={{ true: colors.income }} />}
           />
+          <GroupRow
+            title="Merchant logos"
+            leading={icon('bag.fill', '#FF9500')}
+            trailing={<Switch value={prefs.merchantLogos} onValueChange={(v) => prefs.set('merchantLogos', v)} trackColor={{ true: colors.income }} />}
+          />
         </InsetGroup>
+        <Text style={[type.footnote, styles.note, { color: colors.secondary }]}>
+          Merchant logos are downloaded for known brands like Swiggy or Netflix. Only the brand’s website name is sent, never your
+          transactions. When off, brands show a coloured letter.
+        </Text>
 
         <GroupHeader title="Data" />
         <InsetGroup>
+          {Platform.OS === 'ios' ? (
+            <GroupRow title="Siri & Shortcuts" leading={icon('waveform', '#5856D6')} chevron onPress={() => router.push('/siri')} />
+          ) : null}
           <GroupRow title="Import Statement" leading={icon('doc.text.magnifyingglass', '#34C759')} chevron onPress={() => router.push('/import')} />
           <GroupRow title="Export CSV" leading={icon('square.and.arrow.up', '#007AFF')} chevron onPress={() => run(shareCsvExport, 'Couldn’t export')} />
-          <Menu
-            items={[
-              { title: 'Export Backup', icon: 'square.and.arrow.up', onPress: () => run(shareJsonBackup, 'Couldn’t back up') },
-              { title: 'Restore from Backup…', icon: 'square.and.arrow.down', onPress: restore },
-            ]}
-          >
-            {(open) => <GroupRow title="Backup & Restore" leading={icon('square.and.arrow.down', '#5E5CE6')} chevron onPress={open} />}
-          </Menu>
+          <GroupRow title="Backup & Restore" leading={icon('icloud.fill', '#5E5CE6')} chevron onPress={() => router.push('/backups')} />
         </InsetGroup>
 
         <View style={styles.footer}>
@@ -206,5 +196,6 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
+  note: { paddingHorizontal: 32, paddingTop: 8 },
   footer: { alignItems: 'center', gap: 2, marginTop: 24, paddingHorizontal: 32 },
 });

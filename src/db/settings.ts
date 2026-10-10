@@ -14,6 +14,14 @@ export type SettingsMap = {
   hideAmounts: boolean;
   appLock: boolean;
   lastAccountId: string;
+  /** Download logos for recognised merchants (sends only the brand's domain to Google's favicon service). */
+  merchantLogos: boolean;
+  /** Exchange rates cache (rupees per unit). */
+  'fx.rates': { at: number; inrPer: Record<string, number>; source: string };
+  /** Foreign currencies used most recently, newest first. */
+  recentCurrencies: string[];
+  /** Automatic backups: how often, and how the last one went. */
+  autoBackup: { frequency: 'off' | 'daily' | 'weekly'; lastAt: number | null; lastError: string | null; lastStore?: 'icloud' | 'device' };
 };
 
 export async function getSetting<K extends keyof SettingsMap>(db: DB, key: K): Promise<SettingsMap[K] | undefined> {

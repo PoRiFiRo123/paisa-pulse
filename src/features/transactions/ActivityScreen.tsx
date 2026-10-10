@@ -1,4 +1,4 @@
-import { useFocusEffect } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -65,7 +65,7 @@ export function ActivityScreen({ mode = 'activity' }: { mode?: 'activity' | 'sea
   const titleTop = useTitleTop();
   const bottom = useBottomSpace();
 
-  const range = filters.monthOffset === null ? undefined : monthAt(filters.monthOffset, monthStartDay);
+  const range = filters.range ?? (filters.monthOffset === null ? undefined : monthAt(filters.monthOffset, monthStartDay));
   const { data: items, loaded } = useQuery(
     () =>
       listTransactions(appDb, {
@@ -75,7 +75,7 @@ export function ActivityScreen({ mode = 'activity' }: { mode?: 'activity' | 'sea
         types: filters.types,
         search,
       }),
-    [range?.start, filters.accountIds, filters.categoryIds, filters.types, search],
+    [range?.start, range?.end, filters.accountIds, filters.categoryIds, filters.types, search],
     [],
   );
   const { data: accounts } = useQuery(() => accountsWithBalance(appDb, { includeArchived: true }), [], []);
@@ -83,7 +83,7 @@ export function ActivityScreen({ mode = 'activity' }: { mode?: 'activity' | 'sea
   const { data: incomeCats } = useQuery(() => categoriesByKind(appDb, 'income'), [], []);
 
 
-  const monthLabel = filters.monthOffset === null ? 'All time' : monthAt(filters.monthOffset, monthStartDay).label;
+  const monthLabel = filters.range?.label ?? (filters.monthOffset === null ? 'All time' : monthAt(filters.monthOffset, monthStartDay).label);
   const account = accounts.find((a) => a.id === filters.accountIds[0]);
   const allCats = [...expenseCats, ...incomeCats];
   const category = filters.categoryIds.length
@@ -94,12 +94,12 @@ export function ActivityScreen({ mode = 'activity' }: { mode?: 'activity' | 'sea
   const typeLabel = filters.types.length ? { expense: 'Expenses', income: 'Income', transfer: 'Transfers' }[filters.types[0]] : null;
 
   const monthItems: MenuItem[] = [
-    { title: 'All time', checked: filters.monthOffset === null, onPress: () => setFilters({ monthOffset: null }) },
+    { title: 'All time', checked: !filters.range && filters.monthOffset === null, onPress: () => setFilters({ monthOffset: null, range: null }) },
     'separator',
     ...Array.from({ length: 12 }, (_, o) => ({
       title: monthAt(o, monthStartDay).label,
-      checked: filters.monthOffset === o,
-      onPress: () => setFilters({ monthOffset: o }),
+      checked: !filters.range && filters.monthOffset === o,
+      onPress: () => setFilters({ monthOffset: o, range: null }),
     })),
   ];
   const accountItems: MenuItem[] = [
@@ -180,7 +180,7 @@ export function ActivityScreen({ mode = 'activity' }: { mode?: 'activity' | 'sea
         </ScrollView>
       ) : null}
       <View style={styles.chips}>
-        <Menu items={monthItems}>{(open) => <FilterChip label={monthLabel} active={filters.monthOffset !== 0 && mode === 'activity'} onPress={open} />}</Menu>
+        <Menu items={monthItems}>{(open) => <FilterChip label={monthLabel} active={(!!filters.range || filters.monthOffset !== 0) && mode === 'activity'} onPress={open} />}</Menu>
         <Menu items={accountItems}>{(open) => <FilterChip label={account ? account.name : 'All accounts'} active={!!account} onPress={open} />}</Menu>
         <Menu items={categoryItems}>{(open) => <FilterChip label={category ?? 'All categories'} active={!!category} onPress={open} />}</Menu>
         <Menu items={typeItems}>{(open) => <FilterChip label={typeLabel ?? 'All types'} active={!!typeLabel} onPress={open} />}</Menu>
@@ -234,6 +234,7 @@ export function ActivityScreen({ mode = 'activity' }: { mode?: 'activity' | 'sea
               {search || anyFilter ? (
                 <GlassButton icon="bookmark" accessibilityLabel="Save these filters" onPress={() => setPrompt({ mode: 'save', name: search })} />
               ) : null}
+              {mode === 'activity' ? <GlassButton icon="calendar" accessibilityLabel="Calendar" onPress={() => router.push('/calendar')} /> : null}
               {mode === 'activity' && items.length ? (
                 <GlassButton icon="checkmark.circle" accessibilityLabel="Select transactions" onPress={() => selection.start()} />
               ) : null}

@@ -14,6 +14,8 @@ export function NamePrompt({
   placeholder,
   confirmLabel = 'Save',
   secure = false,
+  keyboardType = 'default',
+  message,
   onCancel,
   onConfirm,
 }: {
@@ -24,6 +26,9 @@ export function NamePrompt({
   confirmLabel?: string;
   /** Hide the text (passwords). */
   secure?: boolean;
+  keyboardType?: 'default' | 'decimal-pad';
+  /** Optional explanation under the title. */
+  message?: string;
   onCancel: () => void;
   onConfirm: (value: string) => void;
 }) {
@@ -35,6 +40,7 @@ export function NamePrompt({
         <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.25)' }]} onPress={onCancel} />
         <GlassSurface radius={26} style={styles.panel}>
           <Text style={[type.headline, { color: colors.label, textAlign: 'center' }]}>{title}</Text>
+          {message ? <Text style={[type.footnote, { color: colors.secondary, textAlign: 'center' }]}>{message}</Text> : null}
           <TextInput
             value={value}
             onChangeText={setValue}
@@ -42,6 +48,7 @@ export function NamePrompt({
             placeholderTextColor={colors.secondary}
             autoFocus
             secureTextEntry={secure}
+            keyboardType={keyboardType}
             autoCapitalize={secure ? 'none' : 'sentences'}
             autoCorrect={!secure}
             returnKeyType="done"

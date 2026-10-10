@@ -48,9 +48,9 @@ function useQuickActions() {
     const icon = (symbol: string) => (Platform.OS === 'ios' ? `symbol:${symbol}` : undefined);
     QuickActions.setItems([
       { id: 'expense', title: 'Add Expense', icon: icon('minus.circle'), params: { href: '/add?type=expense' } },
+      { id: 'voice', title: 'Say It', subtitle: '“250 lunch, 80 auto”', icon: icon('mic.fill'), params: { href: '/capture?mode=voice' } },
+      { id: 'screenshot', title: 'From Screenshots', icon: icon('photo.on.rectangle'), params: { href: '/capture?mode=screenshot' } },
       { id: 'income', title: 'Add Income', icon: icon('plus.circle'), params: { href: '/add?type=income' } },
-      { id: 'transfer', title: 'Transfer', icon: icon('arrow.left.arrow.right'), params: { href: '/add?type=transfer' } },
-      { id: 'search', title: 'Search', icon: Platform.OS === 'ios' ? 'search' : undefined, params: { href: '/search' } },
     ]).catch(() => {});
   }, []);
 }

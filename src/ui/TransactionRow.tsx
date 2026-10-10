@@ -7,7 +7,11 @@ import { accountLabel, relativeWhen } from '@/lib/format';
 import { type } from '@/theme/typography';
 import { useTheme } from '@/theme/useTheme';
 
+import { formatForeign } from '@/features/currency/currency';
+import { matchBrand } from '@/features/merchants/brands';
+
 import { CategoryIcon, transactionVisual } from './CategoryIcon';
+import { BrandMark } from './MerchantIcon';
 
 export function transactionTitle(t: TransactionItem): string {
   if (t.payee) return t.payee;
@@ -31,10 +35,11 @@ export const TransactionRow = memo(function TransactionRow({ item, showTime = tr
   const { colors } = useTheme();
   const money = useMoney();
   const visual = transactionVisual(item);
+  const brand = item.type === 'transfer' ? null : matchBrand(item.payee);
   const amountColor = item.type === 'income' ? colors.income : colors.label;
   return (
     <View style={[styles.row, { backgroundColor: colors.card }]}>
-      <CategoryIcon icon={visual.icon} color={visual.color} />
+      {brand ? <BrandMark brand={brand} /> : <CategoryIcon icon={visual.icon} color={visual.color} />}
       <View style={styles.text}>
         <Text style={[type.body, { color: colors.label }]} numberOfLines={1}>
           {transactionTitle(item)}
@@ -43,7 +48,14 @@ export const TransactionRow = memo(function TransactionRow({ item, showTime = tr
           {transactionSubtitle(item, showTime)}
         </Text>
       </View>
-      <Text style={[type.bodyAmount, { color: amountColor }]}>{money.signed(item.amount, item.type)}</Text>
+      {item.currency && item.originalAmount ? (
+        <View style={styles.amounts}>
+          <Text style={[type.bodyAmount, { color: amountColor }]}>{money.signed(item.amount, item.type)}</Text>
+          <Text style={[type.caption, { color: colors.secondary }]}>{money.hidden ? '••••' : formatForeign(item.originalAmount, item.currency)}</Text>
+        </View>
+      ) : (
+        <Text style={[type.bodyAmount, { color: amountColor }]}>{money.signed(item.amount, item.type)}</Text>
+      )}
     </View>
   );
 });
@@ -51,4 +63,5 @@ export const TransactionRow = memo(function TransactionRow({ item, showTime = tr
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 11, minHeight: 61 },
   text: { flex: 1, gap: 2 },
+  amounts: { alignItems: 'flex-end', gap: 1 },
 });

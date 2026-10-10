@@ -25,17 +25,29 @@ export function pickDateTimeAndroid(value: number, onChange: (ms: number) => voi
   });
 }
 
-/** iOS: inline calendar + time on a glass sheet. */
+/** Android system date dialog (no time). */
+export function pickDateAndroid(value: number, onChange: (ms: number) => void, maximumDate: number = maxOccurredAt()) {
+  DateTimePickerAndroid.open({
+    value: new Date(value),
+    mode: 'date',
+    maximumDate: new Date(maximumDate),
+    onChange: (e, date) => e.type === 'set' && date && onChange(date.getTime()),
+  });
+}
+
+/** iOS: inline calendar (+ time) on a glass sheet. */
 export function DateTimeSheet({
   visible,
   value,
   onClose,
   onChange,
+  mode = 'datetime',
 }: {
   visible: boolean;
   value: number;
   onClose: () => void;
   onChange: (ms: number) => void;
+  mode?: 'date' | 'datetime';
 }) {
   const { colors, dark } = useTheme();
   const [draft, setDraft] = useState(value);
@@ -47,7 +59,7 @@ export function DateTimeSheet({
         <GlassSurface radius={28} style={styles.panel}>
           <RNDateTimePicker
             value={new Date(draft)}
-            mode="datetime"
+            mode={mode}
             display="inline"
             maximumDate={new Date(maxOccurredAt())}
             themeVariant={dark ? 'dark' : 'light'}

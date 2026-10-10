@@ -28,13 +28,16 @@ export function AddButton() {
           { title: 'Expense', icon: 'arrow.up.right', onPress: () => open('expense') },
           { title: 'Income', icon: 'arrow.down.left', onPress: () => open('income') },
           { title: 'Transfer', icon: 'arrow.left.arrow.right', onPress: () => open('transfer') },
+          'separator',
+          { title: 'Say It', icon: 'mic.fill', onPress: () => router.push({ pathname: '/capture', params: { mode: 'voice' } }) },
+          { title: 'From Screenshots', icon: 'photo.on.rectangle', onPress: () => router.push({ pathname: '/capture', params: { mode: 'screenshot' } }) },
         ]}
       >
         {(openMenu) => (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Add transaction"
-            accessibilityHint="Long-press to choose expense, income or transfer"
+            accessibilityHint="Long-press for income, transfer, voice or screenshots"
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
               open();
