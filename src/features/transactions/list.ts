@@ -54,6 +54,8 @@ export async function listTransactions(db: DB, f: TransactionFilters = {}) {
       id: transactions.id,
       type: transactions.type,
       amount: transactions.amount,
+      currency: transactions.currency,
+      originalAmount: transactions.originalAmount,
       payee: transactions.payee,
       note: transactions.note,
       occurredAt: transactions.occurredAt,

@@ -13,7 +13,7 @@ import { type } from '@/theme/typography';
 import { useTheme } from '@/theme/useTheme';
 import { CategoryIcon } from '@/ui/CategoryIcon';
 import { EmptyState } from '@/ui/EmptyState';
-import { GlassButton } from '@/ui/Glass';
+import { GlassButton, GlassGroup } from '@/ui/Glass';
 import { InsetGroup } from '@/ui/InsetGroup';
 import { Menu } from '@/ui/Menu';
 import { LargeTitle, TopBar, useScrollHeader, useTitleTop } from '@/ui/Screen';
@@ -102,7 +102,12 @@ export default function RecurringScreen() {
         title="Recurring"
         scrollY={scrollY}
         leading={<GlassButton icon="chevron.left" accessibilityLabel="Back" onPress={() => router.back()} />}
-        trailing={<GlassButton icon="plus" accessibilityLabel="Add recurring" onPress={() => edit()} />}
+        trailing={
+          <GlassGroup>
+            <GlassButton icon="repeat.circle.fill" accessibilityLabel="Subscriptions" onPress={() => router.push('/subscriptions')} />
+            <GlassButton icon="plus" accessibilityLabel="Add recurring" onPress={() => edit()} />
+          </GlassGroup>
+        }
       />
     </View>
   );

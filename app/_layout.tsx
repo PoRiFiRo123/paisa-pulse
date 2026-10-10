@@ -65,6 +65,9 @@ function AppShell() {
           <Stack.Screen name="budgets" />
           <Stack.Screen name="recurring" />
           <Stack.Screen name="insights" />
+          <Stack.Screen name="calendar" />
+          <Stack.Screen name="subscriptions" />
+          <Stack.Screen name="converter" />
           <Stack.Screen name="import" />
           <Stack.Screen name="budget-form" options={sheet([0.6, 0.92])} />
           <Stack.Screen name="recurring-form" options={sheet([0.92])} />

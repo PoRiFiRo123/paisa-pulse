@@ -128,6 +128,7 @@ export default function SettingsScreen() {
             </Menu>
           ) : null}
           <GroupRow title="Currency" value="₹ · Lakh, Crore" leading={icon('indianrupeesign', '#34C759')} />
+          <GroupRow title="Currency Converter" leading={icon('globe', '#32ADE6')} chevron onPress={() => router.push('/converter')} />
         </InsetGroup>
 
         <GroupHeader title="Money" />
@@ -135,6 +136,8 @@ export default function SettingsScreen() {
           <GroupRow title="Categories" leading={icon('tag.fill', '#FF9500')} chevron onPress={() => router.push('/categories')} />
           <GroupRow title="Budgets" leading={icon('chart.pie.fill', '#5E5CE6')} chevron onPress={() => router.push('/budgets')} />
           <GroupRow title="Recurring" leading={icon('repeat', '#30B0C7')} chevron onPress={() => router.push('/recurring')} />
+          <GroupRow title="Subscriptions" leading={icon('repeat.circle.fill', '#FF2D55')} chevron onPress={() => router.push('/subscriptions')} />
+          <GroupRow title="Calendar" leading={icon('calendar', '#FF9500')} chevron onPress={() => router.push('/calendar')} />
           <Menu
             items={Array.from({ length: 28 }, (_, i) => ({
               title: i === 0 ? '1st (calendar month)' : `${ordinal(i + 1)} (e.g. salary day)`,
@@ -177,7 +180,16 @@ export default function SettingsScreen() {
             leading={icon('eye.slash.fill', '#8E8E93')}
             trailing={<Switch value={prefs.hideAmounts} onValueChange={(v) => prefs.set('hideAmounts', v)} trackColor={{ true: colors.income }} />}
           />
+          <GroupRow
+            title="Merchant logos"
+            leading={icon('bag.fill', '#FF9500')}
+            trailing={<Switch value={prefs.merchantLogos} onValueChange={(v) => prefs.set('merchantLogos', v)} trackColor={{ true: colors.income }} />}
+          />
         </InsetGroup>
+        <Text style={[type.footnote, styles.note, { color: colors.secondary }]}>
+          Merchant logos are downloaded for known brands like Swiggy or Netflix. Only the brand’s website name is sent, never your
+          transactions. When off, brands show a coloured letter.
+        </Text>
 
         <GroupHeader title="Data" />
         <InsetGroup>
@@ -206,5 +218,6 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
+  note: { paddingHorizontal: 32, paddingTop: 8 },
   footer: { alignItems: 'center', gap: 2, marginTop: 24, paddingHorizontal: 32 },
 });

@@ -1,3 +1,5 @@
+import { matchBrand } from '@/features/merchants/brands';
+
 export type Channel = 'UPI' | 'NEFT' | 'IMPS' | 'RTGS' | 'POS' | 'ATM' | 'NACH' | 'INTEREST' | 'CHARGES' | 'CARD_PAYMENT' | 'REFUND' | 'OTHER';
 
 export type Narration = {
@@ -21,68 +23,6 @@ const STOP = new Set(
 // 4-letter bank codes and IFSCs that appear inside UPI/NEFT narrations.
 const BANK_CODE = /^[a-z]{4}(0[a-z0-9]{6})?$/i;
 const BANKS = /^(icic|hdfc|sbin|utib|barb|yesb|kkbk|punb|cnrb|ubin|idib|indb|idfb|pytm|airp|fdrl|bkid|ioba|maha|cbin|jaka|scbl|citi|hsbc|rbl|au|axis|icici|sbi|bob|kotak|paytm|ybl|ibl|axl|okaxis|oksbi|okhdfcbank|okicici|apl|jupiteraxis|fam)$/i;
-
-/** Known Indian merchants: narration/legal names → display name. */
-const BRANDS: [RegExp, string][] = [
-  [/swiggy|bundl tech/i, 'Swiggy'],
-  [/zomato|zomato media|eternal ltd/i, 'Zomato'],
-  [/blinkit|grofers/i, 'Blinkit'],
-  [/zepto|kiranakart/i, 'Zepto'],
-  [/big\s?basket|supermarket grocery/i, 'BigBasket'],
-  [/instamart/i, 'Swiggy Instamart'],
-  [/dmart|avenue supermarts/i, 'DMart'],
-  [/uber/i, 'Uber'],
-  [/\bola\b|ani technologies|olacabs/i, 'Ola'],
-  [/rapido|roppen/i, 'Rapido'],
-  [/amazon pay|amazon/i, 'Amazon'],
-  [/flipkart/i, 'Flipkart'],
-  [/myntra/i, 'Myntra'],
-  [/nykaa/i, 'Nykaa'],
-  [/ajio/i, 'AJIO'],
-  [/meesho/i, 'Meesho'],
-  [/netflix/i, 'Netflix'],
-  [/spotify/i, 'Spotify'],
-  [/youtube|google\s?play|google\s?india digital|google/i, 'Google'],
-  [/apple\s?(services|media)|itunes|apple\.com/i, 'Apple'],
-  [/hotstar|jiocinema|jiohotstar|novi digital/i, 'JioHotstar'],
-  [/prime video|amazon prime/i, 'Amazon Prime'],
-  [/bookmyshow|bigtree/i, 'BookMyShow'],
-  [/\bpvr\b|inox/i, 'PVR INOX'],
-  [/bharti airtel|airtel/i, 'Airtel'],
-  [/reliance jio|\bjio\b/i, 'Jio'],
-  [/vodafone|\bvi\b|idea cellular/i, 'Vi'],
-  [/act fibernet|atria convergence/i, 'ACT Fibernet'],
-  [/tata play|tata sky/i, 'Tata Play'],
-  [/bescom/i, 'BESCOM'],
-  [/tata power/i, 'Tata Power'],
-  [/adani electricity/i, 'Adani Electricity'],
-  [/msedcl|mahadiscom/i, 'MSEDCL'],
-  [/irctc/i, 'IRCTC'],
-  [/makemytrip|make my trip/i, 'MakeMyTrip'],
-  [/goibibo|ibibo/i, 'Goibibo'],
-  [/indigo|interglobe/i, 'IndiGo'],
-  [/air india/i, 'Air India'],
-  [/\boyo\b|oravel/i, 'OYO'],
-  [/zerodha/i, 'Zerodha'],
-  [/groww|nextbillion/i, 'Groww'],
-  [/indian clearing|iccl|bse ltd|nse clearing/i, 'Mutual fund / SIP'],
-  [/\blic\b|life insurance corp/i, 'LIC'],
-  [/bajaj fin/i, 'Bajaj Finance'],
-  [/nobroker/i, 'NoBroker'],
-  [/apollo pharm|apollo/i, 'Apollo'],
-  [/pharmeasy/i, 'PharmEasy'],
-  [/tata 1mg|\b1mg\b/i, 'Tata 1mg'],
-  [/practo/i, 'Practo'],
-  [/hpcl|hindustan petroleum/i, 'HPCL'],
-  [/bpcl|bharat petroleum/i, 'BPCL'],
-  [/iocl|indian oil/i, 'Indian Oil'],
-  [/shell/i, 'Shell'],
-  [/starbucks|tata starbucks/i, 'Starbucks'],
-  [/mcdonald|hardcastle|westlife/i, "McDonald's"],
-  [/domino|jubilant foodworks/i, "Domino's"],
-  [/\bkfc\b|devyani/i, 'KFC'],
-  [/cult\.?fit|curefit/i, 'cult.fit'],
-];
 
 /** Suggested starter-category name for a payee or narration. */
 const CATEGORY_RULES: [RegExp, string][] = [
@@ -121,8 +61,8 @@ function titleCase(s: string): string {
 
 /** Clean a raw counterparty name: brand mapping, drop "Pvt Ltd", title case. */
 export function cleanPayee(raw: string): string {
-  const brand = BRANDS.find(([re]) => re.test(raw));
-  if (brand) return brand[1];
+  const brand = matchBrand(raw);
+  if (brand) return brand.name;
   const cleaned = raw
     .replace(/\b(private|pvt|limited|ltd|llp|india|p ltd|pvt ltd|co|inc)\b\.?/gi, ' ')
     .replace(/[^a-z0-9&'. ]/gi, ' ')
@@ -179,7 +119,7 @@ export function parseNarration(text: string): Narration {
 
   let payee: string | null = null;
   let note: string | null = null;
-  const brand = BRANDS.find(([re]) => re.test(raw))?.[1];
+  const brand = matchBrand(raw)?.name;
   const fixed: Partial<Record<Channel, string>> = {
     ATM: 'ATM withdrawal',
     INTEREST: 'Interest',

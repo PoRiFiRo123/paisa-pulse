@@ -18,6 +18,7 @@ import { GroupRow, InsetGroup } from '@/ui/InsetGroup';
 import { Menu } from '@/ui/Menu';
 import { TopBar, useScrollHeader, useTitleTop } from '@/ui/Screen';
 import { transactionTitle } from '@/ui/TransactionRow';
+import { formatForeign, formatRate, minorDigits } from '@/features/currency/currency';
 
 const SOURCE_LABEL: Record<string, string> = {
   manual: 'Added manually',
@@ -108,6 +109,14 @@ export default function TransactionDetailScreen() {
           <GroupRow title="Date" value={format(t.occurredAt, 'EEE, d MMM yyyy')} leading={square('calendar', '#FF3B30')} height={56} />
           <GroupRow title="Time" value={format(t.occurredAt, 'h:mm a')} leading={square('clock', '#FF9500')} height={56} />
           <GroupRow title="Note" value={t.note ?? '—'} leading={square('note.text', '#FFB800')} height={56} />
+          {t.currency && t.originalAmount ? (
+            <GroupRow
+              title="Paid in"
+              value={money.hidden ? '••••' : `${formatForeign(t.originalAmount, t.currency)} at ${formatRate(t.amount / 100 / (t.originalAmount / 10 ** minorDigits(t.currency)))}`}
+              leading={square('globe', '#32ADE6')}
+              height={56}
+            />
+          ) : null}
         </InsetGroup>
         <Text style={[type.footnote, styles.footnote, { color: colors.secondary }]}>
           {SOURCE_LABEL[t.source] ?? 'Added'} {isToday(t.createdAt) ? 'today' : `on ${format(t.createdAt, 'd MMM yyyy')}`}

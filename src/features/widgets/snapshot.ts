@@ -37,7 +37,7 @@ export async function buildWidgetSnapshot(
     topCategories(db, month, 3),
   ]);
   const fmt = (p: number) => (hideAmounts ? MASK : formatINR(p, { decimals: 'auto' }));
-  const overall = budgets.find((b) => b.category === null);
+  const overall = budgets.find((b) => b.category === null && b.budget.period === 'monthly');
   return {
     version: 1,
     month: month.name,

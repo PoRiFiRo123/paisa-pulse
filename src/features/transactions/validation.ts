@@ -14,6 +14,10 @@ export type TransactionInput = {
   note?: string | null;
   /** Epoch ms. Defaults to now. */
   occurredAt?: number;
+  /** Foreign currency (ISO 4217) the money was spent in; null/undefined = INR. */
+  currency?: string | null;
+  /** The amount in `currency`'s minor units. `amount` stays the INR value in paise. */
+  originalAmount?: number | null;
 };
 
 export type TransactionErrorCode =
@@ -24,7 +28,8 @@ export type TransactionErrorCode =
   | 'same_account_transfer'
   | 'to_account_not_allowed'
   | 'category_not_allowed'
-  | 'date_too_far_in_future';
+  | 'date_too_far_in_future'
+  | 'original_amount_invalid';
 
 export type TransactionError = { field: keyof TransactionInput; code: TransactionErrorCode };
 
@@ -50,6 +55,11 @@ export function validateTransaction(input: TransactionInput, now: number = Date.
     if (input.categoryId) errors.push({ field: 'categoryId', code: 'category_not_allowed' });
   } else if (input.toAccountId) {
     errors.push({ field: 'toAccountId', code: 'to_account_not_allowed' });
+  }
+
+  if (input.currency && input.currency !== 'INR') {
+    if (!Number.isSafeInteger(input.originalAmount) || (input.originalAmount ?? 0) <= 0)
+      errors.push({ field: 'originalAmount', code: 'original_amount_invalid' });
   }
 
   if (input.occurredAt !== undefined && input.occurredAt > maxOccurredAt(now))

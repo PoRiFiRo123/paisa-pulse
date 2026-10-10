@@ -12,6 +12,7 @@ const ANDROID: Record<string, AndroidSymbol> = {
   ellipsis: 'more_horiz',
   'ellipsis.circle.fill': 'more_horiz',
   'chevron.down': 'expand_more',
+  'chevron.up': 'expand_less',
   'chevron.right': 'chevron_right',
   'chevron.left': 'chevron_left',
   'chevron.up.chevron.down': 'unfold_more',

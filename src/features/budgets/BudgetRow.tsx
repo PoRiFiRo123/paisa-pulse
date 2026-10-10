@@ -17,7 +17,7 @@ export function BudgetRow({ progress, onPress }: { progress: BudgetProgress; onP
     status === 'over' ? colors.expense : status === 'warning' ? '#FF9500' : status === 'ahead' ? '#FFB800' : (category?.color ?? colors.accent);
   const detail =
     remaining >= 0 ? `${money.amount(remaining)} left of ${money.amount(budget.amount)}` : `${money.amount(-remaining)} over ${money.amount(budget.amount)}`;
-  const hint = status === 'ahead' ? ' · spending fast' : '';
+  const hint = (budget.period === 'weekly' ? ' · this week' : '') + (status === 'ahead' ? ' · spending fast' : '');
   return (
     <Pressable
       onPress={onPress}

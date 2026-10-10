@@ -1,10 +1,11 @@
 import { accounts, budgets, categories, importBatches, recurringRules, savedFilters, settings, transactions } from '@/db/schema';
 import type { DB } from '@/db/types';
+import { formatForeign } from '@/features/currency/currency';
 import { formatINR } from '@/lib/money';
 
 export const BACKUP_FORMAT = 'paisa-pulse-backup';
-/** v2 adds recurring rules, budgets and saved filters; v3 statement imports. Older files still restore. */
-export const BACKUP_VERSION = 3;
+/** v2 adds recurring rules, budgets and saved filters; v3 statement imports; v4 currencies and weekly budgets. Older files still restore. */
+export const BACKUP_VERSION = 4;
 
 export type Backup = {
   format: typeof BACKUP_FORMAT;
@@ -69,10 +70,13 @@ export function parseBackup(json: string): Backup {
   b.budgets ??= [];
   b.savedFilters ??= [];
   b.importBatches ??= [];
+  for (const budget of b.budgets!) budget.period ??= 'monthly';
   for (const t of b.transactions!) {
     t.recurringId ??= null;
     t.importBatchId ??= null;
     t.externalId ??= null;
+    t.currency ??= null;
+    t.originalAmount ??= null;
     if (!Number.isSafeInteger(t.amount) || t.amount <= 0) throw new BackupError('Backup contains an invalid amount.');
   }
   return b as Backup;
@@ -123,7 +127,7 @@ export async function exportCsv(db: DB): Promise<string> {
   const backup = await exportBackup(db);
   const acc = new Map(backup.accounts.map((a) => [a.id, a.name]));
   const cat = new Map(backup.categories.map((c) => [c.id, c]));
-  const header = ['Date', 'Type', 'Amount', 'Account', 'To account', 'Category', 'Subcategory', 'Payee', 'Note', 'ID'];
+  const header = ['Date', 'Type', 'Amount', 'Account', 'To account', 'Category', 'Subcategory', 'Payee', 'Note', 'Original amount', 'ID'];
   const rows = backup.transactions
     .filter((t) => t.deletedAt === null)
     .sort((a, b) => b.occurredAt - a.occurredAt)
@@ -140,6 +144,7 @@ export async function exportCsv(db: DB): Promise<string> {
         parent ? c?.name : '',
         t.payee,
         t.note,
+        t.currency && t.originalAmount ? formatForeign(t.originalAmount, t.currency) : '',
         t.id,
       ]
         .map(csvCell)

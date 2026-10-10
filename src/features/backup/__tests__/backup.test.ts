@@ -59,7 +59,7 @@ describe('backup', () => {
     const { db, raw } = createTestDb();
     await populate(db);
     const lines = (await exportCsv(db)).trimEnd().split('\n');
-    expect(lines[0]).toBe('Date,Type,Amount,Account,To account,Category,Subcategory,Payee,Note,ID');
+    expect(lines[0]).toBe('Date,Type,Amount,Account,To account,Category,Subcategory,Payee,Note,Original amount,ID');
     expect(lines[1]).toMatch(/^2026-09-25 13:24,expense,420\.00,Axis Bank,,Food & Dining,Cafés,"Swiggy, ""Koramangala""","Lunch$/);
     expect(lines.some((l) => l.includes(',transfer,5000.00,Axis Bank,Axis MyZone,,,'))).toBe(true);
     expect(lines.filter((l) => l.includes(',expense,1.00,'))).toHaveLength(0);

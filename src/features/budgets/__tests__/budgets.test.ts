@@ -2,6 +2,7 @@
  * @jest-environment node
  */
 import { createTestDb } from '@/db/__tests__/testDb';
+import { accounts } from '@/db/schema';
 import { createAccount } from '@/features/accounts/mutations';
 import { exportBackup, parseBackup, restoreBackup } from '@/features/backup/backup';
 import { createCategory } from '@/features/categories/mutations';
@@ -77,6 +78,26 @@ describe('budgets', () => {
     expect((await budgetProgress(other.db, SEPT, MID))[0]).toMatchObject({ spent: 5_000_00 });
     raw.close();
     other.raw.close();
+  });
+});
+
+describe('weekly budgets', () => {
+  it('count only the given week and live beside a monthly budget for the same category', async () => {
+    const { db, raw, food } = await setup();
+    const week = { start: Date.UTC(2026, 8, 14), end: Date.UTC(2026, 8, 21) };
+    const monthly = await setBudget(db, food.id, 6_000_00, MID);
+    const weekly = await setBudget(db, food.id, 1_500_00, MID, 'weekly');
+    expect(weekly.id).not.toBe(monthly.id);
+    // A food expense outside this week but inside the month.
+    const [acc] = await db.select().from(accounts).limit(1);
+    await createTransaction(db, { type: 'expense', amount: 300_00, accountId: acc.id, categoryId: food.id, occurredAt: Date.UTC(2026, 8, 3) }, MID);
+    const p = await budgetProgress(db, SEPT, MID, week);
+    expect(p.map((x) => x.budget.period)).toEqual(['monthly', 'weekly']);
+    expect(p[0]).toMatchObject({ spent: 5_300_00 });
+    expect(p[1]).toMatchObject({ spent: 5_000_00, status: 'over' });
+    expect(p[1].elapsed).toBeCloseTo(2 / 7, 2);
+    expect((await budgetableCategories(db, 'weekly')).map((c) => c.name)).toEqual(['Cafés', 'Rent']);
+    raw.close();
   });
 });
 

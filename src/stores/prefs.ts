@@ -5,7 +5,7 @@ import { getAllSettings, setSetting, type SettingsMap } from '@/db/settings';
 
 export type Prefs = Pick<
   SettingsMap,
-  'onboarded' | 'theme' | 'accent' | 'monthStartDay' | 'weekStartDay' | 'hideAmounts' | 'appLock'
+  'onboarded' | 'theme' | 'accent' | 'monthStartDay' | 'weekStartDay' | 'hideAmounts' | 'appLock' | 'merchantLogos'
 > & { lastAccountId?: string };
 
 const DEFAULTS: Prefs = {
@@ -16,6 +16,7 @@ const DEFAULTS: Prefs = {
   weekStartDay: 1,
   hideAmounts: false,
   appLock: false,
+  merchantLogos: false,
 };
 
 type PrefsState = Prefs & {
