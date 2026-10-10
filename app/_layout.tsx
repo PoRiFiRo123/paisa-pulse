@@ -8,6 +8,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { DatabaseProvider } from '@/db/DatabaseProvider';
 import { useAutoBackup } from '@/features/backup/useAutoBackup';
+import { usePendingCaptures } from '@/features/capture/usePendingCaptures';
 import { PdfExtractorProvider } from '@/features/import/PdfExtractor';
 import { useRecurringProcessor } from '@/features/recurring/useRecurringProcessor';
 import { useWidgetSync } from '@/features/widgets/useWidgetSync';
@@ -37,6 +38,7 @@ function AppShell() {
   useRecurringProcessor();
   useWidgetSync();
   useAutoBackup();
+  usePendingCaptures();
   const { dark, colors } = useTheme();
   const base = dark ? DarkTheme : DefaultTheme;
   const navTheme = {
@@ -71,6 +73,7 @@ function AppShell() {
           <Stack.Screen name="subscriptions" />
           <Stack.Screen name="converter" />
           <Stack.Screen name="backups" />
+          <Stack.Screen name="siri" />
           <Stack.Screen name="import" />
           <Stack.Screen name="budget-form" options={sheet([0.6, 0.92])} />
           <Stack.Screen name="recurring-form" options={sheet([0.92])} />

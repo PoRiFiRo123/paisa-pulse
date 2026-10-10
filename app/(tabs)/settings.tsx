@@ -2,7 +2,7 @@ import Constants from 'expo-constants';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { router, useScrollToTop } from 'expo-router';
 import { useRef, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, Platform, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { shareCsvExport } from '@/features/backup/share';
 import { APP_ICONS, type AppIconName, appIconsSupported, currentAppIcon, setAppIcon } from '@/features/settings/appIcon';
@@ -175,6 +175,9 @@ export default function SettingsScreen() {
 
         <GroupHeader title="Data" />
         <InsetGroup>
+          {Platform.OS === 'ios' ? (
+            <GroupRow title="Siri & Shortcuts" leading={icon('waveform', '#5856D6')} chevron onPress={() => router.push('/siri')} />
+          ) : null}
           <GroupRow title="Import Statement" leading={icon('doc.text.magnifyingglass', '#34C759')} chevron onPress={() => router.push('/import')} />
           <GroupRow title="Export CSV" leading={icon('square.and.arrow.up', '#007AFF')} chevron onPress={() => run(shareCsvExport, 'Couldn’t export')} />
           <GroupRow title="Backup & Restore" leading={icon('icloud.fill', '#5E5CE6')} chevron onPress={() => router.push('/backups')} />
