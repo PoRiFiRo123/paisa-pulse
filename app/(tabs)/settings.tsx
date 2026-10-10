@@ -4,10 +4,9 @@ import { router, useScrollToTop } from 'expo-router';
 import { useRef, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
-import { pickAndRestoreBackup, shareCsvExport, shareJsonBackup } from '@/features/backup/share';
+import { shareCsvExport } from '@/features/backup/share';
 import { APP_ICONS, type AppIconName, appIconsSupported, currentAppIcon, setAppIcon } from '@/features/settings/appIcon';
 import { usePrefs } from '@/stores/prefs';
-import { useToast } from '@/stores/toast';
 import { ACCENTS, type AccentKey } from '@/theme/tokens';
 import { type } from '@/theme/typography';
 import { useTheme } from '@/theme/useTheme';
@@ -29,7 +28,6 @@ export default function SettingsScreen() {
   useScrollToTop(scrollRef);
   const { colors } = useTheme();
   const prefs = usePrefs();
-  const toast = useToast((s) => s.show);
   const { scrollY, onScroll } = useScrollHeader();
   const titleTop = useTitleTop();
   const bottom = useBottomSpace();
@@ -49,22 +47,6 @@ export default function SettingsScreen() {
   };
 
   const run = (task: () => Promise<unknown>, failure: string) => task().catch((e: Error) => Alert.alert(failure, e.message));
-
-  const restore = () =>
-    Alert.alert('Restore from backup?', 'This replaces everything in Paisa Pulse with the backup’s data.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Choose File',
-        style: 'destructive',
-        onPress: () =>
-          run(async () => {
-            if (await pickAndRestoreBackup()) {
-              await usePrefs.getState().hydrate();
-              toast({ message: 'Backup restored' });
-            }
-          }, 'Couldn’t restore'),
-      },
-    ]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -195,14 +177,7 @@ export default function SettingsScreen() {
         <InsetGroup>
           <GroupRow title="Import Statement" leading={icon('doc.text.magnifyingglass', '#34C759')} chevron onPress={() => router.push('/import')} />
           <GroupRow title="Export CSV" leading={icon('square.and.arrow.up', '#007AFF')} chevron onPress={() => run(shareCsvExport, 'Couldn’t export')} />
-          <Menu
-            items={[
-              { title: 'Export Backup', icon: 'square.and.arrow.up', onPress: () => run(shareJsonBackup, 'Couldn’t back up') },
-              { title: 'Restore from Backup…', icon: 'square.and.arrow.down', onPress: restore },
-            ]}
-          >
-            {(open) => <GroupRow title="Backup & Restore" leading={icon('square.and.arrow.down', '#5E5CE6')} chevron onPress={open} />}
-          </Menu>
+          <GroupRow title="Backup & Restore" leading={icon('icloud.fill', '#5E5CE6')} chevron onPress={() => router.push('/backups')} />
         </InsetGroup>
 
         <View style={styles.footer}>

@@ -1,3 +1,4 @@
+import { format } from 'date-fns';
 import * as Haptics from 'expo-haptics';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { router } from 'expo-router';
@@ -8,7 +9,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { appDb } from '@/db/client';
 import type { AccountType } from '@/db/schema';
+import { databaseWasReset } from '@/db/encryption';
 import { createAccount } from '@/features/accounts/mutations';
+import { type BackupFile, listBackups } from '@/features/backup/auto';
+import { allStores } from '@/features/backup/stores';
 import { accountIcon } from '@/features/accounts/presentation';
 import { usePrefs } from '@/stores/prefs';
 import { ACCENTS, type AccentKey } from '@/theme/tokens';
@@ -37,6 +41,13 @@ export default function OnboardingScreen() {
   const [accounts, setAccounts] = useState(SUGGESTIONS);
   const [biometrics, setBiometrics] = useState(false);
   const [lock, setLock] = useState(false);
+  // A new phone: offer the newest backup found in iCloud Drive or app storage.
+  const [latest, setLatest] = useState<BackupFile | null>(null);
+  useEffect(() => {
+    Promise.all(allStores().map((st) => st.available().then((ok) => (ok ? listBackups(st) : [])).catch(() => [] as BackupFile[])))
+      .then((lists) => setLatest(lists.flat().sort((a, b) => b.at - a.at)[0] ?? null))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     Promise.all([LocalAuthentication.hasHardwareAsync(), LocalAuthentication.isEnrolledAsync()])
@@ -80,6 +91,16 @@ export default function OnboardingScreen() {
                     <Text style={[type.body, { color: colors.label }]}>{text}</Text>
                   </View>
                 ))}
+                <Pressable
+                  onPress={() => router.push({ pathname: '/backups', params: { restore: '1' } })}
+                  accessibilityRole="button"
+                  style={[styles.restore, { backgroundColor: latest || databaseWasReset ? `${colors.accent}1F` : 'transparent' }]}
+                >
+                  <Icon name="arrow.clockwise" size={16} color={colors.accent} />
+                  <Text style={[type.subhead, { color: colors.accent, fontWeight: '600', flex: 1 }]}>
+                    {latest ? `Restore your backup from ${format(latest.at, 'd MMM yyyy')}` : 'Have a backup? Restore it'}
+                  </Text>
+                </Pressable>
               </>
             ) : null}
 
@@ -177,5 +198,6 @@ const styles = StyleSheet.create({
   footer: { position: 'absolute', left: 16, right: 16, bottom: 0, gap: 16 },
   dots: { flexDirection: 'row', gap: 8, alignSelf: 'center' },
   dot: { width: 8, height: 8, borderRadius: 4 },
+  restore: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10, marginTop: 4 },
   cta: { height: 54, alignItems: 'center', justifyContent: 'center' },
 });

@@ -20,6 +20,8 @@ export type SettingsMap = {
   'fx.rates': { at: number; inrPer: Record<string, number>; source: string };
   /** Foreign currencies used most recently, newest first. */
   recentCurrencies: string[];
+  /** Automatic backups: how often, and how the last one went. */
+  autoBackup: { frequency: 'off' | 'daily' | 'weekly'; lastAt: number | null; lastError: string | null; lastStore?: 'icloud' | 'device' };
 };
 
 export async function getSetting<K extends keyof SettingsMap>(db: DB, key: K): Promise<SettingsMap[K] | undefined> {

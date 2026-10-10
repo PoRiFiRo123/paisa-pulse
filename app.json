@@ -42,7 +42,12 @@
           "useSQLCipher": true
         }
       ],
-      "expo-secure-store",
+      [
+        "expo-secure-store",
+        {
+          "configureAndroidBackup": false
+        }
+      ],
       "expo-sharing",
       [
         "expo-local-authentication",
@@ -143,7 +148,14 @@
           "cameraPermission": false,
           "microphonePermission": "Paisa Pulse listens when you tap the microphone so you can say what you spent."
         }
-      ]
+      ],
+      [
+        "react-native-cloud-storage",
+        {
+          "iCloudContainerEnvironment": "Production"
+        }
+      ],
+      "./plugins/withAndroidBackupRules"
     ],
     "experiments": {
       "typedRoutes": true

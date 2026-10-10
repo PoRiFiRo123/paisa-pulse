@@ -58,7 +58,30 @@ export function openEncryptedDatabase(plainName: string, encryptedName: string, 
 
   const db = openDatabaseSync(encryptedName, options);
   db.execSync(keyPragma);
-  // Fails fast with "file is not a database" if the key is wrong.
-  db.getFirstSync('SELECT count(*) FROM sqlite_master;');
-  return db;
+  try {
+    // Fails fast with "file is not a database" if the key is wrong.
+    db.getFirstSync('SELECT count(*) FROM sqlite_master;');
+    return db;
+  } catch {
+    // The file came back from a phone backup or migration but its key (kept only on the
+    // old device) didn't. It can't be read here, so set it aside and start fresh; the app
+    // then offers to restore from a Paisa Pulse backup.
+    db.closeSync();
+    setAsideUnreadable(encryptedName);
+    databaseWasReset = true;
+    const fresh = openDatabaseSync(encryptedName, options);
+    fresh.execSync(keyPragma);
+    return fresh;
+  }
+}
+
+/** True when this launch found an encrypted database it couldn't open (see above). */
+export let databaseWasReset = false;
+
+function setAsideUnreadable(name: string) {
+  const stamp = Date.now();
+  for (const suffix of ['', '-wal', '-shm']) {
+    const file = new File(`file://${defaultDatabaseDirectory}/${name}${suffix}`);
+    if (file.exists) file.move(new File(`file://${defaultDatabaseDirectory}/${name}.unreadable-${stamp}${suffix}`));
+  }
 }
