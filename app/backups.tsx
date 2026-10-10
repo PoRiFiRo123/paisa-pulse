@@ -181,7 +181,9 @@ export default function BackupsScreen() {
             <View key={store.kind}>
               <GroupHeader title={`Restore from ${store.label}`} />
               {!available ? (
-                <Text style={[type.footnote, styles.footnote, { color: colors.secondary }]}>Not available. Check that you’re signed in to iCloud Drive.</Text>
+                <Text style={[type.footnote, styles.footnote, { color: colors.secondary }]}>
+                  {store.kind === 'icloud' ? 'Not available. Check that you’re signed in to iCloud Drive.' : 'Not available on this device.'}
+                </Text>
               ) : files.length ? (
                 <InsetGroup>
                   {files.slice(0, 14).map((f) => (

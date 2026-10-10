@@ -140,31 +140,33 @@ function DraftRow({
       >
         <Icon name={d.include ? 'checkmark.circle.fill' : 'circle'} size={24} color={d.include ? colors.accent : colors.secondary} />
       </Pressable>
-      <Menu items={items}>
-        {(open) => (
-          <Pressable onPress={open} style={styles.body} accessibilityRole="button" accessibilityHint="Change amount, category, account or type">
-            {d.type === 'transfer' ? (
-              <CategoryIcon icon="arrow.left.arrow.right" color={TRANSFER_COLOR} size={34} />
-            ) : (
-              <MerchantIcon name={d.payee} fallbackIcon={category?.icon ?? (account ? accountIcon(account.type) : 'questionmark')} fallbackColor={category?.color ?? UNCATEGORISED_COLOR} size={34} />
-            )}
-            <View style={{ flex: 1, gap: 2 }}>
-              <Text style={[type.body, { color: colors.label }]} numberOfLines={1}>
-                {title}
-              </Text>
-              <Text style={[type.footnote, { color: colors.secondary }]} numberOfLines={1}>
-                {subtitle}
-              </Text>
-              {d.warning ? (
-                <Text style={[type.footnote, { color: '#FF9500' }]} numberOfLines={2}>
-                  {d.warning}
+      <View style={{ flex: 1 }}>
+        <Menu items={items}>
+          {(open) => (
+            <Pressable onPress={open} style={styles.body} accessibilityRole="button" accessibilityHint="Change amount, category, account or type">
+              {d.type === 'transfer' ? (
+                <CategoryIcon icon="arrow.left.arrow.right" color={TRANSFER_COLOR} size={34} />
+              ) : (
+                <MerchantIcon name={d.payee} fallbackIcon={category?.icon ?? (account ? accountIcon(account.type) : 'questionmark')} fallbackColor={category?.color ?? UNCATEGORISED_COLOR} size={34} />
+              )}
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text style={[type.body, { color: colors.label }]} numberOfLines={1}>
+                  {title}
                 </Text>
-              ) : null}
-            </View>
-            <Text style={[type.bodyAmount, { color: d.type === 'income' ? colors.income : colors.label }]}>{money.signed(d.amount, d.type)}</Text>
-          </Pressable>
-        )}
-      </Menu>
+                <Text style={[type.footnote, { color: colors.secondary }]} numberOfLines={1}>
+                  {subtitle}
+                </Text>
+                {d.warning ? (
+                  <Text style={[type.footnote, { color: '#FF9500' }]} numberOfLines={2}>
+                    {d.warning}
+                  </Text>
+                ) : null}
+              </View>
+              <Text style={[type.bodyAmount, { color: d.type === 'income' ? colors.income : colors.label }]}>{money.signed(d.amount, d.type)}</Text>
+            </Pressable>
+          )}
+        </Menu>
+      </View>
     </View>
   );
 }

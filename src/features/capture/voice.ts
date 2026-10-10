@@ -173,24 +173,24 @@ export function parseSpokenTransactions(sentence: string, ctx: CaptureContext): 
   const text = wordsToDigits(sentence.replace(/[“”"]/g, ''));
   const drafts: CaptureDraft[] = [];
   const skipped: string[] = [];
-  // A date or account said once applies to the following phrases too ("yesterday 200 lunch and 50 chai").
+  const phrases = splitPhrases(text);
+  // A date covers the phrases after it ("yesterday 200 lunch and 50 chai") and, until one is
+  // said, the phrases before it too ("250 lunch, 80 auto and 40 chai yesterday").
+  const ownDates = phrases.map((p) => findDate(p.replace(findAmount(p)?.match ?? '', ' '), ctx.now));
+  const closing = ownDates.find(Boolean)?.at ?? null;
   let carryDate: number | null = null;
   let carryAccount: string | null = null;
 
-  splitPhrases(text).forEach((phrase, index) => {
+  phrases.forEach((phrase, index) => {
     const amount = findAmount(phrase);
+    const date = ownDates[index];
+    if (date) carryDate = date.at;
     if (!amount) {
       if (phrase.trim()) skipped.push(phrase.trim());
-      const d = findDate(phrase, ctx.now);
-      if (d) carryDate = d.at;
       return;
     }
     let rest = phrase.replace(amount.match, ' ');
-    const date = findDate(rest, ctx.now);
-    if (date) {
-      rest = rest.replace(new RegExp(date.match, 'i'), ' ');
-      carryDate = date.at;
-    }
+    if (date) rest = rest.replace(new RegExp(date.match, 'i'), ' ');
 
     let type: CaptureDraft['type'] = INCOME.test(phrase) ? 'income' : 'expense';
     let accountId: string | null = null;
@@ -240,11 +240,19 @@ export function parseSpokenTransactions(sentence: string, ctx: CaptureContext): 
       rest = rest.replace(named[0], ' ');
     }
     const description = tidy(rest.replace(FILLER, ' '));
-    if (!payee && matchBrand(description)) {
-      payee = matchBrand(description)!.name;
+    // The words left after the payee become the note ("zomato dinner with team" → Zomato · Dinner with team).
+    let remainder = description;
+    const brand = payee ? null : matchBrand(description);
+    if (brand) {
+      payee = brand.name;
+      remainder = tidy(description.replace(brand.match, ' '));
     }
-    const note = description && description.toLowerCase() !== payee?.toLowerCase() ? displayName(description) : null;
-    const brandInNote = note && payee && note.toLowerCase().includes(payee.toLowerCase());
+    // No named payee: what they said ("lunch", "auto") is the title, as typed in Quick Add.
+    if (!payee && description && type !== 'transfer') {
+      payee = displayName(description);
+      remainder = '';
+    }
+    const note = remainder && remainder.toLowerCase() !== payee?.toLowerCase() ? displayName(remainder) : null;
 
     drafts.push({
       key: `voice-${index}`,
@@ -253,9 +261,9 @@ export function parseSpokenTransactions(sentence: string, ctx: CaptureContext): 
       accountId: accountId ?? carryAccount ?? ctx.defaultAccountId ?? ctx.accounts[0]?.id ?? null,
       toAccountId,
       categoryId: guessCategory(description, payee, type, ctx),
-      payee,
-      note: brandInNote ? null : note,
-      occurredAt: carryDate ?? ctx.now,
+      payee: type === 'transfer' ? null : payee,
+      note: type === 'transfer' ? (description ? displayName(description) : null) : note,
+      occurredAt: carryDate ?? closing ?? ctx.now,
       source: phrase.trim(),
       include: true,
     });

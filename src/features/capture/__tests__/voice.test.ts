@@ -65,12 +65,24 @@ describe('phrases and dates', () => {
 describe('parseSpokenTransactions', () => {
   it('logs several expenses from one sentence', () => {
     const { drafts } = parseSpokenTransactions('250 lunch, 80 auto and 40 chai', ctx);
-    expect(drafts.map((d) => [d.amount, d.note, d.categoryId, d.type])).toEqual([
+    expect(drafts.map((d) => [d.amount, d.payee, d.categoryId, d.type])).toEqual([
       [250_00, 'Lunch', 'food', 'expense'],
       [80_00, 'Auto', 'cab', 'expense'],
       [40_00, 'Chai', 'food', 'expense'],
     ]);
     expect(drafts.every((d) => d.accountId === 'axis' && d.occurredAt === NOW)).toBe(true);
+  });
+
+  it('applies a date to the phrases before it until another is said', () => {
+    const { drafts } = parseSpokenTransactions('250 lunch, 80 auto and 40 chai yesterday, paid 1.5k on zomato', ctx);
+    expect(drafts.map((d) => new Date(d.occurredAt).getDate())).toEqual([9, 9, 9, 9]);
+    const mixed = parseSpokenTransactions('250 lunch today, 80 auto yesterday', ctx).drafts;
+    expect(mixed.map((d) => new Date(d.occurredAt).getDate())).toEqual([10, 9]);
+  });
+
+  it('keeps extra words as a note next to a brand', () => {
+    const [d] = parseSpokenTransactions('650 zomato dinner with team', ctx).drafts;
+    expect(d).toMatchObject({ payee: 'Zomato', note: 'Dinner with team', categoryId: 'food' });
   });
 
   it('picks up payees, brands, accounts and dates', () => {

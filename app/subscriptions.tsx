@@ -77,7 +77,7 @@ export default function SubscriptionsScreen() {
                       {d.payee}
                     </Text>
                     <Text style={[type.footnote, { color: colors.secondary }]} numberOfLines={1}>
-                      {money.amount(d.amount)} {d.frequency} · {d.transactionIds.length} payments · last {format(d.lastAt, 'd MMM')}
+                      {money.amount(d.amount)} {d.frequency} · last paid {format(d.lastAt, 'd MMM')}
                     </Text>
                   </View>
                   <Pressable
@@ -156,13 +156,12 @@ function SubscriptionRow({ s, now, onPress }: { s: Subscription; now: number; on
           {name}
         </Text>
         <Text style={[type.footnote, { color: colors.secondary }]} numberOfLines={1}>
-          {describeFrequency(s.rule)} · {s.account.name} · {status}
+          {describeFrequency(s.rule)} · {status}
         </Text>
-        {s.payments ? (
-          <Text style={[type.footnote, { color: colors.secondary }]} numberOfLines={1}>
-            Paid {money.amount(s.paid)} since {format(s.firstPaidAt!, 'MMM yyyy')} · {s.payments} {s.payments === 1 ? 'payment' : 'payments'}
-          </Text>
-        ) : null}
+        <Text style={[type.footnote, { color: colors.secondary }]} numberOfLines={1}>
+          {s.account.name}
+          {s.payments ? ` · paid ${money.amount(s.paid)} since ${format(s.firstPaidAt!, 'MMM yyyy')}` : ''}
+        </Text>
       </View>
       <View style={{ alignItems: 'flex-end', gap: 2 }}>
         <Text style={[type.bodyAmount, { color: colors.label }]}>{money.amount(s.rule.amount)}</Text>

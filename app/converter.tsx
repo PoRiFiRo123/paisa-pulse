@@ -161,7 +161,7 @@ function CurrencyButton({ code, onPress }: { code: string; onPress: () => void }
 const styles = StyleSheet.create({
   card: { marginHorizontal: 16, marginTop: 16, borderRadius: 22, padding: 16 },
   line: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64 },
-  input: { flex: 1, textAlign: 'right', padding: 0 },
+  input: { flex: 1, minWidth: 0, textAlign: 'right', padding: 0, fontSize: 34, lineHeight: 42, minHeight: 48 },
   swapRow: { justifyContent: 'center', marginVertical: 4 },
   swap: { position: 'absolute', alignSelf: 'center', width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
   currency: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, height: 40, borderRadius: 20 },
