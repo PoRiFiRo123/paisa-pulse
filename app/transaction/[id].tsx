@@ -27,6 +27,8 @@ const SOURCE_LABEL: Record<string, string> = {
   sms: 'Captured from SMS',
   shortcut: 'Added with Shortcuts',
   import: 'Imported from a statement',
+  voice: 'Added by voice',
+  screenshot: 'Read from a screenshot',
 };
 
 export default function TransactionDetailScreen() {

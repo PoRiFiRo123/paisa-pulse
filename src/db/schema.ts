@@ -24,7 +24,7 @@ export const TRANSACTION_TYPES = ['expense', 'income', 'transfer'] as const;
 export type TransactionType = (typeof TRANSACTION_TYPES)[number];
 
 // Auto-capture (later phases) writes into the same table with a different source.
-export const TRANSACTION_SOURCES = ['manual', 'recurring', 'notification', 'sms', 'shortcut', 'import'] as const;
+export const TRANSACTION_SOURCES = ['manual', 'recurring', 'notification', 'sms', 'shortcut', 'import', 'voice', 'screenshot'] as const;
 export type TransactionSource = (typeof TRANSACTION_SOURCES)[number];
 
 export const accounts = sqliteTable('accounts', {

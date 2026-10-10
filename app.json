@@ -124,7 +124,26 @@
           }
         ]
       ],
-      "expo-image"
+      "expo-image",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Paisa Pulse listens when you tap the microphone so you can say what you spent.",
+          "speechRecognitionPermission": "Paisa Pulse turns what you say into transactions on your phone.",
+          "androidSpeechServicePackages": [
+            "com.google.android.googlequicksearchbox",
+            "com.google.android.as"
+          ]
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Paisa Pulse reads payment screenshots you pick to add them as transactions. Images stay on your phone.",
+          "cameraPermission": false,
+          "microphonePermission": "Paisa Pulse listens when you tap the microphone so you can say what you spent."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

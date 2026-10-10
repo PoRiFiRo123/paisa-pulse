@@ -84,6 +84,11 @@ const ANDROID: Record<string, AndroidSymbol> = {
   'info.circle': 'info',
   'hand.raised.fill': 'back_hand',
   'iphone': 'smartphone',
+  'mic.fill': 'mic',
+  'stop.fill': 'stop',
+  'photo.on.rectangle': 'photo_library',
+  'waveform': 'graphic_eq',
+  'icloud.fill': 'cloud',
   // Categories
   'fork.knife': 'restaurant',
   'cart.fill': 'shopping_cart',

@@ -26,7 +26,7 @@ import { useTheme } from '@/theme/useTheme';
 import { CategoryChip } from '@/ui/CategoryCapsule';
 import { CategoryIcon } from '@/ui/CategoryIcon';
 import { DateTimeSheet, pickDateTimeAndroid } from '@/ui/DateTimeSheet';
-import { GlassButton } from '@/ui/Glass';
+import { GlassButton, GlassGroup } from '@/ui/Glass';
 import { Icon } from '@/ui/Icon';
 import { GroupRow, InsetGroup } from '@/ui/InsetGroup';
 import { applyKey, Keypad } from '@/ui/Keypad';
@@ -214,15 +214,29 @@ export default function QuickAddScreen() {
   return (
     <View style={[styles.sheet, { backgroundColor: isLiquidGlassAvailable() ? 'transparent' : colors.background, paddingBottom: Math.max(insets.bottom, 16) }]}>
       <View style={styles.toolbar}>
-        <GlassButton icon="xmark" accessibilityLabel="Cancel" onPress={() => router.back()} />
+        <GlassGroup>
+          <GlassButton icon="xmark" accessibilityLabel="Cancel" onPress={() => router.back()} />
+          {editing ? null : (
+            <GlassButton
+              icon="photo.on.rectangle"
+              accessibilityLabel="Add from screenshots"
+              onPress={() => router.replace({ pathname: '/capture', params: { mode: 'screenshot' } })}
+            />
+          )}
+        </GlassGroup>
         <Text style={[type.headline, { color: colors.label }]}>{title}</Text>
-        <GlassButton
-          icon="checkmark"
-          accessibilityLabel="Save"
-          tint={amount && amount > 0 ? colors.accent : undefined}
-          iconColor={amount && amount > 0 ? '#FFFFFF' : colors.secondary}
-          onPress={save}
-        />
+        <GlassGroup>
+          {editing ? null : (
+            <GlassButton icon="mic.fill" accessibilityLabel="Say it instead" onPress={() => router.replace({ pathname: '/capture', params: { mode: 'voice' } })} />
+          )}
+          <GlassButton
+            icon="checkmark"
+            accessibilityLabel="Save"
+            tint={amount && amount > 0 ? colors.accent : undefined}
+            iconColor={amount && amount > 0 ? '#FFFFFF' : colors.secondary}
+            onPress={save}
+          />
+        </GlassGroup>
       </View>
 
       <View style={styles.pad}>
