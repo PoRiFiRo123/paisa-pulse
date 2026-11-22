@@ -4,57 +4,226 @@ import SwiftUI
 struct AccountsView: View {
   @Query(sort: \Account.sortOrder) private var accounts: [Account]
   @Query(filter: #Predicate<Txn> { $0.deletedAt == nil }) private var txns: [Txn]
+  @Query(filter: #Predicate<PaymentCard> { $0.archivedAt == nil }) private var cards: [PaymentCard]
   @AppStorage(PrefKey.hideAmounts, store: AppGroup.defaults) private var hidden = false
-  @State private var adding = false
+  @State private var adding: AccountType?
+  @Namespace private var ns
 
   var body: some View {
     let balances = Ledger.balances(accounts: accounts, txns: txns)
-    let active = accounts.filter { $0.archivedAt == nil }
+    let active = accounts.filter { $0.archivedAt == nil }.sorted { ($0.type.order, $0.sortOrder) < ($1.type.order, $1.sortOrder) }
     let net = Ledger.netWorth(accounts: accounts, balances: balances)
-    List {
-      Section {
-        VStack(alignment: .leading, spacing: 6) {
+    ScrollView {
+      VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: 4) {
           Text("Net worth").font(.subheadline).foregroundStyle(.secondary)
-          Text(Money.format(net, hidden: hidden))
-            .font(.system(size: 36, weight: .bold, design: .rounded)).monospacedDigit()
+          Text(Money.format(net, hidden: hidden)).font(.system(size: 36, weight: .bold, design: .rounded)).monospacedDigit()
             .foregroundStyle(net < 0 ? Color.expense : .primary)
-          Text(net < 0 ? "You owe more than you have" : "Across \(active.count) accounts")
-            .font(.footnote).foregroundStyle(.secondary)
+          NavigationLink { NetWorthView() } label: {
+            Label("Net worth over time", systemImage: "chart.line.uptrend.xyaxis").font(.subheadline.weight(.medium))
+          }
         }
-        .padding(.vertical, 6)
-        NavigationLink { NetWorthView() } label: { Label("Net worth over time", systemImage: "chart.line.uptrend.xyaxis") }
-      }
-      ForEach(AccountType.allCases) { type in
-        let items = active.filter { $0.type == type }
-        if !items.isEmpty {
-          Section(type.plural) {
-            ForEach(items) { a in
-              NavigationLink { AccountDetailView(account: a) } label: {
-                AccountRow(account: a, balance: balances[a.id] ?? 0)
-              }
+        .padding(.horizontal, 4)
+
+        if active.isEmpty {
+          EmptyHint(title: "No accounts", icon: "creditcard", message: "Add your bank account, card or cash to start.")
+        }
+        // Wallet: cards overlap like Apple Wallet; tap one to open it.
+        VStack(spacing: -128) {
+          ForEach(Array(active.enumerated()), id: \.element.id) { i, a in
+            NavigationLink {
+              AccountDetailView(account: a).modifier(ZoomDestination(id: a.id, ns: ns))
+            } label: {
+              WalletCard(account: a, balance: balances[a.id] ?? 0, cards: cards.filter { $0.accountId == a.id })
+                .shadow(color: .black.opacity(0.18), radius: 10, y: -4)
             }
+            .buttonStyle(.plain)
+            .modifier(ZoomSource(id: a.id, ns: ns))
+            .zIndex(Double(i))
           }
         }
-      }
-      let archived = accounts.filter { $0.archivedAt != nil }
-      if !archived.isEmpty {
-        Section("Archived") {
+        .padding(.bottom, 8)
+
+        let archived = accounts.filter { $0.archivedAt != nil }
+        if !archived.isEmpty {
+          Text("Archived").font(.headline).foregroundStyle(.secondary).padding(.top, 8)
           ForEach(archived) { a in
-            NavigationLink { AccountDetailView(account: a) } label: { AccountRow(account: a, balance: balances[a.id] ?? 0) }
+            NavigationLink { AccountDetailView(account: a) } label: {
+              AccountRow(account: a, balance: balances[a.id] ?? 0).padding(12)
+                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 18))
+            }
+            .buttonStyle(.plain)
           }
         }
       }
+      .padding(.horizontal, 16)
+      .padding(.bottom, 120)
     }
+    .background(Color(.systemGroupedBackground))
     .navigationTitle("Accounts")
     .toolbar {
       ToolbarItem(placement: .topBarTrailing) {
-        Button { adding = true } label: { Image(systemName: "plus") }.accessibilityLabel("Add account")
+        Menu {
+          Button { adding = .bank } label: { Label("Bank account", systemImage: "building.columns.fill") }
+          Button { adding = .card } label: { Label("Credit card", systemImage: "creditcard.fill") }
+          Button { adding = .cash } label: { Label("Cash", systemImage: "banknote.fill") }
+          Button { adding = .wallet } label: { Label("Wallet (Paytm, Amazon Pay…)", systemImage: "wallet.bifold.fill") }
+        } label: { Image(systemName: "plus") }
+        .accessibilityLabel("Add account")
       }
     }
-    .sheet(isPresented: $adding) { NavigationStack { AccountFormView(account: nil) } }
-    .overlay {
-      if accounts.isEmpty {
-        EmptyHint(title: "No accounts", icon: "creditcard", message: "Add your bank account, card or cash to start.")
+    .sheet(item: $adding) { type in NavigationStack { AccountFormView(account: nil, initialType: type) } }
+  }
+}
+
+/// iOS 18 zoom transition from a wallet card into its account.
+struct ZoomSource: ViewModifier {
+  let id: String; let ns: Namespace.ID
+  func body(content: Content) -> some View { content.matchedTransitionSource(id: id, in: ns) }
+}
+struct ZoomDestination: ViewModifier {
+  let id: String; let ns: Namespace.ID
+  func body(content: Content) -> some View { content.navigationTransition(.zoom(sourceID: id, in: ns)) }
+}
+
+extension AccountType {
+  var order: Int { switch self { case .bank: 0; case .card: 1; case .wallet: 2; case .cash: 3 } }
+}
+
+/// An account drawn as a card: gradient in the account colour, balance, and a peek of its linked cards.
+struct WalletCard: View {
+  let account: Account
+  let balance: Int
+  let cards: [PaymentCard]
+  @AppStorage(PrefKey.hideAmounts, store: AppGroup.defaults) private var hidden = false
+
+  var body: some View {
+    let base = Color(hex: account.color)
+    let primary = cards.first { $0.kind == "credit" } ?? cards.first
+    ZStack(alignment: .topLeading) {
+      RoundedRectangle(cornerRadius: 24, style: .continuous)
+        .fill(LinearGradient(colors: [base, base.mix(with: .black, by: 0.35)], startPoint: .topLeading, endPoint: .bottomTrailing))
+      // Soft light sweeps give the card some depth.
+      Circle().fill(.white.opacity(0.10)).frame(width: 260).offset(x: 170, y: -120)
+      Circle().fill(.white.opacity(0.06)).frame(width: 200).offset(x: -60, y: 110)
+      VStack(alignment: .leading, spacing: 0) {
+        HStack(alignment: .top) {
+          Image(systemName: account.icon).font(.system(size: 18, weight: .semibold))
+            .frame(width: 34, height: 34).background(.white.opacity(0.18), in: RoundedRectangle(cornerRadius: 10))
+          VStack(alignment: .leading, spacing: 1) {
+            Text(account.name).font(.headline).lineLimit(1)
+            Text(account.institution ?? account.type.label).font(.caption).opacity(0.75).lineLimit(1)
+          }
+          Spacer()
+          if let p = primary { NetworkMark(network: p.network) }
+          else if account.type == .cash { Image(systemName: "banknote").font(.title3).opacity(0.8) }
+        }
+        Spacer(minLength: 0)
+        Text(balance < 0 ? (account.type == .card ? "Due" : "Overdrawn") : "Balance").font(.caption).opacity(0.75)
+        Text(Money.format(balance, hidden: hidden)).font(.system(size: 28, weight: .bold, design: .rounded)).monospacedDigit()
+        HStack {
+          if let l = account.last4 ?? primary?.last4 {
+            Text("•••• \(l)").font(.system(.subheadline, design: .monospaced).weight(.medium)).opacity(0.85)
+          }
+          Spacer()
+          if account.type != .card, !cards.isEmpty {
+            HStack(spacing: -10) {
+              ForEach(cards.prefix(3)) { c in
+                RoundedRectangle(cornerRadius: 4).fill(Color(hex: c.color ?? account.color).mix(with: .white, by: 0.25))
+                  .frame(width: 30, height: 20).overlay(RoundedRectangle(cornerRadius: 4).stroke(.white.opacity(0.6), lineWidth: 1))
+              }
+            }
+            Text("\(cards.count) card\(cards.count == 1 ? "" : "s")").font(.caption.weight(.semibold)).opacity(0.85)
+          }
+          if account.type == .card, let limit = account.creditLimit, limit > 0 {
+            Text("\(Int(Double(max(0, -balance)) / Double(limit) * 100))% used").font(.caption.weight(.semibold)).opacity(0.85)
+          }
+        }
+      }
+      .padding(18)
+    }
+    .foregroundStyle(.white)
+    .frame(height: 200)
+    .contentShape(RoundedRectangle(cornerRadius: 24))
+    .accessibilityElement(children: .combine)
+  }
+}
+
+/// Network wordmark drawn in type (no logos copied).
+struct NetworkMark: View {
+  let network: String
+  var body: some View {
+    switch network {
+    case "mastercard":
+      HStack(spacing: -8) { Circle().fill(Color(hex: "#EB001B")).frame(width: 22); Circle().fill(Color(hex: "#F79E1B").opacity(0.9)).frame(width: 22) }
+    case "visa": Text("VISA").font(.system(size: 20, weight: .heavy)).italic()
+    case "rupay": Text("RuPay").font(.system(size: 17, weight: .heavy)).italic()
+    case "amex": Text("AMEX").font(.system(size: 15, weight: .heavy)).padding(.horizontal, 5).background(.white.opacity(0.2), in: RoundedRectangle(cornerRadius: 4))
+    default: Text(CardNumber.networkName(network).uppercased()).font(.system(size: 13, weight: .bold))
+    }
+  }
+}
+
+/// A payment card face (debit or credit), used in the account's card stack.
+struct PaymentCardFace: View {
+  let card: PaymentCard
+  let accountColor: String
+  var body: some View {
+    let base = Color(hex: card.color ?? accountColor)
+    ZStack(alignment: .topLeading) {
+      RoundedRectangle(cornerRadius: 18, style: .continuous)
+        .fill(LinearGradient(colors: [base.mix(with: .white, by: 0.12), base.mix(with: .black, by: 0.3)], startPoint: .topLeading, endPoint: .bottomTrailing))
+      RoundedRectangle(cornerRadius: 5).fill(LinearGradient(colors: [Color(hex: "#E8C77A"), Color(hex: "#B8913F")], startPoint: .top, endPoint: .bottom))
+        .frame(width: 38, height: 28).offset(x: 18, y: 52)
+      VStack(alignment: .leading) {
+        HStack {
+          Text(card.kind == "credit" ? "CREDIT" : "DEBIT").font(.caption2.weight(.bold)).tracking(1.5).opacity(0.8)
+          Spacer()
+          NetworkMark(network: card.network)
+        }
+        Spacer()
+        Text("••••  ••••  ••••  \(card.last4)").font(.system(.body, design: .monospaced).weight(.semibold))
+        HStack {
+          Text(card.nameOnCard ?? card.label ?? "").font(.caption.weight(.medium)).lineLimit(1).opacity(0.85)
+          Spacer()
+          if let e = card.expiryText { Text(e).font(.caption.monospacedDigit()).opacity(0.85) }
+        }
+      }
+      .padding(16)
+    }
+    .foregroundStyle(.white)
+    .frame(height: 170)
+  }
+}
+
+/// Linked cards as a fanned stack; tap to spread them out.
+struct CardStack: View {
+  let cards: [PaymentCard]
+  let accountColor: String
+  @Binding var editing: PaymentCard?
+  @Environment(\.modelContext) private var context
+  @State private var spread = false
+
+  var body: some View {
+    VStack(spacing: spread ? 12 : -150) {
+      ForEach(Array(cards.enumerated()), id: \.element.id) { i, c in
+        PaymentCardFace(card: c, accountColor: accountColor)
+          .scaleEffect(spread ? 1 : 1 - CGFloat(cards.count - 1 - i) * 0.04)
+          .shadow(color: .black.opacity(0.2), radius: 8, y: 4)
+          .zIndex(Double(i))
+          .onTapGesture { withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { if spread { editing = c } else { spread = true } } }
+          .contextMenu {
+            Button { editing = c } label: { Label("Edit", systemImage: "pencil") }
+            Button(role: .destructive) { c.archivedAt = .now; try? context.save() } label: { Label("Remove Card", systemImage: "trash") }
+          }
+      }
+    }
+    .padding(.top, spread ? 0 : CGFloat(max(0, cards.count - 1)) * 0)
+    .sensoryFeedback(.impact(weight: .light), trigger: spread)
+    .overlay(alignment: .topTrailing) {
+      if spread, cards.count > 1 {
+        Button { withAnimation(.spring) { spread = false } } label: { Image(systemName: "rectangle.stack.fill") }
+          .buttonStyle(.bordered).clipShape(Circle()).offset(x: 6, y: -14)
       }
     }
   }
@@ -121,23 +290,34 @@ struct AccountDetailView: View {
   @Query(filter: #Predicate<Txn> { $0.deletedAt == nil }, sort: \Txn.occurredAt, order: .reverse) private var txns: [Txn]
   @Query private var accounts: [Account]
   @Query private var categories: [Category]
+  @Query(filter: #Predicate<PaymentCard> { $0.archivedAt == nil }) private var allCards: [PaymentCard]
   @State private var editing = false
   @State private var confirmDelete = false
+  @State private var editingCard: PaymentCard?
+  @State private var addingCard = false
 
   var body: some View {
     let lookups = Lookups(accounts: accounts, categories: categories)
     let balance = Ledger.balances(accounts: accounts, txns: txns)[account.id] ?? 0
     let mine = txns.filter { $0.accountId == account.id || $0.toAccountId == account.id }
+    let cards = allCards.filter { $0.accountId == account.id }.sorted { $0.createdAt < $1.createdAt }
     List {
       Section {
-        HStack(spacing: 14) {
-          CategoryBadge(icon: account.icon, color: account.color, size: 52)
-          VStack(alignment: .leading) {
-            Text(account.type.label).font(.subheadline).foregroundStyle(.secondary)
-            BalanceText(account: account, balance: balance, font: .system(size: 32, weight: .bold))
+        WalletCard(account: account, balance: balance, cards: cards)
+          .listRowInsets(EdgeInsets()).listRowBackground(Color.clear)
+      }
+      if account.type != .cash {
+        Section {
+          if !cards.isEmpty {
+            CardStack(cards: cards, accountColor: account.color, editing: $editingCard)
+              .padding(.vertical, 8).listRowBackground(Color.clear).listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
           }
+          Button { addingCard = true } label: {
+            Label(account.type == .card ? (cards.isEmpty ? "Add Card Details" : "Add Add-on Card") : "Add Debit Card", systemImage: "creditcard.and.123")
+          }
+        } header: { Text(account.type == .card ? "Card" : "Linked cards") } footer: {
+          Text(cards.isEmpty ? "Scan the card with the camera or type it in. Only the last 4 digits, network and expiry are kept." : "Tap the stack to spread it. Long-press a card to edit or remove it.")
         }
-        .padding(.vertical, 6)
       }
       if account.type == .card { CardSection(account: account, balance: balance, txns: mine) }
       Section("Transactions") {
@@ -162,6 +342,8 @@ struct AccountDetailView: View {
       }
     }
     .sheet(isPresented: $editing) { NavigationStack { AccountFormView(account: account) } }
+    .sheet(isPresented: $addingCard) { NavigationStack { CardFormView(card: nil, account: account) } }
+    .sheet(item: $editingCard) { c in NavigationStack { CardFormView(card: c, account: account) } }
     .confirmationDialog(mine.isEmpty ? "Delete \(account.name)?" : "\(account.name) has transactions. Archive it instead?",
                         isPresented: $confirmDelete, titleVisibility: .visible) {
       if mine.isEmpty {
@@ -222,6 +404,7 @@ struct CardSection: View {
 
 struct AccountFormView: View {
   let account: Account?
+  var initialType: AccountType = .bank
   @Environment(\.dismiss) private var dismiss
   @Environment(\.modelContext) private var context
   @Query private var all: [Account]
@@ -283,7 +466,7 @@ struct AccountFormView: View {
   }
 
   private func load() {
-    guard let a = account else { color = Palette.colors[all.count % Palette.colors.count]; return }
+    guard let a = account else { color = Palette.colors[all.count % Palette.colors.count]; type = initialType; return }
     name = a.name; type = a.type; institution = a.institution ?? ""; last4 = a.last4 ?? ""
     let ob = a.type == .card ? -a.openingBalance : a.openingBalance
     opening = ob == 0 ? "" : String(Double(abs(ob)) / 100)
@@ -305,7 +488,10 @@ struct AccountFormView: View {
     a.statementDay = type == .card && statementDay > 0 ? statementDay : nil
     a.dueDay = type == .card && dueDay > 0 ? dueDay : nil
     a.color = color; a.icon = type.defaultIcon; a.excludeFromTotals = exclude; a.updatedAt = .now
-    if account == nil { context.insert(a) }
+    if account == nil {
+      context.insert(a)
+      if type == .card, let l = a.last4 { context.insert(PaymentCard(accountId: a.id, kind: "credit", last4: l, color: a.color)) }
+    }
     try? context.save()
     Notifier.refresh(context)
     dismiss()

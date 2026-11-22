@@ -41,6 +41,8 @@ import dev.chrisbanes.haze.hazeSource
           is Sheet.BudgetForm -> BudgetForm(sh.id)
           is Sheet.RecurringForm -> RecurringForm(sh.id, sh.fromTxn)
           is Sheet.GoalForm -> GoalForm(sh.id)
+          is Sheet.CardForm -> CardFormSheet(sh.accountId, sh.id)
+          is Sheet.AccountNew -> AccountForm(null, sh.type)
           null -> {}
         }
       }
@@ -64,6 +66,7 @@ import dev.chrisbanes.haze.hazeSource
     Route.Splits -> SplitsScreen()
     is Route.Friend -> FriendScreen(r.id)
     Route.Backup -> BackupScreen()
+    Route.Converter -> ConverterScreen()
   }
 }
 

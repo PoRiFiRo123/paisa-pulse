@@ -52,6 +52,8 @@ enum class Frequency(val key: String, val noun: String) {
   val occurredAt: Long = now(), val source: String? = "manual", val importBatchId: String? = null,
   val externalId: String? = null, val currency: String? = null, val originalAmount: Long? = null,
   val recurringId: String? = null, val deletedAt: Long? = null, val createdAt: Long = now(), val updatedAt: Long = now(),
+  /** The debit or credit card used ("Paid with"). */
+  val cardId: String? = null,
   /** Your share when split (stored in BackupFile.txnSplitShares, like the iPhone app). */
   @Transient val splitShare: Long? = null,
 ) {
@@ -88,6 +90,16 @@ enum class Frequency(val key: String, val noun: String) {
   val target: Long, val saved: Long = 0, val deadline: Long? = null, val archivedAt: Long? = null, val createdAt: Long = now(),
 )
 
+/** Debit card linked to a bank account, or a credit card linked to its card account. Last 4 + network + expiry only. */
+@Serializable data class PaymentCard(
+  val id: String = newId(), val accountId: String, val kind: String = "debit", val network: String = "other", val last4: String,
+  val expiryMonth: Int? = null, val expiryYear: Int? = null, val nameOnCard: String? = null, val label: String? = null,
+  val color: String? = null, val archivedAt: Long? = null, val createdAt: Long = now(),
+) {
+  val expiryText get() = if (expiryMonth != null && expiryYear != null) "%02d/%02d".format(expiryMonth, expiryYear % 100) else null
+  val title get() = label ?: "${com.paisapulse.app.logic.CardNumber.networkName(network)} ••$last4"
+}
+
 @Serializable data class Setting(val key: String, val value: String)
 @Serializable data class Share(val id: String, val share: Long)
 
@@ -107,6 +119,7 @@ enum class Frequency(val key: String, val noun: String) {
   val splitEntries: List<SplitEntry> = emptyList(),
   val goals: List<Goal> = emptyList(),
   val txnSplitShares: List<Share> = emptyList(),
+  val cards: List<PaymentCard> = emptyList(),
 ) {
   val liveTxns get() = transactions.filter { it.deletedAt == null }
 }
