@@ -5,6 +5,17 @@ Newest first. Every push to `main` becomes a GitHub Release `build-<number>` wit
 
 ## [Unreleased]
 
+- New on both phones: **Splits, version 2.** Pick people from your contacts (the ones you split with
+  most come first), choose who paid, and split equally, by amounts or by shares, with or without you.
+  Save groups (flatmates, a trip) and settle up a whole group at once. After saving, ask everyone to
+  pay: a ready-made message with a link to a simple pay page (QR code + Pay button), or show a UPI
+  QR code. When you owe someone, "Pay with…" opens your UPI app, and "Did it go through?" settles up.
+  Add "They owe me" / "I owe them" amounts that aren't expenses.
+- New on both phones: **Loans**: money you lent or borrowed, with due dates, part repayments and a
+  reminder on the due date.
+- New on both phones: **Clean Up Data**: automatically remove transactions older than 1, 3, 6 or 12
+  months (or your own number); balances stay right and a backup is saved first. Plus Delete All Data.
+
 - New on both phones: **Statement import**. Pick a PDF (password-protected is fine), CSV or Excel
   statement from Axis, Bank of Baroda, HDFC, ICICI, SBI or their cards. Check the columns, review
   every row (category, transfer, skip), import in one go, and undo the whole import later.

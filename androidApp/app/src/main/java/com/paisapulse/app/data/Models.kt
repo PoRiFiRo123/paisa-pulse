@@ -81,8 +81,20 @@ enum class Frequency(val key: String, val noun: String) {
 /** amount > 0: they owe you; < 0: you owe them. txnId null = settle-up / manual entry. */
 @Serializable data class SplitEntry(
   val id: String = newId(), val friendId: String, val txnId: String? = null, val amount: Long, val note: String? = null,
-  val occurredAt: Long = now(), val createdAt: Long = now(),
+  val occurredAt: Long = now(), val createdAt: Long = now(), val groupId: String? = null,
 )
+
+/** A saved set of people you split with. */
+@Serializable data class SplitGroup(val id: String = newId(), val name: String, val memberIds: List<String> = emptyList(), val createdAt: Long = now())
+
+/** Money lent or borrowed ("lent" | "borrowed"), separate from splits. */
+@Serializable data class Loan(
+  val id: String = newId(), val person: String, val friendId: String? = null, val direction: String = "lent", val amount: Long,
+  val startedAt: Long = now(), val dueAt: Long? = null, val note: String? = null, val remind: Boolean? = true, val closedAt: Long? = null,
+  val createdAt: Long = now(),
+) { val lent get() = direction == "lent" }
+
+@Serializable data class LoanPayment(val id: String = newId(), val loanId: String, val amount: Long, val occurredAt: Long = now(), val note: String? = null)
 
 @Serializable data class Goal(
   val id: String = newId(), val name: String, val icon: String = "star.fill", val color: String = "#5E5CE6",
@@ -130,6 +142,9 @@ enum class Frequency(val key: String, val noun: String) {
   val goals: List<Goal> = emptyList(),
   val txnSplitShares: List<Share> = emptyList(),
   val cards: List<PaymentCard> = emptyList(),
+  val splitGroups: List<SplitGroup> = emptyList(),
+  val loans: List<Loan> = emptyList(),
+  val loanPayments: List<LoanPayment> = emptyList(),
 ) {
   val liveTxns get() = transactions.filter { it.deletedAt == null }
 }

@@ -31,7 +31,7 @@ targets:
         LSSupportsOpeningDocumentsInPlace: true
         NSFaceIDUsageDescription: Paisa Pulse uses Face ID to keep your finances private.
         NSCameraUsageDescription: Scan a card to fill in its network, last 4 digits and expiry. The full number is never stored.
-        LSApplicationQueriesSchemes: [sidestore, upi]
+        LSApplicationQueriesSchemes: [sidestore, upi, gpay, tez, phonepe, paytmmp, bhim, credpay]
         CFBundleURLTypes:
           - CFBundleURLName: com.paisapulse.app
             CFBundleURLSchemes: [paisapulse]

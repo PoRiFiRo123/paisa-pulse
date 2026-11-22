@@ -18,8 +18,21 @@ enum Notifier {
   @MainActor static func refresh(_ context: ModelContext) {
     let center = UNUserNotificationCenter.current()
     let d = AppGroup.defaults
-    center.getPendingNotificationRequests { pending in
-      center.removePendingNotificationRequests(withIdentifiers: pending.map(\.identifier).filter { $0.hasPrefix("bill-") || $0 == "weekly" })
+    // Everything scheduled ahead comes from here (bills, weekly, loans), so start clean.
+    center.removeAllPendingNotificationRequests()
+    // Loans: on the morning they're due.
+    let loans = (try? context.fetch(FetchDescriptor<Loan>())) ?? []
+    let loanPayments = (try? context.fetch(FetchDescriptor<LoanPayment>())) ?? []
+    for l in loans where l.closedAt == nil && l.remind {
+      guard let due = l.dueAt, let at = Calendar.current.date(bySettingHour: 9, minute: 30, second: 0, of: due), at > .now else { continue }
+      let left = LoanMath.outstanding(l, loanPayments)
+      guard left > 0 else { continue }
+      let content = UNMutableNotificationContent()
+      content.title = l.lent ? "\(l.person) is due to pay you back" : "Loan from \(l.person) is due"
+      content.body = "\(Money.format(left)) \(l.lent ? "to get back" : "to pay back") today."
+      content.sound = .default
+      let comps = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: at)
+      center.add(UNNotificationRequest(identifier: "loan-\(l.id)", content: content, trigger: UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)))
     }
     if d.bool(forKey: PrefKey.notifyBills) {
       let accounts = (try? context.fetch(FetchDescriptor<Account>())) ?? []

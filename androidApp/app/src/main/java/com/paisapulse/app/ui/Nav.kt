@@ -25,12 +25,16 @@ sealed interface Route {
   data object Recurring : Route
   data object Goals : Route
   data object Splits : Route
-  data class Friend(val id: String) : Route
+  data class Friend(val id: String, val groupId: String? = null) : Route
   data object Backup : Route
   data object Converter : Route
   data object Subscriptions : Route
   data class Import(val accountId: String? = null) : Route
   data class Capture(val mode: String) : Route
+  data class Group(val id: String) : Route
+  data object Loans : Route
+  data class LoanDetail(val id: String) : Route
+  data object Cleanup : Route
 }
 
 sealed interface Sheet {
@@ -44,6 +48,10 @@ sealed interface Sheet {
   data class AccountNew(val type: String) : Sheet
   /** "accounts" or "categories:expense" / "categories:income" */
   data class Reorder(val what: String) : Sheet
+  data class GroupForm(val id: String?) : Sheet
+  data class LoanForm(val id: String?) : Sheet
+  /** Ask people who owe you (Messages, QR, link). amounts: friend id → paise. */
+  data class Request(val note: String?, val amounts: Map<String, Long>) : Sheet
 }
 
 data class Toast(val text: String, val undo: (() -> Unit)? = null, val id: Long = System.nanoTime())

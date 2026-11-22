@@ -54,6 +54,7 @@ struct SettingsView: View {
         NavigationLink { SubscriptionsView() } label: { row("Subscriptions", "creditcard.and.123", "#32ADE6") }
         NavigationLink { GoalsView() } label: { row("Goals", "target", "#1E9E5A") }
         NavigationLink { SplitsView() } label: { row("Splits", "person.2.fill", "#007AFF") }
+        NavigationLink { LoansView() } label: { row("Loans", "banknote.fill", "#E5484D") }
         Picker(selection: $monthStartDay) { ForEach(1...28, id: \.self) { Text(ordinal($0)).tag($0) } } label: {
           row("Month starts on", "calendar", "#FF3B30")
         }
@@ -95,6 +96,7 @@ struct SettingsView: View {
         NavigationLink { ImportView() } label: { row("Import Statement", "doc.text.viewfinder", "#007AFF") }
         Button { router.capture = true } label: { row("Add from Screenshots", "photo.on.rectangle", "#AF52DE") }
         NavigationLink { BackupView() } label: { row("Backup & Restore", "externaldrive.fill", "#5E5CE6") }
+        NavigationLink { CleanupView() } label: { row("Clean Up Data", "trash.fill", "#8E8E93") }
         Button {
           if let text = try? BackupCodec.csv(context) {
             let url = URL.temporaryDirectory.appending(path: "paisa-pulse-transactions.csv")

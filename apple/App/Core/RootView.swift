@@ -63,6 +63,7 @@ struct MainTabs: View {
       QuickAddView(request: request)
     }
     .sheet(isPresented: $router.capture) { NavigationStack { CaptureView() } }
+    .sheet(item: $router.request) { r in NavigationStack { RequestView(request: r) } }
   }
 }
 

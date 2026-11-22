@@ -20,7 +20,7 @@ struct QuickAddView: View {
   @State private var accountId: String?
   @State private var toAccountId: String?
   @State private var date: Date
-  @State private var splitWith: Set<String>
+  @State private var split = SplitSetup()
   @State private var cardId: String?
   @State private var currency: String
   @State private var rate: Double?
@@ -41,7 +41,6 @@ struct QuickAddView: View {
     _accountId = State(initialValue: e?.accountId ?? request.accountId)
     _toAccountId = State(initialValue: e?.toAccountId)
     _date = State(initialValue: e?.occurredAt ?? request.date ?? .now)
-    _splitWith = State(initialValue: [])
     _cardId = State(initialValue: e?.cardId)
     _currency = State(initialValue: e?.currency ?? "INR")
     if let e, let orig = e.originalAmount, e.currency != nil, e.currency != "INR" {
@@ -196,14 +195,15 @@ struct QuickAddView: View {
           }
         }
         DatePicker("Date", selection: $date, in: ...Date.now.addingTimeInterval(86_400 * 366))
-        if type == .expense, !friends.isEmpty {
+        if type == .expense {
           NavigationLink {
-            SplitPicker(friends: friends, selection: $splitWith)
+            SplitEditorView(setup: $split, total: amountPaise ?? 0)
           } label: {
             LabeledContent("Split") {
-              if splitWith.isEmpty { Text("No") } else if let p = amountPaise {
-                let s = Splits.equalShares(total: p, friends: splitWith.count)
-                Text("\(splitWith.count + 1) people · yours \(Money.format(s.yours))")
+              if split.isEmpty { Text("No") } else {
+                let r = SplitMath.compute(total: amountPaise ?? 0, split)
+                Text(split.payer == nil ? "\(split.people.count + (split.includeMe ? 1 : 0)) people · yours \(Money.format(r.myShare))"
+                     : "\(friends.first { $0.id == split.payer }?.name ?? "They") paid · you owe \(Money.format(r.myShare))")
               }
             }
           }
@@ -243,8 +243,17 @@ struct QuickAddView: View {
       accountId = accounts.first(where: { $0.id == lastAccountId })?.id ?? accounts.first?.id
     }
     if let t = request.editing {
-      let ids = ((try? context.fetch(FetchDescriptor<SplitEntry>())) ?? []).filter { $0.txnId == t.id }.map(\.friendId)
-      splitWith = Set(ids)
+      let old = ((try? context.fetch(FetchDescriptor<SplitEntry>())) ?? []).filter { $0.txnId == t.id }
+      if !old.isEmpty {
+        split.people = old.map(\.friendId)
+        split.groupId = old.first?.groupId
+        if let share = t.splitShare, share != SplitMath.compute(total: t.amount, split).myShare {
+          split.mode = .amount
+          split.values = Dictionary(uniqueKeysWithValues: old.map { ($0.friendId, $0.amount) })
+          split.values["me"] = share
+          split.includeMe = share > 0
+        }
+      }
     }
   }
 
@@ -253,6 +262,19 @@ struct QuickAddView: View {
     guard let accountId else { error = "Add an account first (Accounts tab)."; return }
     if type == .transfer, toAccountId == nil || toAccountId == accountId { error = "Pick a different account to move money to."; return }
     let name = payee.trimmingCharacters(in: .whitespaces)
+    let result = SplitMath.compute(total: amount, split)
+    if type == .expense, !split.isEmpty, !result.valid { error = "The split amounts don't add up to the total."; return }
+    // A friend paid: nothing left your account yet, so it's only "you owe them" (settle up later).
+    if type == .expense, let payer = split.payer, request.editing == nil {
+      for (f, v) in result.entries {
+        context.insert(SplitEntry(friendId: f, amount: v, note: name.isEmpty ? note.nilIfEmpty : name, groupId: split.groupId, occurredAt: date))
+      }
+      try? context.save()
+      let who = friends.first { $0.id == payer }?.name ?? "them"
+      router.show("You owe \(who) \(Money.format(result.myShare))")
+      dismiss()
+      return
+    }
     let txn: Txn
     if let t = request.editing {
       txn = t
@@ -271,12 +293,13 @@ struct QuickAddView: View {
     // Splits: recreate this expense's shares.
     let old = ((try? context.fetch(FetchDescriptor<SplitEntry>())) ?? []).filter { $0.txnId == txn.id }
     old.forEach { context.delete($0) }
-    if type == .expense, !splitWith.isEmpty {
-      let s = Splits.equalShares(total: amount, friends: splitWith.count)
-      txn.splitShare = s.yours
-      for f in splitWith {
-        context.insert(SplitEntry(friendId: f, txnId: txn.id, amount: s.each, note: txn.payee, occurredAt: date))
+    var owed: [String: Int] = [:]
+    if type == .expense, !split.isEmpty, split.payer == nil {
+      txn.splitShare = result.myShare
+      for (f, v) in result.entries {
+        context.insert(SplitEntry(friendId: f, txnId: txn.id, amount: v, note: txn.payee, groupId: split.groupId, occurredAt: date))
       }
+      owed = result.entries
     } else {
       txn.splitShare = nil
     }
@@ -291,6 +314,13 @@ struct QuickAddView: View {
       WidgetRefresh.now()
     })
     dismiss()
+    if !editing, !owed.isEmpty {
+      let note = txn.payee ?? txn.categoryId.flatMap { id in categories.first { $0.id == id }?.name }
+      Task { @MainActor in
+        try? await Task.sleep(for: .milliseconds(600))
+        router.request = SplitRequest(note: note, amounts: owed)
+      }
+    }
   }
 }
 
@@ -410,28 +440,3 @@ struct CategoryPicker: View {
   }
 }
 
-struct SplitPicker: View {
-  let friends: [Friend]
-  @Binding var selection: Set<String>
-
-  var body: some View {
-    List {
-      Section {
-        ForEach(friends) { f in
-          Button {
-            if selection.contains(f.id) { selection.remove(f.id) } else { selection.insert(f.id) }
-          } label: {
-            HStack {
-              Image(systemName: selection.contains(f.id) ? "checkmark.circle.fill" : "circle")
-                .foregroundStyle(selection.contains(f.id) ? Color.accentColor : .secondary)
-              Text(f.name).foregroundStyle(.primary)
-            }
-          }
-        }
-      } footer: {
-        Text("Split equally between you and the people you pick. They'll owe you their share; settle up in Splits.")
-      }
-    }
-    .navigationTitle("Split with")
-  }
-}
