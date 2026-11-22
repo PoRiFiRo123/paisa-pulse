@@ -14,7 +14,8 @@ final class MoneyTests: XCTestCase {
     XCTAssertEqual(Money.compact(95_000), "₹950")
     XCTAssertEqual(Money.compact(3_845_000), "₹38K")
     XCTAssertEqual(Money.compact(12_000_000), "₹1.2L")
-    XCTAssertEqual(Money.compact(-230_000_000), "₹2.3Cr")
+    XCTAssertEqual(Money.compact(-230_000_000), "₹23L")
+    XCTAssertEqual(Money.compact(2_300_000_000), "₹2.3Cr")
   }
 
   func testParse() {
@@ -111,7 +112,8 @@ final class LedgerTests: XCTestCase {
     XCTAssertNotNil(t["occurredAt"] as? Int64 ?? (t["occurredAt"] as? Int).map(Int64.init))
 
     let file = try BackupCodec.decode(data)
-    let other = Store.makeContainer(inMemory: true).mainContext
+    let otherContainer = Store.makeContainer(inMemory: true) // keep it alive: a context doesn't retain its container
+    let other = otherContainer.mainContext
     try BackupCodec.restore(file, into: other)
     let restored = try other.fetch(FetchDescriptor<Txn>())
     XCTAssertEqual(restored.count, 1)

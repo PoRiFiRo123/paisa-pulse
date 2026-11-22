@@ -15,7 +15,10 @@ enum Store {
     } else if let dir = AppGroup.containerURL {
       config = ModelConfiguration(schema: schema, url: dir.appending(path: "PaisaPulse.store"))
     } else {
-      config = ModelConfiguration(schema: schema)
+      // No App Group (e.g. an unsigned simulator build): Application Support, created if missing.
+      let dir = URL.applicationSupportDirectory
+      try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+      config = ModelConfiguration(schema: schema, url: dir.appending(path: "PaisaPulse.store"))
     }
     do {
       return try ModelContainer(for: schema, configurations: config)

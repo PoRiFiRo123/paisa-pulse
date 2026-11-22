@@ -141,7 +141,10 @@ jobs:
           set -o pipefail
           xcodebuild test -project PaisaPulse.xcodeproj -scheme PaisaPulse -destination "id=$UDID" \
             -derivedDataPath build/dd CODE_SIGNING_ALLOWED=NO | tee build/test.log | grep -E "error:|Test Case .*(passed|failed)|\*\* TEST" || true
-          grep -q "\*\* TEST SUCCEEDED \*\*" build/test.log
+          if ! grep -q "\*\* TEST SUCCEEDED \*\*" build/test.log; then
+            grep -n -B3 -A25 -E "error: -\[|Fatal error|crashed|unexpected exit" build/test.log | head -150
+            exit 1
+          fi
       - name: Screenshots (simulator, sample data)
         if: always()
         env:
@@ -153,18 +156,17 @@ jobs:
           xcrun simctl status_bar "$UDID" override --time 9:41 --batteryLevel 100 --batteryState charged --cellularBars 4 --wifiBars 3
           xcrun simctl install "$UDID" "$APP"
           mkdir -p shots
+          shot() { # name, extra launch args...
+            local name=$1; shift
+            xcrun simctl terminate "$UDID" com.paisapulse.app 2>/dev/null || true
+            xcrun simctl launch "$UDID" com.paisapulse.app -PaisaDemo YES "$@" >/dev/null
+            sleep 7
+            xcrun simctl io "$UDID" screenshot "shots/$name.png"
+          }
           for mode in light dark; do
             xcrun simctl ui "$UDID" appearance $mode
-            xcrun simctl terminate "$UDID" com.paisapulse.app || true
-            xcrun simctl launch "$UDID" com.paisapulse.app -PaisaDemo YES
-            sleep 6
-            for tab in home activity accounts settings; do
-              xcrun simctl openurl "$UDID" "paisapulse://tab/$tab"; sleep 3
-              xcrun simctl io "$UDID" screenshot "shots/$tab-$mode.png"
-            done
-            xcrun simctl openurl "$UDID" "paisapulse://tab/home"; sleep 2
-            xcrun simctl openurl "$UDID" "paisapulse://add?type=expense"; sleep 3
-            xcrun simctl io "$UDID" screenshot "shots/add-$mode.png"
+            for tab in home activity accounts settings; do shot "$tab-$mode" -PaisaTab $tab; done
+            shot "add-$mode" -PaisaAdd YES
           done
           ls -la shots
           # Publish to the ci-screenshots branch so they can be viewed without downloading artifacts.

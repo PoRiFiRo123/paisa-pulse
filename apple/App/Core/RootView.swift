@@ -19,6 +19,9 @@ struct RootView: View {
     .overlay(alignment: .bottom) { ToastView() }
     .task {
       DemoData.seedIfRequested(context)
+      // Screenshot automation (CI): -PaisaTab activity, -PaisaAdd YES.
+      if let tab = UserDefaults.standard.string(forKey: "PaisaTab"), let url = URL(string: "paisapulse://tab/\(tab)") { router.handle(url: url) }
+      if UserDefaults.standard.bool(forKey: "PaisaAdd") { router.add = AddRequest(type: .expense) }
       Seed.ensureCategories(context)
       Maintenance.run(context)
       if appLock { locked = true }
