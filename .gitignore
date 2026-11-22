@@ -39,3 +39,9 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+/android
+
+# Native iOS app (generated / build output)
+/apple/PaisaPulse.xcodeproj
+/apple/build
+/apple/Payload

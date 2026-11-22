@@ -2,11 +2,18 @@ import { Platform } from 'react-native';
 
 import { HAS_CUSTOM_NATIVE } from '@/lib/native';
 
+import { resolveAppGroup } from '../../../modules/app-group';
+
 import type { WidgetSnapshot } from './snapshot';
 import { writeSnapshotFile } from './store';
 
 /** Shared with the iOS widget extension (see targets/widget and ios.entitlements in app.json). */
 export const APP_GROUP = 'group.com.paisapulse.app';
+
+/** APP_GROUP as renamed by free-account re-signing (SideStore/AltStore), if it was. */
+export function appGroup(): string {
+  return resolveAppGroup(APP_GROUP);
+}
 export const ANDROID_WIDGET = 'Spending';
 
 /**
@@ -18,7 +25,7 @@ export async function publishWidgets(snapshot: WidgetSnapshot): Promise<void> {
   if (Platform.OS === 'ios') {
     // eslint-disable-next-line @typescript-eslint/no-require-imports -- lazy: absent in Expo Go
     const { ExtensionStorage } = require('@bacons/apple-targets') as typeof import('@bacons/apple-targets');
-    new ExtensionStorage(APP_GROUP).set('snapshot', JSON.stringify(snapshot));
+    new ExtensionStorage(appGroup()).set('snapshot', JSON.stringify(snapshot));
     ExtensionStorage.reloadWidget();
   } else if (Platform.OS === 'android') {
     writeSnapshotFile(snapshot);

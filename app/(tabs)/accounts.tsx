@@ -135,7 +135,7 @@ export default function AccountsScreen() {
                     <GroupRow
                       key={a.id}
                       title={accountLabel(a.name, a.last4)}
-                      value={money.balance(a.balance)}
+                      value={money.account(a.balance)}
                       leading={<CategoryIcon icon={accountIcon(a.type)} color={a.color} size={30} square />}
                       chevron
                       onPress={() => open(a.id)}

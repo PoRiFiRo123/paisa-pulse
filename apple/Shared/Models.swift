@@ -1,0 +1,279 @@
+import Foundation
+import SwiftData
+
+// Mirrors the React Native app's tables (src/db/schema.ts) so backups move between
+// Android and iPhone. Money is integer paise, always positive on transactions.
+
+enum TxnType: String, Codable, CaseIterable, Identifiable {
+  case expense, income, transfer
+  var id: String { rawValue }
+  var label: String { rawValue.capitalized }
+}
+
+enum AccountType: String, Codable, CaseIterable, Identifiable {
+  case bank, card, cash, wallet
+  var id: String { rawValue }
+  var label: String {
+    switch self {
+    case .bank: "Bank account"
+    case .card: "Credit card"
+    case .cash: "Cash"
+    case .wallet: "Wallet"
+    }
+  }
+  var plural: String {
+    switch self {
+    case .bank: "Bank accounts"
+    case .card: "Credit cards"
+    case .cash: "Cash"
+    case .wallet: "Wallets"
+    }
+  }
+  var defaultIcon: String {
+    switch self {
+    case .bank: "building.columns.fill"
+    case .card: "creditcard.fill"
+    case .cash: "banknote.fill"
+    case .wallet: "wallet.bifold.fill"
+    }
+  }
+}
+
+enum CategoryKind: String, Codable, CaseIterable, Identifiable {
+  case expense, income
+  var id: String { rawValue }
+}
+
+enum Frequency: String, Codable, CaseIterable, Identifiable {
+  case daily, weekly, monthly, yearly
+  var id: String { rawValue }
+  var unit: Calendar.Component {
+    switch self {
+    case .daily: .day
+    case .weekly: .weekOfYear
+    case .monthly: .month
+    case .yearly: .year
+    }
+  }
+  var noun: String {
+    switch self {
+    case .daily: "day"
+    case .weekly: "week"
+    case .monthly: "month"
+    case .yearly: "year"
+    }
+  }
+}
+
+@Model final class Account {
+  @Attribute(.unique) var id: String
+  var name: String
+  var typeRaw: String
+  var institution: String?
+  var last4: String?
+  /// Signed: a credit card you owe on is negative.
+  var openingBalance: Int
+  var creditLimit: Int?
+  var statementDay: Int?
+  var dueDay: Int?
+  var color: String
+  var icon: String
+  var sortOrder: Int
+  var excludeFromTotals: Bool
+  var archivedAt: Date?
+  var createdAt: Date
+  var updatedAt: Date
+
+  init(id: String = UUID().uuidString.lowercased(), name: String, type: AccountType, institution: String? = nil,
+       last4: String? = nil, openingBalance: Int = 0, creditLimit: Int? = nil, statementDay: Int? = nil,
+       dueDay: Int? = nil, color: String, icon: String, sortOrder: Int = 0, excludeFromTotals: Bool = false,
+       archivedAt: Date? = nil, createdAt: Date = .now, updatedAt: Date = .now) {
+    self.id = id; self.name = name; self.typeRaw = type.rawValue; self.institution = institution
+    self.last4 = last4; self.openingBalance = openingBalance; self.creditLimit = creditLimit
+    self.statementDay = statementDay; self.dueDay = dueDay; self.color = color; self.icon = icon
+    self.sortOrder = sortOrder; self.excludeFromTotals = excludeFromTotals; self.archivedAt = archivedAt
+    self.createdAt = createdAt; self.updatedAt = updatedAt
+  }
+
+  var type: AccountType {
+    get { AccountType(rawValue: typeRaw) ?? .bank }
+    set { typeRaw = newValue.rawValue }
+  }
+  var displayName: String { last4.map { "\(name) ••\($0)" } ?? name }
+}
+
+@Model final class Category {
+  @Attribute(.unique) var id: String
+  var parentId: String?
+  var kindRaw: String
+  var name: String
+  var icon: String
+  var color: String
+  var sortOrder: Int
+  var archivedAt: Date?
+  var createdAt: Date
+  var updatedAt: Date
+
+  init(id: String = UUID().uuidString.lowercased(), parentId: String? = nil, kind: CategoryKind, name: String,
+       icon: String, color: String, sortOrder: Int = 0, archivedAt: Date? = nil,
+       createdAt: Date = .now, updatedAt: Date = .now) {
+    self.id = id; self.parentId = parentId; self.kindRaw = kind.rawValue; self.name = name
+    self.icon = icon; self.color = color; self.sortOrder = sortOrder; self.archivedAt = archivedAt
+    self.createdAt = createdAt; self.updatedAt = updatedAt
+  }
+
+  var kind: CategoryKind {
+    get { CategoryKind(rawValue: kindRaw) ?? .expense }
+    set { kindRaw = newValue.rawValue }
+  }
+}
+
+@Model final class Txn {
+  @Attribute(.unique) var id: String
+  var typeRaw: String
+  /// Paise, always > 0.
+  var amount: Int
+  var accountId: String
+  var toAccountId: String?
+  var categoryId: String?
+  var payee: String?
+  var note: String?
+  var occurredAt: Date
+  var source: String
+  var recurringId: String?
+  var importBatchId: String?
+  var externalId: String?
+  var currency: String?
+  var originalAmount: Int?
+  /// Split with friends: your share in paise (nil = not split). See Splits.swift.
+  var splitShare: Int?
+  var deletedAt: Date?
+  var createdAt: Date
+  var updatedAt: Date
+
+  init(id: String = UUID().uuidString.lowercased(), type: TxnType, amount: Int, accountId: String,
+       toAccountId: String? = nil, categoryId: String? = nil, payee: String? = nil, note: String? = nil,
+       occurredAt: Date = .now, source: String = "manual", recurringId: String? = nil,
+       importBatchId: String? = nil, externalId: String? = nil, currency: String? = nil,
+       originalAmount: Int? = nil, splitShare: Int? = nil, deletedAt: Date? = nil,
+       createdAt: Date = .now, updatedAt: Date = .now) {
+    self.id = id; self.typeRaw = type.rawValue; self.amount = amount; self.accountId = accountId
+    self.toAccountId = type == .transfer ? toAccountId : nil
+    self.categoryId = type == .transfer ? nil : categoryId
+    self.payee = payee; self.note = note; self.occurredAt = occurredAt; self.source = source
+    self.recurringId = recurringId; self.importBatchId = importBatchId; self.externalId = externalId
+    self.currency = currency; self.originalAmount = originalAmount; self.splitShare = splitShare
+    self.deletedAt = deletedAt; self.createdAt = createdAt; self.updatedAt = updatedAt
+  }
+
+  var type: TxnType {
+    get { TxnType(rawValue: typeRaw) ?? .expense }
+    set { typeRaw = newValue.rawValue }
+  }
+  /// What counts towards your spending: your share when split.
+  var effectiveAmount: Int { splitShare ?? amount }
+}
+
+@Model final class Budget {
+  @Attribute(.unique) var id: String
+  /// nil = overall budget.
+  var categoryId: String?
+  /// "monthly" | "weekly"
+  var period: String
+  var amount: Int
+  var createdAt: Date
+  var updatedAt: Date
+
+  init(id: String = UUID().uuidString.lowercased(), categoryId: String? = nil, period: String = "monthly",
+       amount: Int, createdAt: Date = .now, updatedAt: Date = .now) {
+    self.id = id; self.categoryId = categoryId; self.period = period; self.amount = amount
+    self.createdAt = createdAt; self.updatedAt = updatedAt
+  }
+}
+
+@Model final class RecurringRule {
+  @Attribute(.unique) var id: String
+  var typeRaw: String
+  var amount: Int
+  var accountId: String
+  var toAccountId: String?
+  var categoryId: String?
+  var payee: String?
+  var note: String?
+  var frequencyRaw: String
+  var interval: Int
+  var startAt: Date
+  var nextAt: Date
+  var endAt: Date?
+  var pausedAt: Date?
+  var createdAt: Date
+  var updatedAt: Date
+
+  init(id: String = UUID().uuidString.lowercased(), type: TxnType, amount: Int, accountId: String,
+       toAccountId: String? = nil, categoryId: String? = nil, payee: String? = nil, note: String? = nil,
+       frequency: Frequency, interval: Int = 1, startAt: Date, nextAt: Date? = nil, endAt: Date? = nil,
+       pausedAt: Date? = nil, createdAt: Date = .now, updatedAt: Date = .now) {
+    self.id = id; self.typeRaw = type.rawValue; self.amount = amount; self.accountId = accountId
+    self.toAccountId = toAccountId; self.categoryId = categoryId; self.payee = payee; self.note = note
+    self.frequencyRaw = frequency.rawValue; self.interval = max(1, interval); self.startAt = startAt
+    self.nextAt = nextAt ?? startAt; self.endAt = endAt; self.pausedAt = pausedAt
+    self.createdAt = createdAt; self.updatedAt = updatedAt
+  }
+
+  var type: TxnType { TxnType(rawValue: typeRaw) ?? .expense }
+  var frequency: Frequency {
+    get { Frequency(rawValue: frequencyRaw) ?? .monthly }
+    set { frequencyRaw = newValue.rawValue }
+  }
+}
+
+/// A person you split expenses with (feature: splits).
+@Model final class Friend {
+  @Attribute(.unique) var id: String
+  var name: String
+  var upiId: String?
+  var createdAt: Date
+
+  init(id: String = UUID().uuidString.lowercased(), name: String, upiId: String? = nil, createdAt: Date = .now) {
+    self.id = id; self.name = name; self.upiId = upiId; self.createdAt = createdAt
+  }
+}
+
+/// One person's part of a split expense, or a settle-up payment.
+/// amount > 0: they owe you. amount < 0: you owe them.
+@Model final class SplitEntry {
+  @Attribute(.unique) var id: String
+  var friendId: String
+  /// The expense it came from; nil for a settle-up.
+  var txnId: String?
+  var amount: Int
+  var note: String?
+  var occurredAt: Date
+  var createdAt: Date
+
+  init(id: String = UUID().uuidString.lowercased(), friendId: String, txnId: String? = nil, amount: Int,
+       note: String? = nil, occurredAt: Date = .now, createdAt: Date = .now) {
+    self.id = id; self.friendId = friendId; self.txnId = txnId; self.amount = amount; self.note = note
+    self.occurredAt = occurredAt; self.createdAt = createdAt
+  }
+}
+
+/// A savings goal (feature: goals).
+@Model final class Goal {
+  @Attribute(.unique) var id: String
+  var name: String
+  var icon: String
+  var color: String
+  var target: Int
+  var saved: Int
+  var deadline: Date?
+  var archivedAt: Date?
+  var createdAt: Date
+
+  init(id: String = UUID().uuidString.lowercased(), name: String, icon: String = "star.fill",
+       color: String = "#5E5CE6", target: Int, saved: Int = 0, deadline: Date? = nil,
+       archivedAt: Date? = nil, createdAt: Date = .now) {
+    self.id = id; self.name = name; self.icon = icon; self.color = color; self.target = target
+    self.saved = saved; self.deadline = deadline; self.archivedAt = archivedAt; self.createdAt = createdAt
+  }
+}

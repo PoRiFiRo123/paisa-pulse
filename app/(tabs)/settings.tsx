@@ -5,6 +5,8 @@ import { useRef, useState } from 'react';
 import { Alert, Platform, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { shareCsvExport } from '@/features/backup/share';
+import { checkForUpdate, installUpdate, useUpdates } from '@/features/updates/useUpdates';
+import { BUILD_NUMBER, FREE_SIGNING, HAS_CUSTOM_NATIVE } from '@/lib/native';
 import { APP_ICONS, type AppIconName, appIconsSupported, currentAppIcon, setAppIcon } from '@/features/settings/appIcon';
 import { usePrefs } from '@/stores/prefs';
 import { ACCENTS, type AccentKey } from '@/theme/tokens';
@@ -31,6 +33,14 @@ export default function SettingsScreen() {
   const { scrollY, onScroll } = useScrollHeader();
   const titleTop = useTitleTop();
   const bottom = useBottomSpace();
+  const update = useUpdates((s) => s.available);
+  const [checking, setChecking] = useState(false);
+  const checkNow = async () => {
+    setChecking(true);
+    const found = await checkForUpdate(true);
+    setChecking(false);
+    if (!found) Alert.alert('You’re up to date', `Build ${BUILD_NUMBER} is the newest.`);
+  };
   const [iconsSupported] = useState(appIconsSupported);
   const [appIcon, setAppIconState] = useState<AppIconName>(currentAppIcon);
   const icon = (name: string, color: string) => <CategoryIcon icon={name} color={color} size={30} square />;
@@ -58,6 +68,25 @@ export default function SettingsScreen() {
         contentContainerStyle={{ paddingTop: titleTop, paddingBottom: bottom }}
       >
         <LargeTitle title="Settings" />
+        {update ? (
+          <>
+            <InsetGroup>
+              <GroupRow
+                title="Software Update"
+                value={`Build ${update.build}`}
+                leading={icon('arrow.down.circle.fill', '#34C759')}
+                chevron
+                onPress={() => installUpdate(update)}
+                accessibilityHint={Platform.OS === 'ios' ? 'Opens SideStore to install it' : 'Downloads the new app'}
+              />
+            </InsetGroup>
+            <Text style={[type.footnote, styles.note, { color: colors.secondary }]}>
+              {Platform.OS === 'ios'
+                ? 'Opens the new build in SideStore, which installs it over this one. Your data stays.'
+                : 'Downloads the new APK. Open it to install over this one. Your data stays.'}
+            </Text>
+          </>
+        ) : null}
 
         <GroupHeader title="Appearance" />
         <InsetGroup>
@@ -175,16 +204,24 @@ export default function SettingsScreen() {
 
         <GroupHeader title="Data" />
         <InsetGroup>
-          {Platform.OS === 'ios' ? (
+          {Platform.OS === 'ios' && !FREE_SIGNING ? (
             <GroupRow title="Siri & Shortcuts" leading={icon('waveform', '#5856D6')} chevron onPress={() => router.push('/siri')} />
           ) : null}
           <GroupRow title="Import Statement" leading={icon('doc.text.magnifyingglass', '#34C759')} chevron onPress={() => router.push('/import')} />
           <GroupRow title="Export CSV" leading={icon('square.and.arrow.up', '#007AFF')} chevron onPress={() => run(shareCsvExport, 'Couldn’t export')} />
-          <GroupRow title="Backup & Restore" leading={icon('icloud.fill', '#5E5CE6')} chevron onPress={() => router.push('/backups')} />
+          <GroupRow title="Backup & Restore" leading={icon(FREE_SIGNING ? 'externaldrive.fill' : 'icloud.fill', '#5E5CE6')} chevron onPress={() => router.push('/backups')} />
         </InsetGroup>
 
         <View style={styles.footer}>
-          <Text style={[type.footnote, { color: colors.secondary }]}>Paisa Pulse {Constants.expoConfig?.version ?? ''}</Text>
+          <Text style={[type.footnote, { color: colors.secondary }]}>
+            Paisa Pulse {Constants.expoConfig?.version ?? ''}
+            {BUILD_NUMBER ? ` (build ${BUILD_NUMBER})` : ''}
+          </Text>
+          {HAS_CUSTOM_NATIVE && BUILD_NUMBER ? (
+            <Text onPress={checking ? undefined : checkNow} style={[type.footnote, { color: colors.accent, paddingVertical: 6 }]} accessibilityRole="button">
+              {checking ? 'Checking…' : 'Check for Updates'}
+            </Text>
+          ) : null}
           <Text style={[type.footnote, { color: colors.secondary, textAlign: 'center' }]}>
             No account. No servers. Your data stays on this phone.
           </Text>

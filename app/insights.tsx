@@ -199,7 +199,7 @@ export default function InsightsScreen() {
                     {t.payee ?? t.note ?? 'Expense'}
                   </Text>
                   <Text style={[type.footnote, { color: colors.secondary }]}>{format(t.occurredAt, 'd MMM')}</Text>
-                  <Text style={[type.bodyAmount, { color: colors.label, minWidth: 90, textAlign: 'right' }]}>{money.signed(t.amount, 'expense')}</Text>
+                  <Text style={[type.bodyAmount, { color: colors.expense, minWidth: 90, textAlign: 'right' }]}>{money.signed(t.amount, 'expense')}</Text>
                 </Pressable>
               </View>
             ))}

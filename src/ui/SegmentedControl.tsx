@@ -31,9 +31,10 @@ export function SegmentedControl<T extends string>({
               Haptics.selectionAsync().catch(() => {});
               onChange(s.value);
             }}
-            style={[styles.segment, selected && [styles.selected, { backgroundColor: dark ? '#636366' : '#FFFFFF' }]]}
+            // Dark: a colour-coded segment gets a tinted pill with a white label (red on grey failed contrast).
+            style={[styles.segment, selected && [styles.selected, { backgroundColor: dark ? (s.color ? `${s.color}66` : '#636366') : '#FFFFFF' }]]}
           >
-            <Text style={[type.subhead, { fontWeight: selected ? '600' : '500', color: selected ? (s.color ?? colors.label) : colors.label }]}>
+            <Text style={[type.subhead, { fontWeight: selected ? '600' : '500', color: selected && !dark ? (s.color ?? colors.label) : colors.label }]}>
               {s.label}
             </Text>
           </Pressable>

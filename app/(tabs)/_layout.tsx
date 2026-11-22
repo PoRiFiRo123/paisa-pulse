@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { Platform } from 'react-native';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 
+import { useUpdateCheck } from '@/features/updates/useUpdates';
 import { usePrefs } from '@/stores/prefs';
 import { useTheme } from '@/theme/useTheme';
 
@@ -13,6 +14,7 @@ export default function TabsLayout() {
   const onboarded = usePrefs((s) => s.onboarded);
   const { colors } = useTheme();
   useQuickActions();
+  useUpdateCheck();
   if (!onboarded) return <Redirect href="/onboarding" />;
   return (
     <NativeTabs minimizeBehavior="onScrollDown" tintColor={colors.accent}>

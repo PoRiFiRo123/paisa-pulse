@@ -162,7 +162,7 @@ function DraftRow({
                   </Text>
                 ) : null}
               </View>
-              <Text style={[type.bodyAmount, { color: d.type === 'income' ? colors.income : colors.label }]}>{money.signed(d.amount, d.type)}</Text>
+              <Text style={[type.bodyAmount, { color: d.type === 'income' ? colors.income : d.type === 'expense' ? colors.expense : colors.secondary }]}>{money.signed(d.amount, d.type)}</Text>
             </Pressable>
           )}
         </Menu>

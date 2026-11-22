@@ -10,7 +10,6 @@ import { listTransactions } from '@/features/transactions/list';
 import { TransactionListRow } from '@/features/transactions/TransactionListRow';
 import { useMoney } from '@/hooks/useMoney';
 import { useQuery } from '@/hooks/useQuery';
-import { MINUS } from '@/lib/format';
 import { formatINRTiny } from '@/lib/money';
 import { usePrefs } from '@/stores/prefs';
 import { type } from '@/theme/typography';
@@ -58,9 +57,13 @@ export default function CalendarScreen() {
         <LargeTitle title={format(month, 'MMMM yyyy')} />
 
         <View style={[styles.summary]}>
-          <Stat label="Spent" value={money.amount(spent)} />
+          <Stat label="Spent" value={money.amount(spent)} color={colors.expense} />
           <Stat label="Income" value={money.amount(received)} color={colors.income} />
-          <Stat label="Net" value={money.hidden ? money.amount(0) : `${received - spent < 0 ? MINUS : '+'}${money.amount(Math.abs(received - spent))}`} />
+          <Stat
+            label={received - spent < 0 ? 'Overspent' : 'Kept'}
+            value={money.amount(Math.abs(received - spent))}
+            color={received - spent < 0 ? colors.expense : colors.income}
+          />
         </View>
 
         <View style={[styles.calendar, { backgroundColor: colors.card }]}>
@@ -79,7 +82,7 @@ export default function CalendarScreen() {
               const isToday = isSameDay(c.date, today);
               const strong = h > 0.62;
               const net = (t?.received ?? 0) - (t?.spent ?? 0);
-              const label = !t || money.hidden || net === 0 ? '' : `${net < 0 ? MINUS : '+'}${formatINRTiny(net)}`;
+              const label = !t || money.hidden || net === 0 ? '' : formatINRTiny(Math.abs(net));
               return (
                 <Pressable
                   key={c.key}
@@ -110,7 +113,7 @@ export default function CalendarScreen() {
                     </Text>
                     <Text
                       numberOfLines={1}
-                      style={[styles.net, { color: strong ? '#FFFFFF' : net > 0 ? colors.income : colors.secondary }]}
+                      style={[styles.net, { color: strong ? '#FFFFFF' : net > 0 ? colors.income : colors.expense }]}
                     >
                       {c.inMonth ? label : ''}
                     </Text>

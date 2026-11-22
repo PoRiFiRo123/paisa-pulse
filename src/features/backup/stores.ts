@@ -1,7 +1,7 @@
 import { Directory, File, Paths } from 'expo-file-system';
 import { Platform } from 'react-native';
 
-import { HAS_CUSTOM_NATIVE } from '@/lib/native';
+import { FREE_SIGNING, HAS_CUSTOM_NATIVE } from '@/lib/native';
 
 import type { BackupStore } from './auto';
 
@@ -11,7 +11,7 @@ import type { BackupStore } from './auto';
  */
 export const deviceStore: BackupStore = {
   kind: 'device',
-  label: Platform.OS === 'ios' ? 'On this iPhone' : 'On this phone',
+  label: Platform.OS === 'ios' ? 'On this iPhone (Files app)' : 'On this phone',
   async available() {
     return Platform.OS !== 'web';
   },
@@ -43,7 +43,7 @@ function cloudModule(): CloudModule | null {
   if (cloud !== undefined) return cloud;
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports -- lazy: absent in Expo Go
-    cloud = Platform.OS === 'ios' && HAS_CUSTOM_NATIVE ? (require('react-native-cloud-storage') as CloudModule) : null;
+    cloud = Platform.OS === 'ios' && HAS_CUSTOM_NATIVE && !FREE_SIGNING ? (require('react-native-cloud-storage') as CloudModule) : null;
   } catch {
     cloud = null;
   }

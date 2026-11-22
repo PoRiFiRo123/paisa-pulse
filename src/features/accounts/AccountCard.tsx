@@ -43,7 +43,7 @@ export function AccountCard({
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${account.name}, ${subtitle}, balance ${money.balance(balance)}`}
+      accessibilityLabel={`${account.name}, ${subtitle}, balance ${money.account(balance)}`}
       style={({ pressed }) => [styles.shadow, { transform: [{ scale: pressed ? 0.98 : 1 }] }]}
     >
       <LinearGradient colors={[shade(account.color, 0.12), shade(account.color, -0.25)]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.card}>
@@ -54,14 +54,14 @@ export function AccountCard({
             </Text>
             <Text style={[type.footnote, styles.dim]}>{subtitle}</Text>
           </View>
-          {showHeaderBalance ? <Text style={[type.bodyAmount, styles.white]}>{money.balance(balance)}</Text> : null}
+          {showHeaderBalance ? <Text style={[type.bodyAmount, styles.white]}>{money.account(balance)}</Text> : null}
         </View>
         <View style={styles.chip}>
           <Icon name={accountIcon(account.type)} size={22} color="rgba(255,255,255,0.85)" />
         </View>
         <View>
           <Text style={[type.amountMedium, styles.white, { fontSize: 28 }]} adjustsFontSizeToFit numberOfLines={1}>
-            {money.balance(balance)}
+            {money.account(balance)}
           </Text>
           <Text style={[type.footnote, styles.dim]}>{footnote}</Text>
         </View>

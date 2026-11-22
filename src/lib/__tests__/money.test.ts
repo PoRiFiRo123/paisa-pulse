@@ -61,7 +61,7 @@ describe('formatINR', () => {
   });
 
   it('supports sign, symbol and decimal options', () => {
-    expect(formatINR(-125050)).toBe('-₹1,250.50');
+    expect(formatINR(-125050)).toBe('₹1,250.50'); // never a minus sign
     expect(formatINR(125050, { sign: 'always' })).toBe('+₹1,250.50');
     expect(formatINR(-125050, { sign: 'never' })).toBe('₹1,250.50');
     expect(formatINR(0, { sign: 'always' })).toBe('₹0.00');
@@ -85,7 +85,7 @@ describe('formatINRCompact', () => {
     [CRORE, '₹1Cr'],
     [3.4 * CRORE, '₹3.4Cr'],
     [150 * CRORE, '₹150Cr'],
-    [-125 * LAKH / 100, '-₹1.25L'],
+    [-125 * LAKH / 100, '₹1.25L'],
   ])('%p → %p', (paise, expected) => {
     expect(formatINRCompact(paise)).toBe(expected);
   });
