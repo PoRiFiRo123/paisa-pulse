@@ -82,7 +82,7 @@ object PdfExtractor {
 }
 
 class ImportSession(
-  val fileName: String, val sheet: Sheet, val template: StatementTemplate?, val mapping: Mapping, val accountId: String,
+  val fileName: String, val sheet: CellSheet, val template: StatementTemplate?, val mapping: Mapping, val accountId: String,
   val rows: List<PlannedRow> = emptyList(), val mismatches: Int? = null,
 ) {
   fun copy(mapping: Mapping = this.mapping, accountId: String = this.accountId, rows: List<PlannedRow> = this.rows, mismatches: Int? = this.mismatches) =
@@ -108,7 +108,7 @@ private fun fileName(ctx: Context, uri: Uri): String =
   var pdf by remember { mutableStateOf<Pair<ByteArray, String>?>(null) }
   var wrongPassword by remember { mutableStateOf(false) }
 
-  fun start(sheet: Sheet, name: String) {
+  fun start(sheet: CellSheet, name: String) {
     val template = StatementParser.detectTemplate(sheet)
     val account = presetAccountId?.let { id -> db.accounts.firstOrNull { it.id == id } } ?: StatementParser.guessAccount(db.accounts, template)
     if (account == null) { error = "Add an account first."; return }
