@@ -6,6 +6,8 @@ struct CategoriesView: View {
   @State private var kind: CategoryKind = .expense
   @State private var editing: Category?
   @State private var adding = false
+  @State private var reordering = false
+  @Environment(\.modelContext) private var context
 
   var body: some View {
     List {
@@ -30,7 +32,26 @@ struct CategoriesView: View {
     }
     .navigationTitle("Categories")
     .toolbar {
+      ToolbarItem(placement: .topBarTrailing) {
+        Button { reordering = true } label: { Image(systemName: "arrow.up.arrow.down") }.accessibilityLabel("Reorder")
+      }
       ToolbarItem(placement: .topBarTrailing) { Button { adding = true } label: { Image(systemName: "plus") } }
+    }
+    .sheet(isPresented: $reordering) {
+      let live = categories.filter { $0.kind == kind && $0.archivedAt == nil }
+      let parents = live.filter { $0.parentId == nil }.sorted { $0.sortOrder < $1.sortOrder }
+      let item = { (c: Category) in ReorderItem(id: c.id, name: c.name, icon: c.icon, color: c.color) }
+      NavigationStack {
+        ReorderView(title: kind == .expense ? "Expense Categories" : "Income Categories",
+                    groups: [ReorderGroup(title: "Categories", items: parents.map(item))] + parents.compactMap { (p: Category) -> ReorderGroup? in
+                      let kids = live.filter { $0.parentId == p.id }.sorted { $0.sortOrder < $1.sortOrder }
+                      return kids.count > 1 ? ReorderGroup(title: "In \(p.name)", items: kids.map(item)) : nil
+                    }) { groups in
+          let byId = Dictionary(uniqueKeysWithValues: categories.map { ($0.id, $0) })
+          for ids in groups { for (i, id) in ids.enumerated() { byId[id]?.sortOrder = i; byId[id]?.updatedAt = .now } }
+          try? context.save()
+        }
+      }
     }
     .sheet(item: $editing) { c in NavigationStack { CategoryFormView(category: c, kind: c.kind) } }
     .sheet(isPresented: $adding) { NavigationStack { CategoryFormView(category: nil, kind: kind) } }

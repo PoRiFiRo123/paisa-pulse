@@ -7,32 +7,48 @@ struct InsightsView: View {
   @Query private var accounts: [Account]
   @Query private var categories: [Category]
   @AppStorage(PrefKey.monthStartDay, store: AppGroup.defaults) private var monthStartDay = 1
+  @AppStorage(PrefKey.weekStartDay, store: AppGroup.defaults) private var weekStartDay = 2
   @State private var offset = 0
-  @State private var selectedMonth: Date?
+  @State private var kind: PeriodKind = .month
+  @State private var customStart = Calendar.current.date(byAdding: .day, value: -29, to: Calendar.current.startOfDay(for: .now))!
+  @State private var customEnd = Calendar.current.startOfDay(for: .now)
 
   var body: some View {
     let lookups = Lookups(accounts: accounts, categories: categories)
-    let range = Periods.month(offset: offset, startDay: monthStartDay)
-    let prev = Periods.month(offset: offset - 1, startDay: monthStartDay)
+    let custom = DateInterval(start: min(customStart, customEnd), end: Calendar.current.date(byAdding: .day, value: 1, to: max(customStart, customEnd))!)
+    let period: (Int) -> DateInterval = { o in kind.range(offset: o, startDay: monthStartDay, weekStart: weekStartDay, custom: custom) }
+    let range = period(offset)
+    let prev = period(offset - 1)
     let s = Ledger.summary(txns, in: range)
     let p = Ledger.summary(txns, in: prev)
-    let months: [(start: Date, spent: Int)] = (0..<6).reversed().map { i in
-      let r = Periods.month(offset: offset - i, startDay: monthStartDay)
-      return (r.start, Ledger.summary(txns, in: r).spent)
+    let months: [(label: String, spent: Int, current: Bool)] = (0..<6).reversed().map { i in
+      let r = period(offset - i)
+      return (kind.short(r), Ledger.summary(txns, in: r).spent, i == 0)
     }
     let cats = Ledger.byCategory(txns, in: range, categories: lookups.categories)
     let days = max(1, Calendar.current.dateComponents([.day], from: range.start, to: min(range.end, .now)).day ?? 1)
 
     List {
       Section {
+        Picker("Period", selection: $kind) { ForEach(PeriodKind.allCases) { Text($0.label).tag($0) } }
+          .pickerStyle(.segmented)
+          .listRowBackground(Color.clear)
+          .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+          .onChange(of: kind) { offset = 0 }
+        if kind == .custom {
+          DatePicker("From", selection: $customStart, in: ...Date.now, displayedComponents: .date)
+          DatePicker("To", selection: $customEnd, in: ...Date.now, displayedComponents: .date)
+        }
+      }
+      Section {
         VStack(alignment: .leading, spacing: 4) {
-          Text("Spent in \(Periods.label(range, startDay: monthStartDay))").font(.subheadline).foregroundStyle(.secondary)
+          Text("Spent in \(kind.label(range, startDay: monthStartDay))").font(.subheadline).foregroundStyle(.secondary)
           Text(Money.format(s.spent)).font(.system(size: 36, weight: .bold, design: .rounded))
           HStack(spacing: 18) {
             stat("Per day", Money.format(s.spent / days), .primary)
             if p.spent > 0 {
               let change = Double(s.spent - p.spent) / Double(p.spent)
-              stat("vs last month", "\(change >= 0 ? "up" : "down") \(Int(abs(change) * 100))%", change > 0 ? .expense : .income)
+              stat("vs last \(kind.noun)", "\(change >= 0 ? "up" : "down") \(Int(abs(change) * 100))%", change > 0 ? .expense : .income)
             }
             stat("Kept", Money.format(max(0, s.saved)), .income)
           }
@@ -41,13 +57,12 @@ struct InsightsView: View {
         .padding(.vertical, 6)
       }
 
-      Section("Last 6 months") {
-        Chart(months, id: \.start) { m in
-          BarMark(x: .value("Month", m.start, unit: .month), y: .value("Spent", Double(m.spent) / 100))
-            .foregroundStyle(Calendar.current.isDate(m.start, equalTo: range.start, toGranularity: .month) ? Color.accentColor : Color.accentColor.opacity(0.35))
+      Section("Last 6 \(kind.noun)s") {
+        Chart(months, id: \.label) { m in
+          BarMark(x: .value("Period", m.label), y: .value("Spent", Double(m.spent) / 100))
+            .foregroundStyle(m.current ? Color.accentColor : Color.accentColor.opacity(0.35))
             .cornerRadius(6)
         }
-        .chartXAxis { AxisMarks(values: .stride(by: .month)) { _ in AxisValueLabel(format: .dateTime.month(.abbreviated)) } }
         .chartYAxis { AxisMarks { v in AxisGridLine(); AxisValueLabel { if let d = v.as(Double.self) { Text(Money.compact(Int(d * 100))) } } } }
         .frame(height: 180)
         .padding(.vertical, 8)
@@ -87,8 +102,8 @@ struct InsightsView: View {
     .navigationTitle("Insights")
     .toolbar {
       ToolbarItemGroup(placement: .topBarTrailing) {
-        Button { offset -= 1 } label: { Image(systemName: "chevron.left") }
-        Button { offset += 1 } label: { Image(systemName: "chevron.right") }.disabled(offset >= 0)
+        Button { offset -= 1 } label: { Image(systemName: "chevron.left") }.accessibilityLabel("Previous \(kind.noun)")
+        Button { offset += 1 } label: { Image(systemName: "chevron.right") }.disabled(offset >= 0).accessibilityLabel("Next \(kind.noun)")
       }
     }
   }

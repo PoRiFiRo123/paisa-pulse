@@ -65,6 +65,22 @@ fun TxnType.color(p: Palette) = when (this) { TxnType.Expense -> p.expense; TxnT
   }
 }
 
+/** A known merchant: its logo (Settings › Merchant logos) or a monogram in the brand colour. Mirrors iOS MerchantBadge. */
+@Composable fun MerchantBadge(brand: com.paisapulse.app.logic.Brand, size: Dp = 36.dp) {
+  val c = hex(brand.color)
+  Box(Modifier.size(size).clip(RoundedCornerShape(size * 0.28f)).background(Brush.verticalGradient(listOf(c.copy(alpha = 0.92f), c))),
+    contentAlignment = Alignment.Center) {
+    Text(brand.monogram, color = if (com.paisapulse.app.logic.Brands.whiteOn(brand.color)) Color.White else Color.Black,
+      style = T.amount((size.value * 0.48f).toInt(), androidx.compose.ui.text.font.FontWeight.Bold))
+    val url = brand.logoUrl()
+    if (Prefs.merchantLogos && url != null) {
+      var loaded by remember(url) { mutableStateOf(false) }
+      coil.compose.AsyncImage(url, null, onSuccess = { loaded = true },
+        modifier = Modifier.fillMaxSize().background(if (loaded) Color.White else Color.Transparent).padding(size * 0.14f))
+    }
+  }
+}
+
 /** Amount without a minus sign: soft red expense, green income, grey transfer. */
 @Composable fun AmountText(amount: Long, type: TxnType, style: androidx.compose.ui.text.TextStyle = T.amount(17)) {
   Text(Money.format(amount, Prefs.hideAmounts), style = style, color = type.color(C), maxLines = 1)

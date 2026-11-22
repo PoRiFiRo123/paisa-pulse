@@ -15,4 +15,5 @@ enum PrefKey {
   static let notifyWeekly = "notifyWeekly"
   static let autoBackup = "autoBackup"
   static let lastBackupAt = "lastBackupAt"
+  static let merchantLogos = "merchantLogos"
 }

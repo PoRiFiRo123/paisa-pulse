@@ -13,6 +13,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.paisapulse.app.data.*
 import com.paisapulse.app.logic.Money
+import com.paisapulse.app.logic.Brands
 import com.paisapulse.app.logic.toDate
 import com.paisapulse.app.ui.*
 import com.paisapulse.app.work.Services
@@ -46,7 +47,8 @@ fun dayLabel(d: LocalDate) = when (d) { LocalDate.now() -> "Today"; LocalDate.no
 
 /** A transaction row with swipe (delete / duplicate) and long-press menu, like iOS. */
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
-@Composable fun TxnRow(t: Txn, l: Lookups, showTime: Boolean = true) {
+@Composable fun TxnRow(t: Txn, l: Lookups, showTime: Boolean = true, selected: Boolean? = null, onToggle: () -> Unit = {}) {
+  if (selected != null) { TxnRowContent(t, l, showTime, selected, onClick = onToggle, onLongClick = onToggle); return }
   var menu by remember { mutableStateOf(false) }
   val state = rememberSwipeToDismissBoxState(confirmValueChange = { v ->
     when (v) {
@@ -64,27 +66,36 @@ fun dayLabel(d: LocalDate) = when (d) { LocalDate.now() -> "Today"; LocalDate.no
     }
   }) {
     Box {
-      val (icon, color) = l.badge(t)
-      Row(Modifier.fillMaxWidth().background(C.card).combinedClickable(onClick = { Ui.push(Route.TxnDetail(t.id)) }, onLongClick = { menu = true })
-        .padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-        CategoryBadge(icon, color)
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
-          Text(l.title(t), style = T.body, color = C.label, maxLines = 1, overflow = TextOverflow.Ellipsis)
-          Text(l.subtitle(t) + if (showTime) " · " + t.occurredAt.time() else "", style = T.footnote, color = C.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
-        Column(horizontalAlignment = Alignment.End) {
-          AmountText(t.amount, t.kind)
-          t.splitShare?.let { Text("yours ${Money.format(it)}", style = T.caption2, color = C.secondary) }
-        }
-        Icon(Sym.of("chevron.right"), null, tint = C.tertiary, modifier = Modifier.padding(start = 6.dp).size(13.dp))
-      }
+      TxnRowContent(t, l, showTime, null, onClick = { Ui.push(Route.TxnDetail(t.id)) }, onLongClick = { menu = true })
       DropdownMenu(menu, { menu = false }, modifier = Modifier.background(C.card)) {
         DropdownMenuItem({ Text("Edit", style = T.body) }, { menu = false; Ui.sheet = Sheet.Add(t.kind, editId = t.id) }, leadingIcon = { Icon(Sym.of("pencil"), null) })
         DropdownMenuItem({ Text("Duplicate", style = T.body) }, { menu = false; TxnOps.duplicate(t) }, leadingIcon = { Icon(Sym.of("plus.square.on.square"), null) })
         DropdownMenuItem({ Text("Delete", style = T.body, color = C.expense) }, { menu = false; TxnOps.delete(t) }, leadingIcon = { Icon(Sym.of("trash"), null, tint = C.expense) })
       }
     }
+  }
+}
+
+@Composable private fun TxnRowContent(t: Txn, l: Lookups, showTime: Boolean, selected: Boolean?, onClick: () -> Unit, onLongClick: () -> Unit) {
+  val (icon, color) = l.badge(t)
+  Row(Modifier.fillMaxWidth().background(C.card).combinedClickable(onClick = onClick, onLongClick = onLongClick)
+    .padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+    if (selected != null) {
+      Icon(Sym.of(if (selected) "checkmark.circle.fill" else "circle"), if (selected) "Selected" else "Not selected",
+        tint = if (selected) C.accent else C.tertiary, modifier = Modifier.padding(end = 12.dp).size(24.dp))
+    }
+    val brand = if (t.kind != TxnType.Transfer) Brands.match(t.payee) else null
+    if (brand != null) MerchantBadge(brand) else CategoryBadge(icon, color)
+    Spacer(Modifier.width(12.dp))
+    Column(Modifier.weight(1f)) {
+      Text(l.title(t), style = T.body, color = C.label, maxLines = 1, overflow = TextOverflow.Ellipsis)
+      Text(l.subtitle(t) + if (showTime) " · " + t.occurredAt.time() else "", style = T.footnote, color = C.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    }
+    Column(horizontalAlignment = Alignment.End) {
+      AmountText(t.amount, t.kind)
+      t.splitShare?.let { Text("yours ${Money.format(it)}", style = T.caption2, color = C.secondary) }
+    }
+    if (selected == null) Icon(Sym.of("chevron.right"), null, tint = C.tertiary, modifier = Modifier.padding(start = 6.dp).size(13.dp))
   }
 }
 
@@ -111,6 +122,9 @@ object TxnOps {
       DropdownMenuItem({ Text("Income", style = T.body) }, { menu = false; Ui.sheet = Sheet.Add(TxnType.Income) })
       DropdownMenuItem({ Text("Transfer", style = T.body) }, { menu = false; Ui.sheet = Sheet.Add(TxnType.Transfer) })
       DropdownMenuItem({ Text("Expense", style = T.body) }, { menu = false; Ui.sheet = Sheet.Add(TxnType.Expense) })
+      HorizontalDivider(color = C.separator)
+      DropdownMenuItem({ Text("From Screenshots", style = T.body) }, { menu = false; Ui.push(Route.Capture("screenshot")) }, leadingIcon = { Icon(Sym.of("photo.on.rectangle"), null) })
+      DropdownMenuItem({ Text("Say It", style = T.body) }, { menu = false; Ui.push(Route.Capture("voice")) }, leadingIcon = { Icon(Sym.of("mic.fill"), null) })
     }
   }
 }

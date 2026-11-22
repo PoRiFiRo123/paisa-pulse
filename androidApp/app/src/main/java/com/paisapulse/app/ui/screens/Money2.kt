@@ -63,6 +63,7 @@ import java.time.temporal.ChronoUnit
       DropdownMenu(menu, { menu = false }, modifier = Modifier.background(C.card)) {
         DropdownMenuItem({ Text("Edit") }, { menu = false; Ui.sheet = Sheet.AccountForm(a.id) })
         DropdownMenuItem({ Text("Add Transaction") }, { menu = false; Ui.sheet = Sheet.Add(accountId = a.id) })
+        DropdownMenuItem({ Text("Import Statement") }, { menu = false; Ui.push(Route.Import(a.id)) })
         DropdownMenuItem({ Text(if (a.archivedAt == null) "Archive" else "Unarchive") }, { menu = false
           Store.update { d -> d.copy(accounts = d.accounts.map { if (it.id == a.id) it.copy(archivedAt = if (a.archivedAt == null) now() else null) else it }) } })
         DropdownMenuItem({ Text("Delete", color = C.expense) }, { menu = false
@@ -112,7 +113,10 @@ import java.time.temporal.ChronoUnit
   val db by Store.db.collectAsState()
   var income by remember { mutableStateOf(false) }
   val kind = if (income) "income" else "expense"
-  PScreen("Categories", back = true, actions = { GlassIcon("plus", "Add category") { Ui.sheet = Sheet.CategoryForm(null, income) } }) {
+  PScreen("Categories", back = true, actions = {
+    GlassIcon("arrow.up.arrow.down", "Reorder") { Ui.sheet = Sheet.Reorder("categories:$kind") }
+    GlassIcon("plus", "Add category") { Ui.sheet = Sheet.CategoryForm(null, income) }
+  }) {
     item { Segmented(listOf("Expense", "Income"), if (income) 1 else 0, Modifier.padding(16.dp)) { income = it == 1 } }
     db.categories.filter { it.kind == kind && it.parentId == null && it.archivedAt == null }.sortedBy { it.sortOrder }.forEach { p ->
       group {

@@ -1,0 +1,68 @@
+## AXIS_CARD_CSV sheet=8x1 template=axis-card header=2 cols=date,description,ignore,amount,drcr order=dmy pos=out
+mismatch=null
+3 | 2026-09-03T06:30:00.000Z | out | 58000 |  |  | SWIGGY BANGALORE IN | => | OTHER | Swiggy |  |  | Food & Dining | dadb03dacc28a178
+4 | 2026-09-07T06:30:00.000Z | out | 64900 |  |  | NETFLIX.COM MUMBAI | => | OTHER | Netflix |  |  | Subscriptions | 2a63864c3ba2d590
+5 | 2026-09-06T06:30:00.000Z | in | 836000 |  |  | BBPS PAYMENT RECEIVED - THANK YOU | => | CARD_PAYMENT | Credit card payment |  |  |  | b768e3404ce6ecf0
+6 | 2026-09-15T06:30:00.000Z | out | 129900 |  |  | AMAZON PAY INDIA PRIVATE | => | OTHER | Amazon |  |  | Shopping | ac851659e9367280
+7 | 2026-09-16T06:30:00.000Z | in | 29900 |  |  | REFUND AMAZON PAY INDIA | => | REFUND | Amazon |  |  | Refund | abe91d475f1710d0
+## AXIS_CSV sheet=12x1 template=axis-bank header=3 cols=date,reference,description,debit,credit,balance,ignore order=dmy pos=in
+mismatch=0
+5 | 2026-09-01T06:30:00.000Z | out | 42000 | 958000 |  | UPI/P2M/424412345678/SWIGGY LIMITED/swiggy@icici/Payment for order | => | UPI | Swiggy | swiggy@icici |  | Food & Dining | cbf43cbb22c02940
+6 | 2026-09-02T06:30:00.000Z | in | 9000000 | 9958000 |  | NEFT/N245260123456/ACME TECHNOLOGIES PVT LTD/SALARY SEP | => | NEFT | Acme Technologies |  | SALARY SEP | Salary | b25bd2b30dc0f6c0
+7 | 2026-09-03T06:30:00.000Z | out | 200000 | 9758000 |  | ATM-WDL/MG ROAD BANGALORE/S1AW0123 | => | ATM | ATM withdrawal |  |  |  | 394c171bb9f6e140
+8 | 2026-09-05T06:30:00.000Z | out | 836000 | 8922000 |  | BILLDESK/AXIS BANK CREDIT CARD/XX3307 PAYMENT | => | CARD_PAYMENT | Credit card payment |  |  |  | 98bfead2aba4e740
+9 | 2026-09-06T06:30:00.000Z | out | 750000 | 8172000 |  | UPI/P2A/424912345/RAHUL SHARMA/rahul@okaxis/rent share | => | UPI | Rahul Sharma | rahul@okaxis | rent share | Rent | e9fff5bbfb2dcf20
+10 | 2026-09-30T06:30:00.000Z | in | 24500 | 8196500 |  | Int.Pd:912010012345678:01-07-2026 to 30-09-2026 | => | INTEREST | Interest |  |  | Interest | 774f5c399a8b5618
+## BOB_CSV sheet=6x1 template=bob header=2 cols=date,description,reference,debit,credit,balance order=dmy pos=in
+mismatch=0
+3 | 2026-09-04T06:30:00.000Z | out | 124500 | 4875500 |  | UPI/424512349876/DR/BIGBASKET/UTIB/bigbasket@axisbank | => | UPI | BigBasket | bigbasket@axisbank |  | Groceries | ec87c2809e8857c8
+4 | 2026-09-08T06:30:00.000Z | out | 500000 | 4375500 |  | IMPS/P2A/425112345678/PRIYA/SBIN0001234/gift | => | IMPS | Priya |  |  | Gifts & Donations | 00bd8979fe534788
+5 | 2026-09-10T06:30:00.000Z | in | 2500000 | 6875500 |  | TRF FROM AXIS BANK XX5678 | => | OTHER | Trf From Axis Bank Xx5678 |  |  |  | 6bc5970b8c8c8ac8
+## HDFC_CSV sheet=5x7 template=hdfc header=0 cols=date,description,reference,valueDate,debit,credit,balance order=dmy pos=in
+mismatch=0
+1 | 2026-09-01T06:30:00.000Z | out | 65000 | 2435000 | 0000424412345111 | UPI-ZOMATO LTD-zomato-order@hdfcbank-HDFC0MERUPI-424412345111-Dinner | => | UPI | Zomato | LTD-zomato-order@hdfcbank | Dinner | Food & Dining | 40734076f1a48550
+2 | 2026-09-02T06:30:00.000Z | out | 249900 | 2185100 | 0000000000000000 | POS 512345XXXXXX1234 AMAZON PAY INDIA | => | POS | Amazon |  |  | Shopping | bee846f2e2656688
+3 | 2026-09-03T06:30:00.000Z | in | 10000000 | 12185100 | CITIN24245123 | NEFT CR-CITI0100000-ACME TECHNOLOGIES-SALARY-CITIN24245123 | => | NEFT | Acme Technologies |  | SALARY CITIN24245123 | Salary | ffb84787cb6d1f88
+4 | 2026-09-04T06:30:00.000Z | out | 421000 | 11764100 | 0000000000000456 | ACH D- TP ACH BAJAJ FINANCE-CITI000000123 | => | NACH | Bajaj Finance |  |  | EMI/Loans | 4f31acd5fbec6578
+## ICICI_CSV sheet=6x1 template=icici header=2 cols=ignore,valueDate,date,reference,description,debit,credit,balance order=dmy pos=in
+mismatch=0
+3 | 2026-09-01T06:30:00.000Z | out | 18600 | 1231400 |  | UPI/424412345222/Payment for order/uber.rides@hdfcbank/HDFC Bank/ICI1234567890 | => | UPI | Uber | uber.rides@hdfcbank |  | Metro/Auto/Cab | 5c9a2e737c01e1b0
+4 | 2026-09-02T06:30:00.000Z | out | 1800000 | -568600 |  | MMT/IMPS/424512345333/Rent/NOBROKER/ICIC0000011 | => | IMPS | NoBroker |  |  | Rent | d9ec05893aee9730
+5 | 2026-09-05T06:30:00.000Z | out | 64900 | -633500 |  | BIL/ONL/000123456/NETFLIX/NETFLIX-MONTHLY | => | OTHER | Netflix |  | NETFLIX MONTHLY | Subscriptions | 8faa4fd19fa78b68
+## SBI_CSV sheet=6x1 template=sbi header=2 cols=date,valueDate,description,reference,debit,credit,balance order=dmy pos=in
+mismatch=0
+3 | 2026-09-01T06:30:00.000Z | out | 31200 | 568800 | TRANSFER TO 4897693162093 | TO TRANSFER-UPI/DR/424412345444/BLINKIT/YESB/blinkit.payu@hdfcbank/Groceries | => | UPI | Blinkit | blinkit.payu@hdfcbank | Groceries | Groceries | 1be3e265ae5c6e20
+4 | 2026-09-02T06:30:00.000Z | out | 100000 | 468800 |  | ATM WDL-ATM CASH 1234 SBI MG ROAD | => | ATM | ATM withdrawal |  |  |  | d30f5ea0dfc51be0
+5 | 2026-09-15T06:30:00.000Z | in | 3400 | 472200 |  | CREDIT INTEREST | => | INTEREST | Interest |  |  | Interest | 32e82fe295ebd010
+## PDF
+Tran Date ¦ Particulars ¦ Debit ¦ Credit ¦ Balance
+01-09-2026 ¦ OPENING BALANCE ¦  ¦  ¦ 10,000.00
+01-09-2026 ¦ UPI/P2M/424412345678/SWIGGY LIMITED/swiggy@icici/Payment for order 88231 ¦ 420.00 ¦  ¦ 9,580.00
+02-09-2026 ¦ NEFT/N245260123456/ACME TECHNOLOGIES PVT LTD/SALARY SEP ¦  ¦ 90,000.00 ¦ 99,580.00
+03-09-2026 ¦ ATM-WDL/MG ROAD BANGALORE/S1AW0123 ¦ 2,000.00 ¦  ¦ 97,580.00
+05-09-2026 ¦ BILLDESK/AXIS BANK CREDIT CARD/XX3307 PAYMENT ¦ 8,360.00 ¦  ¦ 89,220.00
+06-09-2026 ¦ UPI/P2A/424912345/RAHUL SHARMA/rahul@okaxis/rent share ¦ 7,500.00 ¦  ¦ 81,720.00
+Closing Balance 81,720.00 ¦  ¦  ¦  ¦ 
+date 01-09-2026 => 2026-09-01T06:30:00.000Z
+date 01/09/26 => 2026-09-01T06:30:00.000Z
+date 1-Sep-2026 => 2026-09-01T06:30:00.000Z
+date 01 SEP 26 => 2026-09-01T06:30:00.000Z
+date 1 Sept 2026 => 2026-09-01T06:30:00.000Z
+date Sep 1, 2026 => 2026-09-01T06:30:00.000Z
+date 2026-09-01 => 2026-09-01T06:30:00.000Z
+date 46266 => 2026-09-01T06:30:00.000Z
+date 01/09/2026 06:15 PM => 2026-09-01T12:45:00.000Z
+date 31/02/2026 => null
+date 12345 => null
+amt 1,23,456.78 => 12345678 null
+amt ₹ 1,234 => 123400 null
+amt INR 50 => 5000 null
+amt (120.00) => -12000 null
+amt -50 => -5000 null
+amt 120.00 Dr => 12000 dr
+amt 1,234.50CR => 123450 cr
+amt 10.005 => 1001 null
+amt  => null
+amt - => null
+amt 0.00 => null
+amt abc => null

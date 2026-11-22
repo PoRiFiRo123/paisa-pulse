@@ -3,6 +3,7 @@ import SwiftUI
 
 @main
 struct PaisaPulseApp: App {
+  @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
   let container: ModelContainer = {
     let c = Store.makeContainer()
     c.mainContext.undoManager = UndoManager() // shake to undo
@@ -19,6 +20,13 @@ struct PaisaPulseApp: App {
         .tint(Palette.accent(accent))
         .preferredColorScheme(theme == "light" ? .light : theme == "dark" ? .dark : nil)
         .onOpenURL { router.handle(url: $0) }
+        .onReceive(NotificationCenter.default.publisher(for: QuickActions.notification)) { n in
+          if let url = n.object as? URL { router.handle(url: url) }
+        }
+        .task {
+          QuickActions.install()
+          if let url = QuickActions.pending { QuickActions.pending = nil; router.handle(url: url) }
+        }
     }
     .modelContainer(container)
   }
@@ -46,6 +54,8 @@ struct ToastMessage: Identifiable, Equatable {
   var tab: AppTab = .home
   var add: AddRequest?
   var toast: ToastMessage?
+  /// Screenshot capture sheet (Add button menu, Settings).
+  var capture = false
 
   /// paisapulse://add?type=expense|income|transfer (widget, Control Center, Shortcuts).
   func handle(url: URL) {
@@ -53,6 +63,8 @@ struct ToastMessage: Identifiable, Equatable {
     if url.host == "add" {
       let type = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first(where: { $0.name == "type" })?.value
       add = AddRequest(type: TxnType(rawValue: type ?? "") ?? .expense)
+    } else if url.host == "capture" {
+      capture = true
     } else if url.host == "tab" {
       switch url.lastPathComponent {
       case "activity": tab = .activity
@@ -71,5 +83,45 @@ struct ToastMessage: Identifiable, Equatable {
       try? await Task.sleep(for: .seconds(5))
       if self.toast == msg { self.toast = nil }
     }
+  }
+}
+
+/// Long-press the app icon: Add Expense, Add Income, From Screenshots, Search (same as Android's shortcuts).
+enum QuickActions {
+  static let notification = Notification.Name("PaisaQuickAction")
+  nonisolated(unsafe) static var pending: URL?
+
+  @MainActor static func install() {
+    func item(_ type: String, _ title: String, _ icon: String) -> UIApplicationShortcutItem {
+      UIApplicationShortcutItem(type: type, localizedTitle: title, localizedSubtitle: nil, icon: UIApplicationShortcutIcon(systemImageName: icon))
+    }
+    UIApplication.shared.shortcutItems = [
+      item("paisapulse://add?type=expense", "Add Expense", "minus.circle"),
+      item("paisapulse://add?type=income", "Add Income", "plus.circle"),
+      item("paisapulse://capture", "From Screenshots", "photo.on.rectangle"),
+      item("paisapulse://tab/search", "Search", "magnifyingglass"),
+    ]
+  }
+
+  static func fire(_ type: String) {
+    guard let url = URL(string: type) else { return }
+    NotificationCenter.default.post(name: notification, object: url)
+  }
+}
+
+final class AppDelegate: NSObject, UIApplicationDelegate {
+  func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession,
+                   options: UIScene.ConnectionOptions) -> UISceneConfiguration {
+    if let item = options.shortcutItem { QuickActions.pending = URL(string: item.type) }
+    let config = UISceneConfiguration(name: nil, sessionRole: connectingSceneSession.role)
+    config.delegateClass = QuickActionSceneDelegate.self
+    return config
+  }
+}
+
+final class QuickActionSceneDelegate: NSObject, UIWindowSceneDelegate {
+  func windowScene(_ windowScene: UIWindowScene, performActionFor shortcutItem: UIApplicationShortcutItem, completionHandler: @escaping (Bool) -> Void) {
+    QuickActions.fire(shortcutItem.type)
+    completionHandler(true)
   }
 }

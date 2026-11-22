@@ -13,6 +13,8 @@ struct SettingsView: View {
   @AppStorage(PrefKey.notifyBudgets, store: AppGroup.defaults) private var notifyBudgets = false
   @AppStorage(PrefKey.notifyBills, store: AppGroup.defaults) private var notifyBills = false
   @AppStorage(PrefKey.notifyWeekly, store: AppGroup.defaults) private var notifyWeekly = false
+  @AppStorage(PrefKey.merchantLogos, store: AppGroup.defaults) private var merchantLogos = false
+  @Environment(Router.self) private var router
   @State private var updates = UpdateChecker.shared
   @State private var checking = false
   @State private var upToDate = false
@@ -49,6 +51,7 @@ struct SettingsView: View {
         NavigationLink { CategoriesView() } label: { row("Categories", "square.grid.2x2.fill", "#FF9500") }
         NavigationLink { BudgetsView() } label: { row("Budgets", "gauge.with.dots.needle.33percent", "#5E5CE6") }
         NavigationLink { RecurringView() } label: { row("Recurring", "repeat", "#30B0C7") }
+        NavigationLink { SubscriptionsView() } label: { row("Subscriptions", "creditcard.and.123", "#32ADE6") }
         NavigationLink { GoalsView() } label: { row("Goals", "target", "#1E9E5A") }
         NavigationLink { SplitsView() } label: { row("Splits", "person.2.fill", "#007AFF") }
         Picker(selection: $monthStartDay) { ForEach(1...28, id: \.self) { Text(ordinal($0)).tag($0) } } label: {
@@ -80,12 +83,17 @@ struct SettingsView: View {
         }
       }
 
-      Section("Privacy") {
+      Section {
         Toggle(isOn: $appLock) { row("Face ID Lock", "faceid", "#34C759") }
         Toggle(isOn: $hideAmounts) { row("Hide amounts", "eye.slash.fill", "#8E8E93") }
+        Toggle(isOn: $merchantLogos) { row("Merchant logos", "photo.circle.fill", "#FF9500") }
+      } header: { Text("Privacy") } footer: {
+        Text("Merchant logos load from Google's icon service: only the shop's website (like swiggy.com) is sent. Off, rows show a coloured letter.")
       }
 
       Section {
+        NavigationLink { ImportView() } label: { row("Import Statement", "doc.text.viewfinder", "#007AFF") }
+        Button { router.capture = true } label: { row("Add from Screenshots", "photo.on.rectangle", "#AF52DE") }
         NavigationLink { BackupView() } label: { row("Backup & Restore", "externaldrive.fill", "#5E5CE6") }
         Button {
           if let text = try? BackupCodec.csv(context) {
@@ -97,9 +105,7 @@ struct SettingsView: View {
         if let csvURL {
           ShareLink(item: csvURL) { Label("Share CSV", systemImage: "square.and.arrow.up") }
         }
-      } header: { Text("Data") } footer: {
-        Text("Coming to iPhone next: statement import, voice and screenshot capture (they're in the Android app today).")
-      }
+      } header: { Text("Data") }
 
       Section {
         VStack(spacing: 4) {

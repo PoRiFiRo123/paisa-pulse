@@ -53,6 +53,7 @@ dependencies {
   implementation("androidx.biometric:biometric:1.1.0")
   implementation("com.google.zxing:core:3.5.3")
   implementation("com.google.mlkit:text-recognition:16.0.1")
+  implementation("io.coil-kt:coil-compose:2.7.0")
   debugImplementation("androidx.compose.ui:ui-tooling")
   testImplementation("junit:junit:4.13.2")
 }

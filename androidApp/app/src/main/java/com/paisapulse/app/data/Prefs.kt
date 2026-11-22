@@ -22,6 +22,7 @@ object Prefs {
   var notifyWeekly by mutableStateOf(false); private set
   var autoBackup by mutableStateOf(true); private set
   var lastBackupAt by mutableStateOf(0L); private set
+  var merchantLogos by mutableStateOf(false); private set
 
   fun init(ctx: Context) {
     sp = ctx.getSharedPreferences("paisa", Context.MODE_PRIVATE)
@@ -31,7 +32,7 @@ object Prefs {
     appLock = sp.getBoolean("appLock", false); lastAccountId = sp.getString("lastAccountId", "")!!
     notifyBudgets = sp.getBoolean("notifyBudgets", false); notifyBills = sp.getBoolean("notifyBills", false)
     notifyWeekly = sp.getBoolean("notifyWeekly", false); autoBackup = sp.getBoolean("autoBackup", true)
-    lastBackupAt = sp.getLong("lastBackupAt", 0L)
+    lastBackupAt = sp.getLong("lastBackupAt", 0L); merchantLogos = sp.getBoolean("merchantLogos", false)
   }
 
   fun set(key: String, v: Any) {
@@ -45,6 +46,7 @@ object Prefs {
       "lastAccountId" -> lastAccountId = v as String; "notifyBudgets" -> notifyBudgets = v as Boolean
       "notifyBills" -> notifyBills = v as Boolean; "notifyWeekly" -> notifyWeekly = v as Boolean
       "autoBackup" -> autoBackup = v as Boolean; "lastBackupAt" -> lastBackupAt = v as Long
+      "merchantLogos" -> merchantLogos = v as Boolean
     }
   }
 
@@ -52,7 +54,7 @@ object Prefs {
   fun toSettings(): List<Setting> = listOf(
     Setting("onboarded", onboarded.toString()), Setting("theme", "\"$theme\""), Setting("accent", "\"$accent\""),
     Setting("monthStartDay", monthStartDay.toString()), Setting("weekStartDay", weekStartDay.toString()),
-    Setting("hideAmounts", hideAmounts.toString()),
+    Setting("hideAmounts", hideAmounts.toString()), Setting("merchantLogos", merchantLogos.toString()),
   )
 
   fun applySettings(list: List<Setting>) {
@@ -61,7 +63,7 @@ object Prefs {
       when (s.key) {
         "theme", "accent" -> set(s.key, v)
         "monthStartDay", "weekStartDay" -> v.toIntOrNull()?.let { set(s.key, it) }
-        "hideAmounts" -> v.toBooleanStrictOrNull()?.let { set(s.key, it) }
+        "hideAmounts", "merchantLogos" -> v.toBooleanStrictOrNull()?.let { set(s.key, it) }
       }
     }
     set("onboarded", true)

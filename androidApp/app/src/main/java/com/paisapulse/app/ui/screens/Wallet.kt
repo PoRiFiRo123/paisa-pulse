@@ -43,7 +43,7 @@ import com.paisapulse.app.data.*
 import com.paisapulse.app.logic.*
 import com.paisapulse.app.ui.*
 
-private val AccountType.order get() = when (this) { AccountType.Bank -> 0; AccountType.Card -> 1; AccountType.Wallet -> 2; AccountType.Cash -> 3 }
+val AccountType.order get() = when (this) { AccountType.Bank -> 0; AccountType.Card -> 1; AccountType.Wallet -> 2; AccountType.Cash -> 3 }
 
 /** Accounts as a wallet: cards overlap like Apple Wallet; tap one to open it (same as the iPhone app). */
 @Composable fun AccountsScreen() {
@@ -59,6 +59,8 @@ private val AccountType.order get() = when (this) { AccountType.Bank -> 0; Accou
         listOf("bank" to "Bank account", "card" to "Credit card", "cash" to "Cash", "wallet" to "Wallet (Paytm, Amazon Pay…)").forEach { (k, l) ->
           DropdownMenuItem({ Text(l, style = T.body) }, { menu = false; Ui.sheet = Sheet.AccountNew(k) }, leadingIcon = { Icon(Sym.of(AccountType.of(k).icon), null) })
         }
+        HorizontalDivider(color = C.separator)
+        DropdownMenuItem({ Text("Reorder Accounts", style = T.body) }, { menu = false; Ui.sheet = Sheet.Reorder("accounts") }, leadingIcon = { Icon(Sym.of("arrow.up.arrow.down"), null) })
       }
     }
   }) {

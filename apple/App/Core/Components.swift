@@ -66,6 +66,33 @@ struct Lookups {
   }
 }
 
+/// A known merchant: its logo (when Merchant logos is on) or a monogram in the brand colour.
+struct MerchantBadge: View {
+  let brand: Brand
+  var size: CGFloat = 36
+  @AppStorage(PrefKey.merchantLogos, store: AppGroup.defaults) private var logos = false
+
+  var body: some View {
+    let shape = RoundedRectangle(cornerRadius: size * 0.28, style: .continuous)
+    ZStack {
+      shape.fill(Color(hex: brand.color).gradient)
+      Text(brand.monogram)
+        .font(.system(size: size * 0.48, weight: .bold, design: .rounded))
+        .foregroundStyle(Brands.onColor(brand.color))
+      if logos, let url = brand.logoURL() {
+        AsyncImage(url: url) { phase in
+          if let image = phase.image {
+            image.resizable().scaledToFit().padding(size * 0.14).frame(width: size, height: size).background(.white, in: shape)
+          }
+        }
+      }
+    }
+    .frame(width: size, height: size)
+    .clipShape(shape)
+    .accessibilityHidden(true)
+  }
+}
+
 struct TxnRow: View {
   let txn: Txn
   let lookups: Lookups
@@ -74,7 +101,11 @@ struct TxnRow: View {
   var body: some View {
     let badge = lookups.badge(txn)
     HStack(spacing: 12) {
-      CategoryBadge(icon: badge.icon, color: badge.color)
+      if txn.type != .transfer, let brand = Brands.match(txn.payee) {
+        MerchantBadge(brand: brand)
+      } else {
+        CategoryBadge(icon: badge.icon, color: badge.color)
+      }
       VStack(alignment: .leading, spacing: 2) {
         Text(lookups.title(txn)).font(.body).lineLimit(1)
         HStack(spacing: 4) {

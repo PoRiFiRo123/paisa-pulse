@@ -5,6 +5,24 @@ Newest first. Every push to `main` becomes a GitHub Release `build-<number>` wit
 
 ## [Unreleased]
 
+- New on both phones: **Statement import**. Pick a PDF (password-protected is fine), CSV or Excel
+  statement from Axis, Bank of Baroda, HDFC, ICICI, SBI or their cards. Check the columns, review
+  every row (category, transfer, skip), import in one go, and undo the whole import later.
+  Card bill payments, ATM withdrawals and moves between your accounts become transfers; rows you
+  already added are left unticked.
+- New on both phones: **Add from Screenshots**. Pick GPay, PhonePe, Paytm, CRED or bank payment
+  screenshots; amount, payee, date and account are read on the phone.
+- New on Android: **Say It**. Speak or type "250 lunch, 80 auto and 40 chai yesterday".
+- New: **Subscriptions**: what your recurring bills cost a month and a year, and steady payments
+  found in your history that you can track with one tap.
+- New: **Merchant logos**: known shops show a letter in their brand colour, or their real logo when
+  you turn on Settings › Merchant logos.
+- New: **Saved filters** in Activity (bookmark chips), and **Select** to change the category or
+  account of many transactions at once, or delete them, with one Undo.
+- New: **Insights by week, month, quarter, year or your own dates**.
+- New: **Reorder** accounts and categories by dragging.
+- New: long-press the app icon for Add Expense, Add Income, From Screenshots (and Say It on Android).
+
 - **New iPhone app, rewritten in Swift (SwiftUI).** Native Liquid Glass tab bar with its own Search
   button, native lists, sheets, swipe actions, long-press menus and forms. Home has one card with a
   budget ring. Quick Add is a sheet you can drag between half and full height, with keypad sums.

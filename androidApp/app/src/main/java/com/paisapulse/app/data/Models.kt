@@ -2,7 +2,6 @@ package com.paisapulse.app.data
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import kotlinx.serialization.json.JsonObject
 import java.util.UUID
 
 // The app's storage IS the backup format (v4, shared with the iPhone app's BackupCodec), so a backup
@@ -100,6 +99,17 @@ enum class Frequency(val key: String, val noun: String) {
   val title get() = label ?: "${com.paisapulse.app.logic.CardNumber.networkName(network)} ••$last4"
 }
 
+/** Named Activity filter; `filters` JSON is shared with iOS: {"filters":{"monthOffset":…,"accountIds":[],"categoryIds":[],"types":[]},"search":""} */
+@Serializable data class SavedFilter(
+  val id: String = newId(), val name: String, val filters: String, val sortOrder: Int = 0, val createdAt: Long = now(), val updatedAt: Long = now(),
+)
+
+/** One statement import (its transactions carry importBatchId), so it can be undone. */
+@Serializable data class ImportBatch(
+  val id: String = newId(), val accountId: String, val fileName: String, val template: String? = null, val count: Int,
+  val createdAt: Long = now(), val undoneAt: Long? = null,
+)
+
 @Serializable data class Setting(val key: String, val value: String)
 @Serializable data class Share(val id: String, val share: Long)
 
@@ -113,8 +123,8 @@ enum class Frequency(val key: String, val noun: String) {
   val settings: List<Setting> = emptyList(),
   val recurringRules: List<RecurringRule> = emptyList(),
   val budgets: List<Budget> = emptyList(),
-  val savedFilters: List<JsonObject> = emptyList(),
-  val importBatches: List<JsonObject> = emptyList(),
+  val savedFilters: List<SavedFilter> = emptyList(),
+  val importBatches: List<ImportBatch> = emptyList(),
   val friends: List<Friend> = emptyList(),
   val splitEntries: List<SplitEntry> = emptyList(),
   val goals: List<Goal> = emptyList(),

@@ -312,3 +312,37 @@ enum Frequency: String, Codable, CaseIterable, Identifiable {
   }
   var title: String { label ?? "\(CardNumber.networkName(network)) ••\(last4)" }
 }
+
+/// A named Activity filter. `filters` is JSON shared with Android and the RN app:
+/// {"filters":{"monthOffset":null,"accountIds":[],"categoryIds":[],"types":[]},"search":""}
+@Model final class SavedFilter {
+  @Attribute(.unique) var id: String
+  var name: String
+  var filters: String
+  var sortOrder: Int
+  var createdAt: Date
+  var updatedAt: Date
+
+  init(id: String = UUID().uuidString.lowercased(), name: String, filters: String, sortOrder: Int = 0,
+       createdAt: Date = .now, updatedAt: Date = .now) {
+    self.id = id; self.name = name; self.filters = filters; self.sortOrder = sortOrder
+    self.createdAt = createdAt; self.updatedAt = updatedAt
+  }
+}
+
+/// One statement import, so it can be undone (its transactions carry importBatchId).
+@Model final class ImportBatch {
+  @Attribute(.unique) var id: String
+  var accountId: String
+  var fileName: String
+  var template: String?
+  var count: Int
+  var createdAt: Date
+  var undoneAt: Date?
+
+  init(id: String = UUID().uuidString.lowercased(), accountId: String, fileName: String, template: String? = nil,
+       count: Int, createdAt: Date = .now, undoneAt: Date? = nil) {
+    self.id = id; self.accountId = accountId; self.fileName = fileName; self.template = template
+    self.count = count; self.createdAt = createdAt; self.undoneAt = undoneAt
+  }
+}

@@ -49,6 +49,15 @@ object Sym {
     "checkmark.circle.fill" to Icons.Rounded.CheckCircle, "circle" to Icons.Rounded.RadioButtonUnchecked,
     "tray" to Icons.Rounded.Inbox, "chevron.up" to Icons.Rounded.KeyboardArrowUp, "chevron.down" to Icons.Rounded.KeyboardArrowDown,
     "chevron.up.chevron.down" to Icons.Rounded.UnfoldMore,
+    "bookmark" to Icons.Rounded.BookmarkBorder, "bookmark.fill" to Icons.Rounded.Bookmark,
+    "arrow.triangle.2.circlepath" to Icons.Rounded.Sync, "arrow.up.arrow.down" to Icons.Rounded.SwapVert,
+    "line.3.horizontal" to Icons.Rounded.DragHandle, "creditcard.and.123" to Icons.Rounded.Subscriptions,
+    "doc.text.viewfinder" to Icons.Rounded.DocumentScanner, "photo" to Icons.Rounded.Image, "photo.on.rectangle" to Icons.Rounded.PhotoLibrary,
+    "mic.fill" to Icons.Rounded.Mic, "mic" to Icons.Rounded.Mic, "stop.fill" to Icons.Rounded.Stop,
+    "exclamationmark.triangle.fill" to Icons.Rounded.Warning, "arrow.uturn.backward" to Icons.AutoMirrored.Rounded.Undo,
+    "doc.fill" to Icons.Rounded.InsertDriveFile, "building.columns" to Icons.Rounded.AccountBalance,
+    "square.grid.2x2" to Icons.Rounded.GridView, "keyboard" to Icons.Rounded.Keyboard, "sparkles.rectangle.stack" to Icons.Rounded.AutoAwesome,
+    "globe" to Icons.Rounded.Public, "photo.circle.fill" to Icons.Rounded.Image, "camera.viewfinder" to Icons.Rounded.CameraAlt,
   )
   fun of(name: String?): ImageVector = name?.let { map[it] } ?: Icons.Rounded.Sell
 }

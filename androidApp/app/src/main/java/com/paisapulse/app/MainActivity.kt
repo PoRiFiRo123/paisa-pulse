@@ -29,9 +29,23 @@ class MainActivity : FragmentActivity() {
     intent.getStringExtra("PaisaTab")?.let { t -> Ui.tab = Tab.entries.firstOrNull { it.name.equals(t, true) } ?: Tab.Home }
     if (intent.getBooleanExtra("PaisaAdd", false)) Ui.sheet = com.paisapulse.app.ui.Sheet.Add()
     Ui.handle(intent?.data)
+    installShortcuts()
     locked.value = Prefs.appLock
     setContent { PaisaTheme { Root(locked.value) { authenticate() } } }
     if (locked.value) authenticate()
+  }
+
+  /** Long-press the app icon: same quick actions as the iPhone app. */
+  private fun installShortcuts() = runCatching {
+    fun sc(id: String, label: String, uri: String, icon: Int) = androidx.core.content.pm.ShortcutInfoCompat.Builder(this, id)
+      .setShortLabel(label).setIcon(androidx.core.graphics.drawable.IconCompat.createWithResource(this, icon))
+      .setIntent(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(uri), this, MainActivity::class.java)).build()
+    androidx.core.content.pm.ShortcutManagerCompat.setDynamicShortcuts(this, listOf(
+      sc("expense", "Add Expense", "paisapulse://add?type=expense", android.R.drawable.ic_menu_add),
+      sc("income", "Add Income", "paisapulse://add?type=income", android.R.drawable.ic_input_add),
+      sc("screenshot", "From Screenshots", "paisapulse://capture?mode=screenshot", android.R.drawable.ic_menu_gallery),
+      sc("voice", "Say It", "paisapulse://capture?mode=voice", android.R.drawable.ic_btn_speak_now),
+    ))
   }
 
   override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); Ui.handle(intent.data) }

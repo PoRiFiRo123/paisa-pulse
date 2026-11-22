@@ -15,8 +15,8 @@ struct BackupFile: Codable {
   var settings: [SettingDTO]
   var recurringRules: [RuleDTO]?
   var budgets: [BudgetDTO]?
-  var savedFilters: [Empty]?
-  var importBatches: [Empty]?
+  var savedFilters: [FilterDTO]?
+  var importBatches: [BatchDTO]?
   var friends: [FriendDTO]?
   var splitEntries: [SplitDTO]?
   var goals: [GoalDTO]?
@@ -50,6 +50,10 @@ struct BackupFile: Codable {
     var id, name, icon, color: String; var target, saved: Int; var deadline, archivedAt: Int64?; var createdAt: Int64
   }
   struct ShareDTO: Codable { var id: String; var share: Int }
+  struct FilterDTO: Codable { var id, name, filters: String; var sortOrder: Int?; var createdAt, updatedAt: Int64 }
+  struct BatchDTO: Codable {
+    var id, accountId, fileName: String; var template: String?; var count: Int; var createdAt: Int64; var undoneAt: Int64?
+  }
   struct CardDTO: Codable {
     var id, accountId, kind, network, last4: String; var expiryMonth, expiryYear: Int?; var nameOnCard, label, color: String?
     var archivedAt: Int64?; var createdAt: Int64
@@ -76,6 +80,7 @@ enum BackupCodec {
   static let prefKeys: [(String, Any.Type)] = [
     (PrefKey.onboarded, Bool.self), (PrefKey.theme, String.self), (PrefKey.accent, String.self),
     (PrefKey.monthStartDay, Int.self), (PrefKey.weekStartDay, Int.self), (PrefKey.hideAmounts, Bool.self),
+    (PrefKey.merchantLogos, Bool.self),
   ]
 
   @MainActor static func export(_ context: ModelContext, now: Date = .now) throws -> Data {
@@ -88,6 +93,8 @@ enum BackupCodec {
     let splits = try context.fetch(FetchDescriptor<SplitEntry>())
     let goals = try context.fetch(FetchDescriptor<Goal>())
     let cards = try context.fetch(FetchDescriptor<PaymentCard>())
+    let filters = try context.fetch(FetchDescriptor<SavedFilter>())
+    let batches = try context.fetch(FetchDescriptor<ImportBatch>())
     let d = AppGroup.defaults
     let settings: [BackupFile.SettingDTO] = prefKeys.compactMap { key, _ in
       guard let v = d.object(forKey: key),
@@ -121,7 +128,9 @@ enum BackupCodec {
               createdAt: ms($0.createdAt), updatedAt: ms($0.updatedAt))
       },
       budgets: budgets.map { .init(id: $0.id, categoryId: $0.categoryId, period: $0.period, amount: $0.amount, createdAt: ms($0.createdAt), updatedAt: ms($0.updatedAt)) },
-      savedFilters: [], importBatches: [],
+      savedFilters: filters.map { .init(id: $0.id, name: $0.name, filters: $0.filters, sortOrder: $0.sortOrder, createdAt: ms($0.createdAt), updatedAt: ms($0.updatedAt)) },
+      importBatches: batches.map { .init(id: $0.id, accountId: $0.accountId, fileName: $0.fileName, template: $0.template, count: $0.count,
+                                         createdAt: ms($0.createdAt), undoneAt: msOpt($0.undoneAt)) },
       friends: friends.map { .init(id: $0.id, name: $0.name, upiId: $0.upiId, createdAt: ms($0.createdAt)) },
       splitEntries: splits.map { .init(id: $0.id, friendId: $0.friendId, txnId: $0.txnId, amount: $0.amount, note: $0.note, occurredAt: ms($0.occurredAt), createdAt: ms($0.createdAt)) },
       goals: goals.map { .init(id: $0.id, name: $0.name, icon: $0.icon, color: $0.color, target: $0.target, saved: $0.saved, deadline: msOpt($0.deadline), archivedAt: msOpt($0.archivedAt), createdAt: ms($0.createdAt)) },
@@ -147,6 +156,7 @@ enum BackupCodec {
     try context.delete(model: Txn.self); try context.delete(model: Account.self); try context.delete(model: Category.self)
     try context.delete(model: RecurringRule.self); try context.delete(model: Budget.self); try context.delete(model: Friend.self)
     try context.delete(model: SplitEntry.self); try context.delete(model: Goal.self); try context.delete(model: PaymentCard.self)
+    try context.delete(model: SavedFilter.self); try context.delete(model: ImportBatch.self)
     for a in file.accounts {
       context.insert(Account(id: a.id, name: a.name, type: AccountType(rawValue: a.type) ?? .bank, institution: a.institution,
                              last4: a.last4, openingBalance: a.openingBalance, creditLimit: a.creditLimit, statementDay: a.statementDay,
@@ -188,6 +198,13 @@ enum BackupCodec {
       context.insert(PaymentCard(id: c.id, accountId: c.accountId, kind: c.kind, network: c.network, last4: c.last4, expiryMonth: c.expiryMonth,
                                  expiryYear: c.expiryYear, nameOnCard: c.nameOnCard, label: c.label, color: c.color,
                                  archivedAt: dateOpt(c.archivedAt), createdAt: date(c.createdAt)))
+    }
+    for f in file.savedFilters ?? [] {
+      context.insert(SavedFilter(id: f.id, name: f.name, filters: f.filters, sortOrder: f.sortOrder ?? 0, createdAt: date(f.createdAt), updatedAt: date(f.updatedAt)))
+    }
+    for b in file.importBatches ?? [] {
+      context.insert(ImportBatch(id: b.id, accountId: b.accountId, fileName: b.fileName, template: b.template, count: b.count,
+                                 createdAt: date(b.createdAt), undoneAt: dateOpt(b.undoneAt)))
     }
     let d = AppGroup.defaults
     for s in file.settings {
