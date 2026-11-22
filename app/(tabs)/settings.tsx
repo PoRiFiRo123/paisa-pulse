@@ -5,6 +5,7 @@ import { useRef, useState } from 'react';
 import { Alert, Platform, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { shareCsvExport } from '@/features/backup/share';
+import { FREE_SIGNING } from '@/lib/native';
 import { APP_ICONS, type AppIconName, appIconsSupported, currentAppIcon, setAppIcon } from '@/features/settings/appIcon';
 import { usePrefs } from '@/stores/prefs';
 import { ACCENTS, type AccentKey } from '@/theme/tokens';
@@ -175,12 +176,12 @@ export default function SettingsScreen() {
 
         <GroupHeader title="Data" />
         <InsetGroup>
-          {Platform.OS === 'ios' ? (
+          {Platform.OS === 'ios' && !FREE_SIGNING ? (
             <GroupRow title="Siri & Shortcuts" leading={icon('waveform', '#5856D6')} chevron onPress={() => router.push('/siri')} />
           ) : null}
           <GroupRow title="Import Statement" leading={icon('doc.text.magnifyingglass', '#34C759')} chevron onPress={() => router.push('/import')} />
           <GroupRow title="Export CSV" leading={icon('square.and.arrow.up', '#007AFF')} chevron onPress={() => run(shareCsvExport, 'Couldn’t export')} />
-          <GroupRow title="Backup & Restore" leading={icon('icloud.fill', '#5E5CE6')} chevron onPress={() => router.push('/backups')} />
+          <GroupRow title="Backup & Restore" leading={icon(FREE_SIGNING ? 'externaldrive.fill' : 'icloud.fill', '#5E5CE6')} chevron onPress={() => router.push('/backups')} />
         </InsetGroup>
 
         <View style={styles.footer}>

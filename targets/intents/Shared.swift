@@ -20,7 +20,12 @@ struct PendingEntry: Codable {
 }
 
 enum Shared {
-  static let appGroup = "group.com.paisapulse.app"
+  static let appGroup: String = {
+    // Free-account re-signing (SideStore/AltStore) renames the group; the real name is in ALTAppGroups.
+    let base = "group.com.paisapulse.app"
+    let groups = (Bundle.main.object(forInfoDictionaryKey: "ALTAppGroups") as? [String]) ?? []
+    return groups.first(where: { $0 == base }) ?? groups.first(where: { $0.hasPrefix(base + ".") }) ?? base
+  }()
   static let pendingKey = "pendingCaptures"
 
   static var defaults: UserDefaults? { UserDefaults(suiteName: appGroup) }

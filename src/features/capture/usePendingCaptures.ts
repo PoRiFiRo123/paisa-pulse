@@ -4,7 +4,7 @@ import { AppState, Platform } from 'react-native';
 import { appDb } from '@/db/client';
 import { accountsWithBalance } from '@/features/accounts/queries';
 import { categoriesByKind } from '@/features/categories/queries';
-import { APP_GROUP } from '@/features/widgets/publish';
+import { appGroup } from '@/features/widgets/publish';
 import { HAS_CUSTOM_NATIVE } from '@/lib/native';
 import { usePrefs } from '@/stores/prefs';
 import { useToast } from '@/stores/toast';
@@ -18,7 +18,7 @@ export function usePendingCaptures() {
     if (Platform.OS !== 'ios' || !HAS_CUSTOM_NATIVE) return;
     // eslint-disable-next-line @typescript-eslint/no-require-imports -- lazy: absent in Expo Go
     const { ExtensionStorage } = require('@bacons/apple-targets') as typeof import('@bacons/apple-targets');
-    const storage = new ExtensionStorage(APP_GROUP);
+    const storage = new ExtensionStorage(appGroup());
     let running = false;
 
     const run = async () => {

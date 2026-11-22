@@ -4,6 +4,8 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { FREE_SIGNING } from '@/lib/native';
+
 import { appDb } from '@/db/client';
 import { databaseWasReset } from '@/db/encryption';
 import { setSetting } from '@/db/settings';
@@ -119,7 +121,9 @@ export default function BackupsScreen() {
       ? 'Backups go to iCloud Drive › Paisa Pulse › Backups, so they’re safe if you lose or change your iPhone.'
       : Platform.OS === 'android'
         ? 'Backups stay on this phone and are included in Android’s Google backup, so they come back when you set up a new phone.'
-        : 'Backups stay on this iPhone (and in its iCloud backup). Sign in to iCloud Drive to keep them off the phone too.';
+        : FREE_SIGNING
+          ? 'Backups are in the Files app › On My iPhone › Paisa Pulse › backups. Copy one to iCloud Drive or Google Drive now and then to keep it off the phone.'
+          : 'Backups stay on this iPhone (and in its iCloud backup). Sign in to iCloud Drive to keep them off the phone too.';
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>

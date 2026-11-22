@@ -1,0 +1,154 @@
+name: Build Android + iOS
+
+# Every push to main builds:
+#   - PaisaPulse.apk : Android, release build, signed with the same key every time so a new APK
+#                      installs over the old one and keeps your data.
+#   - PaisaPulse.ipa : iOS, built for a FREE Apple ID (PAISA_FREE_SIGNING=1: app + widget, no Siri,
+#                      no iCloud). Ad-hoc signed with its entitlements; install it with SideStore,
+#                      AltStore or Sideloadly, which re-sign it with your Apple ID.
+# ...and publishes both as a GitHub Release "build-<run number>" that the in-app update check reads.
+# Pushes to claude/** branches build and test the same way but publish no release (artifacts only).
+
+on:
+  push:
+    branches: [main, 'claude/**']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PAISA_BUILD_NUMBER: ${{ github.run_number }}
+  PAISA_RELEASE_REPO: ${{ github.repository }}
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci --no-audit --no-fund
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npx jest --ci
+
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17' }
+      - uses: gradle/actions/setup-gradle@v4
+      - run: npm ci --no-audit --no-fund
+      - name: Generate the Android project
+        run: npx expo prebuild --platform android --clean --no-install
+
+      # Same signing key on every build. Uses the PAISA_ANDROID_KEYSTORE_B64 secret if set (alias
+      # androiddebugkey, password android), otherwise a key kept in the build cache.
+      - name: Restore signing key
+        uses: actions/cache@v4
+        with:
+          path: ~/.paisa/release.keystore
+          key: paisa-android-keystore-v1
+      - name: Prepare signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.PAISA_ANDROID_KEYSTORE_B64 }}
+        run: |
+          mkdir -p ~/.paisa
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > ~/.paisa/release.keystore
+            echo "Using the signing key from the repository secret"
+          elif [ ! -f ~/.paisa/release.keystore ]; then
+            keytool -genkeypair -keystore ~/.paisa/release.keystore -storepass android -keypass android \
+              -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Paisa Pulse,C=IN"
+            echo "Created a new signing key (kept in the build cache)"
+          fi
+          # Expo's generated release build signs with android/app/debug.keystore.
+          cp ~/.paisa/release.keystore android/app/debug.keystore
+
+      - name: Build release APK
+        working-directory: android
+        run: |
+          ./gradlew :app:assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
+          cp app/build/outputs/apk/release/app-release.apk ../PaisaPulse.apk
+      - uses: actions/upload-artifact@v4
+        with: { name: android, path: PaisaPulse.apk, retention-days: 14 }
+
+  ios:
+    runs-on: macos-26
+    timeout-minutes: 90
+    env:
+      PAISA_FREE_SIGNING: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: xcodebuild -version && sw_vers
+      - run: npm ci --no-audit --no-fund
+      - name: Generate the iOS project (free-signing variant)
+        run: npx expo prebuild --platform ios --clean
+      - name: Build (unsigned)
+        run: |
+          WS=$(ls -d ios/*.xcworkspace | head -1)
+          SCHEME=$(basename "$WS" .xcworkspace)
+          echo "SCHEME=$SCHEME" >> "$GITHUB_ENV"
+          set -o pipefail
+          xcodebuild -workspace "$WS" -scheme "$SCHEME" -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            -archivePath build/app.xcarchive archive \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            | tee build/xcodebuild.log | grep -E "error:|warning: .*Swift|\*\* (ARCHIVE|BUILD)" || true
+          test -d build/app.xcarchive/Products/Applications
+      - name: Ad-hoc sign with entitlements and package the .ipa
+        run: |
+          APP=$(ls -d build/app.xcarchive/Products/Applications/*.app | head -1)
+          # Only the App Group survives a free Apple ID; SideStore/AltStore read it from the signature.
+          /usr/bin/python3 - <<'PY'
+          import plistlib
+          plistlib.dump({'com.apple.security.application-groups': ['group.com.paisapulse.app']}, open('/tmp/groups.entitlements', 'wb'))
+          PY
+          for ext in "$APP"/PlugIns/*.appex; do
+            [ -d "$ext" ] && codesign --force --sign - --entitlements /tmp/groups.entitlements "$ext"
+          done
+          find "$APP/Frameworks" -maxdepth 1 \( -name '*.framework' -o -name '*.dylib' \) -exec codesign --force --sign - {} \; 2>/dev/null || true
+          codesign --force --sign - --entitlements /tmp/groups.entitlements "$APP"
+          codesign -d --entitlements - "$APP"
+          ls "$APP/PlugIns" || true
+          mkdir -p Payload && cp -R "$APP" Payload/
+          zip -qry PaisaPulse.ipa Payload
+          ls -la PaisaPulse.ipa
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: ios, path: "PaisaPulse.ipa\nbuild/xcodebuild.log", retention-days: 14, if-no-files-found: warn }
+
+  release:
+    if: github.ref == 'refs/heads/main'
+    needs: [tests, android, ios]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="build-${{ github.run_number }}"
+          {
+            echo "Paisa Pulse build ${{ github.run_number }} ($(git log -1 --format=%h))"
+            echo
+            echo "$(git log -1 --format=%s)"
+            echo
+            echo "- **Android:** download PaisaPulse.apk on the phone and install it (allow installing from your browser)."
+            echo "- **iPhone:** open PaisaPulse.ipa with SideStore (or AltStore / Sideloadly). See docs/INSTALL.md."
+          } > notes.md
+          gh release create "$TAG" android/PaisaPulse.apk ios/PaisaPulse.ipa \
+            --title "Paisa Pulse (build ${{ github.run_number }})" --notes-file notes.md --latest
