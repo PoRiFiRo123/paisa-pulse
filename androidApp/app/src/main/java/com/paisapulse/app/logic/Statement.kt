@@ -8,7 +8,7 @@ import java.util.zip.ZipInputStream
 // Statement.swift: readers turn a file into a Sheet (rows of text cells), the normaliser finds the
 // header, columns, dates and amounts.
 
-typealias Sheet = List<List<String>>
+typealias CellSheet = List<List<String>>
 
 enum class FileKind { Csv, Xlsx, Html, Pdf, XlsBinary, Unknown }
 
@@ -40,7 +40,7 @@ object StatementReaders {
     return best
   }
 
-  fun csv(text: String, delimiter: Char? = null): Sheet {
+  fun csv(text: String, delimiter: Char? = null): CellSheet {
     val src = text.removePrefix("\uFEFF")
     val d = delimiter ?: detectDelimiter(src)
     val rows = mutableListOf<List<String>>()
@@ -74,8 +74,8 @@ object StatementReaders {
     decodeEntities(fragment.replace(Regex("<br\\s*/?>", RegexOption.IGNORE_CASE), " ").replace(Regex("<[^>]*>"), "")).replace(Regex("\\s+"), " ").trim()
 
   /** The largest HTML table (banks' ".xls" downloads). */
-  fun html(html: String): Sheet {
-    var best: Sheet = emptyList()
+  fun html(html: String): CellSheet {
+    var best: CellSheet = emptyList()
     val ic = setOf(RegexOption.IGNORE_CASE)
     for (table in Regex("<table\\b[\\s\\S]*?</table>", ic).findAll(html)) {
       val rows = mutableListOf<List<String>>()
@@ -99,7 +99,7 @@ object StatementReaders {
   }
 
   /** First worksheet of an .xlsx. */
-  fun xlsx(bytes: ByteArray): Sheet {
+  fun xlsx(bytes: ByteArray): CellSheet {
     val files = HashMap<String, String>()
     ZipInputStream(bytes.inputStream()).use { zip ->
       while (true) {
@@ -175,7 +175,7 @@ object PdfLayout {
     return lines
   }
 
-  fun toSheet(items: List<TextItem>): Sheet {
+  fun toSheet(items: List<TextItem>): CellSheet {
     val lines = lines(items)
     val headerIndex = lines.indexOfFirst { l -> l.cells.count { headerWords.containsMatchIn(it.text) } >= 3 }
     if (headerIndex < 0) return lines.map { l -> l.cells.map { it.text } }
@@ -283,7 +283,7 @@ object StatementParser {
     return rolePatterns.firstOrNull { it.second.containsMatchIn(h) }?.first ?: ColumnRole.Ignore
   }
 
-  fun detectHeaderRow(sheet: Sheet): Int {
+  fun detectHeaderRow(sheet: CellSheet): Int {
     var best = -1; var bestHits = 2
     for (i in 0 until minOf(sheet.size, 60)) {
       val hits = sheet[i].map(::guessRole).filter { it != ColumnRole.Ignore }.toSet().size
@@ -298,7 +298,7 @@ object StatementParser {
     return if (ColumnRole.Debit in roles && ColumnRole.Credit in roles) roles.map { if (it == ColumnRole.Amount) ColumnRole.Ignore else it } else roles
   }
 
-  fun detectTemplate(sheet: Sheet, headerRow: Int = detectHeaderRow(sheet)): StatementTemplate? {
+  fun detectTemplate(sheet: CellSheet, headerRow: Int = detectHeaderRow(sheet)): StatementTemplate? {
     val preamble = sheet.take(maxOf(headerRow, 0)).joinToString(" ") { it.joinToString(" ") }
     val header = if (headerRow >= 0) sheet[headerRow].joinToString(" ") else ""
     return (if (preamble.isNotEmpty()) templates.firstOrNull { it.match.containsMatchIn(preamble) } else null)?.t
@@ -366,7 +366,7 @@ object StatementParser {
     return Amount(if (negative) -paise else paise, marker)
   }
 
-  fun detectMapping(sheet: Sheet, template: StatementTemplate?, cardAccount: Boolean): Mapping? {
+  fun detectMapping(sheet: CellSheet, template: StatementTemplate?, cardAccount: Boolean): Mapping? {
     val headerRow = detectHeaderRow(sheet)
     if (headerRow < 0) return null
     val columns = guessColumns(sheet[headerRow])
@@ -379,7 +379,7 @@ object StatementParser {
     return Mapping(headerRow, columns, order, positiveIsIn = !card)
   }
 
-  fun extractRows(sheet: Sheet, m: Mapping): List<StatementRow> {
+  fun extractRows(sheet: CellSheet, m: Mapping): List<StatementRow> {
     fun col(r: ColumnRole) = m.columns.indexOf(r)
     val dateC = col(ColumnRole.Date); val descC = col(ColumnRole.Description); val refC = col(ColumnRole.Reference)
     val debitC = col(ColumnRole.Debit); val creditC = col(ColumnRole.Credit); val amountC = col(ColumnRole.Amount)
