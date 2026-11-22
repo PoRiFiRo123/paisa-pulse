@@ -25,34 +25,19 @@ env:
   PAISA_RELEASE_REPO: ${{ github.repository }}
 
 jobs:
-  tests:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: npm }
-      - run: npm ci --no-audit --no-fund
-      - run: npm run typecheck
-      - run: npm run lint
-      - run: npx jest --ci
-
   android:
+    # Native Kotlin + Jetpack Compose app in androidApp/ (the Expo app is retired).
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: npm }
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: '17' }
       - uses: gradle/actions/setup-gradle@v4
-      - run: npm ci --no-audit --no-fund
-      - name: Generate the Android project
-        run: npx expo prebuild --platform android --clean --no-install
+        with: { gradle-version: '8.14.3' }
 
-      # Same signing key on every build. Uses the PAISA_ANDROID_KEYSTORE_B64 secret if set (alias
-      # androiddebugkey, password android), otherwise a key kept in the build cache.
+      # Same signing key on every build so updates install over each other: the PAISA_ANDROID_KEYSTORE_B64
+      # secret if set (alias androiddebugkey, password android), else a key kept in the build cache.
       - name: Restore signing key
         uses: actions/cache@v4
         with:
@@ -63,24 +48,37 @@ jobs:
           KEYSTORE_B64: ${{ secrets.PAISA_ANDROID_KEYSTORE_B64 }}
         run: |
           mkdir -p ~/.paisa
-          if [ -n "$KEYSTORE_B64" ]; then
-            echo "$KEYSTORE_B64" | base64 -d > ~/.paisa/release.keystore
-            echo "Using the signing key from the repository secret"
+          if [ -n "$KEYSTORE_B64" ]; then echo "$KEYSTORE_B64" | base64 -d > ~/.paisa/release.keystore
           elif [ ! -f ~/.paisa/release.keystore ]; then
             keytool -genkeypair -keystore ~/.paisa/release.keystore -storepass android -keypass android \
               -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Paisa Pulse,C=IN"
-            echo "Created a new signing key (kept in the build cache)"
           fi
-          # Expo's generated release build signs with android/app/debug.keystore.
-          cp ~/.paisa/release.keystore android/app/debug.keystore
+          echo "PAISA_KEYSTORE=$HOME/.paisa/release.keystore" >> "$GITHUB_ENV"
 
-      - name: Build release APK
-        working-directory: android
+      - name: Unit tests and release APK
+        working-directory: androidApp
         run: |
-          ./gradlew :app:assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
+          gradle --no-daemon :app:testReleaseUnitTest :app:assembleRelease
           cp app/build/outputs/apk/release/app-release.apk ../PaisaPulse.apk
+          ls -la ../PaisaPulse.apk
       - uses: actions/upload-artifact@v4
         with: { name: android, path: PaisaPulse.apk, retention-days: 14 }
+
+      - name: Enable KVM for the emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+      - name: Screenshots (emulator, sample data)
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_7_pro
+          disable-animations: true
+          script: bash .github/scripts/android-screenshots.sh
 
   ios:
     # Native SwiftUI app in apple/ (XcodeGen project). Free Apple ID friendly: app + widget only.
@@ -178,7 +176,7 @@ jobs:
 
   release:
     if: github.ref == 'refs/heads/main'
-    needs: [tests, android, ios]
+    needs: [android, ios]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
