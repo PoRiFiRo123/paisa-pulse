@@ -96,9 +96,9 @@ fun sendSms(ctx: Context, phones: List<String>, body: String) {
   runCatching { ctx.startActivity(i) }.onFailure { ctx.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, body), "Send request")) }
 }
 
-fun shareBitmap(ctx: Context, bmp: Bitmap, title: String) {
+fun shareBitmap(ctx: Context, bmp: Bitmap, title: String, name: String = "upi-qr.png") {
   val dir = File(ctx.cacheDir, "share").apply { mkdirs() }
-  val f = File(dir, "upi-qr.png").apply { outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) } }
+  val f = File(dir, name).apply { outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) } }
   val uri = FileProvider.getUriForFile(ctx, "com.paisapulse.app.files", f)
   ctx.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("image/png").putExtra(Intent.EXTRA_STREAM, uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION), title))
 }

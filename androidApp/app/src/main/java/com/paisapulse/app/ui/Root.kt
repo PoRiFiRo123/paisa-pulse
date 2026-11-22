@@ -59,6 +59,7 @@ import dev.chrisbanes.haze.hazeSource
           is Sheet.GroupForm -> GroupFormSheet(sh.id)
           is Sheet.LoanForm -> LoanFormSheet(sh.id)
           is Sheet.Request -> RequestSheet(sh.note, sh.amounts)
+          Sheet.HomeLayout -> HomeLayoutSheet()
           null -> {}
         }
       }
@@ -90,6 +91,10 @@ import dev.chrisbanes.haze.hazeSource
     Route.Loans -> LoansScreen()
     is Route.LoanDetail -> LoanDetailScreen(r.id)
     Route.Cleanup -> CleanupScreen()
+    Route.Templates -> TemplatesScreen()
+    Route.Tags -> TagsScreen()
+    is Route.TagDetail -> TagDetailScreen(r.tag)
+    is Route.Recap -> RecapScreen(r.offset)
   }
 }
 

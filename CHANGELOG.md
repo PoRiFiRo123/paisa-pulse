@@ -5,6 +5,19 @@ Newest first. Every push to `main` becomes a GitHub Release `build-<number>` wit
 
 ## [Unreleased]
 
+- New on both phones:
+  - **Payee memory:** start typing a payee and pick one you've used before; its usual category and account fill in.
+  - **Templates:** "Save as Template" on any transaction, then add it in one tap from Home or Quick Add (Settings › Templates to reorder or delete).
+  - **Tags:** add tags like "goa trip, work" in Quick Add, search with `#goa-trip`, and see totals per tag (Settings › Tags).
+  - **Receipt photos** on a transaction (kept on this phone, not in backups).
+  - **Card bills:** each credit card shows last statement, what's paid, what's still to pay and the unbilled amount; Home lists bills due in the next 10 days.
+  - **Month-end forecast** on Home and in Insights: today's money, coming income and bills, and your usual daily spending.
+  - **Monthly recap** with a shareable picture (totals only), offered on Home in the first week of the month.
+  - **Investments** account type (Groww, mutual funds): enter what it's worth now and then; net worth over time uses those values.
+  - **Edit Home Screen:** reorder and hide Home's sections.
+  - **Password-protected backups** (AES-256): turn it on in Backup & Restore; the same password opens the file on either phone.
+- Android: a Quick Settings tile "Add Expense" (the iPhone already has the Control Center / Action Button control and Lock Screen widgets).
+
 - Keyboards: a "hide keyboard" button floats above every keyboard on iPhone (number pads included),
   tapping outside a field puts it away, and fields have a Done key (both phones).
 - Quick Add: the keypad sits on its own raised panel, the details fade into it instead of being cut

@@ -4,16 +4,23 @@ import Foundation
 /// so it's easy to test.
 enum Ledger {
   /// Current balance per account id (signed: cards you owe on are negative).
-  static func balances(accounts: [Account], txns: [Txn]) -> [String: Int] {
+  /// Balances from opening balances and transactions. An account with valuations (investments) starts from
+  /// its latest value on or before `asOf`; only transactions after that value count.
+  static func balances(accounts: [Account], txns: [Txn], valuations: [Valuation] = [], asOf: Date? = nil) -> [String: Int] {
     var b: [String: Int] = [:]
+    var anchor: [String: Date] = [:]
     for a in accounts { b[a.id] = a.openingBalance }
-    for t in txns where t.deletedAt == nil {
+    for v in valuations where asOf.map({ v.at <= $0 }) ?? true {
+      if anchor[v.accountId].map({ v.at > $0 }) ?? true { anchor[v.accountId] = v.at; b[v.accountId] = v.value }
+    }
+    func counts(_ id: String, _ t: Txn) -> Bool { anchor[id].map { t.occurredAt > $0 } ?? true }
+    for t in txns where t.deletedAt == nil && (asOf.map { t.occurredAt <= $0 } ?? true) {
       switch t.type {
-      case .expense: b[t.accountId, default: 0] -= t.amount
-      case .income: b[t.accountId, default: 0] += t.amount
+      case .expense: if counts(t.accountId, t) { b[t.accountId, default: 0] -= t.amount }
+      case .income: if counts(t.accountId, t) { b[t.accountId, default: 0] += t.amount }
       case .transfer:
-        b[t.accountId, default: 0] -= t.amount
-        if let to = t.toAccountId { b[to, default: 0] += t.amount }
+        if counts(t.accountId, t) { b[t.accountId, default: 0] -= t.amount }
+        if let to = t.toAccountId, counts(to, t) { b[to, default: 0] += t.amount }
       }
     }
     return b

@@ -21,4 +21,6 @@ enum PrefKey {
   static let autoCleanup = "autoCleanup"    // off | monthly | quarterly | halfyearly | yearly | custom
   static let autoCleanupMonths = "autoCleanupMonths"
   static let lastCleanupAt = "lastCleanupAt"
+  static let homeOrder = "homeOrder"        // comma-separated HomeSections keys
+  static let homeHidden = "homeHidden"
 }

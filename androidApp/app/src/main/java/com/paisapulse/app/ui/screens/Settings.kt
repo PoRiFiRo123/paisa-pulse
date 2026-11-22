@@ -20,6 +20,7 @@ import com.paisapulse.app.data.*
 import com.paisapulse.app.logic.Money
 import com.paisapulse.app.ui.*
 import com.paisapulse.app.work.BackupOps
+import com.paisapulse.app.work.BackupPassword
 import com.paisapulse.app.work.Services
 import com.paisapulse.app.work.Updates
 import kotlinx.coroutines.launch
@@ -45,6 +46,9 @@ import java.io.File
           onClick = { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(u.apk ?: u.page))) })
       }
     }
+    group {
+      PRow("Home Screen", leading = { Badge("square.grid.2x2.fill", "#5E5CE6") }, chevron = true, onClick = { Ui.sheet = Sheet.HomeLayout })
+    }
     group("Appearance") {
       PickerRow("Theme", listOf("system" to "System", "light" to "Light", "dark" to "Dark"), Prefs.theme, leading = { Badge("circle.lefthalf.filled", "#5856D6") }) { Prefs.set("theme", it) }
       Divider(56.dp)
@@ -57,6 +61,7 @@ import java.io.File
       Divider(56.dp); PRow("Budgets", leading = { Badge("gauge.with.dots.needle.33percent", "#5E5CE6") }, chevron = true, onClick = { Ui.push(Route.Budgets) })
       Divider(56.dp); PRow("Recurring", leading = { Badge("repeat", "#30B0C7") }, chevron = true, onClick = { Ui.push(Route.Recurring) })
       Divider(56.dp); PRow("Subscriptions", leading = { Badge("creditcard.and.123", "#32ADE6") }, chevron = true, onClick = { Ui.push(Route.Subscriptions) })
+      Divider(56.dp); PRow("Templates", leading = { Badge("bolt.fill", "#FF9500") }, chevron = true, onClick = { Ui.push(Route.Templates) })
       Divider(56.dp); PRow("Goals", leading = { Badge("target", "#1E9E5A") }, chevron = true, onClick = { Ui.push(Route.Goals) })
       Divider(56.dp); PRow("Splits", leading = { Badge("person.2.fill", "#007AFF") }, chevron = true, onClick = { Ui.push(Route.Splits) })
       Divider(56.dp); PRow("Loans", leading = { Badge("banknote.fill", "#E5484D") }, chevron = true, onClick = { Ui.push(Route.Loans) })
@@ -67,6 +72,8 @@ import java.io.File
       PRow("Insights", leading = { Badge("chart.bar.xaxis", "#AF52DE") }, chevron = true, onClick = { Ui.push(Route.Insights) })
       Divider(56.dp); PRow("Calendar", leading = { Badge("calendar", "#FF2D55") }, chevron = true, onClick = { Ui.push(Route.Calendar) })
       Divider(56.dp); PRow("Net Worth", leading = { Badge("chart.line.uptrend.xyaxis", "#34C759") }, chevron = true, onClick = { Ui.push(Route.NetWorth) })
+      Divider(56.dp); PRow("Monthly Recap", leading = { Badge("sparkles", "#5E5CE6") }, chevron = true, onClick = { Ui.push(Route.Recap(-1)) })
+      Divider(56.dp); PRow("Tags", leading = { Badge("number", "#8E8E93") }, chevron = true, onClick = { Ui.push(Route.Tags) })
       Divider(56.dp); PRow("Currency Converter", leading = { Badge("indianrupeesign.circle", "#30B0C7") }, chevron = true, onClick = { Ui.push(Route.Converter) })
     }
     group("Notifications", footer = "Budget alerts at 80% and 100%. Bill reminders 3 days before a card's due day.") {
@@ -111,18 +118,28 @@ fun ordinal(n: Int) = n.toString() + if (n % 100 in 11..13) "th" else when (n % 
   var files by remember { mutableStateOf(BackupOps.list(ctx)) }
   var pending by remember { mutableStateOf<Db?>(null) }
   var error by remember { mutableStateOf<String?>(null) }
+  var locked by remember { mutableStateOf<String?>(null) }
+  var protected by remember { mutableStateOf(BackupPassword.get(ctx) != null) }
+  var settingPassword by remember { mutableStateOf(false) }
+  fun open(text: String) {
+    runCatching { BackupOps.open(ctx, text) }.onSuccess { pending = it }
+      .onFailure { if (it is BackupOps.NeedsPassword) locked = text else error = it.message }
+  }
   val exporter = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
     uri ?: return@rememberLauncherForActivityResult
-    ctx.contentResolver.openOutputStream(uri)?.use { it.write(BackupOps.export().toByteArray()) }; Ui.show("Backup saved")
+    ctx.contentResolver.openOutputStream(uri)?.use { it.write(BackupOps.exportFile(ctx).toByteArray()) }; Ui.show("Backup saved")
   }
   val importer = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
     uri ?: return@rememberLauncherForActivityResult
-    runCatching { BackupOps.decode(ctx.contentResolver.openInputStream(uri)!!.bufferedReader().readText()) }.onSuccess { pending = it }.onFailure { error = it.message }
+    runCatching { ctx.contentResolver.openInputStream(uri)!!.bufferedReader().readText() }.onSuccess { open(it) }.onFailure { error = it.message }
   }
   PScreen("Backup & Restore", back = true) {
     group(footer = "Daily backups stay on this phone (the last 14) and in your Google account's Android backup." +
       if (Prefs.lastBackupAt > 0) " Last: ${shortDate.format(java.time.Instant.ofEpochMilli(Prefs.lastBackupAt).atZone(java.time.ZoneId.systemDefault()).toLocalDate())}." else "") {
       ToggleRow("Daily backup", Prefs.autoBackup) { Prefs.set("autoBackup", it) }
+      Divider(); ToggleRow("Protect with a password", protected) { on ->
+        if (on) settingPassword = true else { BackupPassword.set(ctx, null); protected = false; Ui.show("Backups are no longer encrypted") }
+      }
       Divider(); PRow("Back Up Now", titleColor = C.accent, onClick = { BackupOps.write(ctx); files = BackupOps.list(ctx); Ui.show("Backed up") })
     }
     group("Google Drive", footer = "Pick Google Drive in the list to keep a copy off your phone. The same file restores on iPhone.") {
@@ -131,7 +148,7 @@ fun ordinal(n: Int) = n.toString() + if (n % 100 in 11..13) "th" else when (n % 
     }
     if (files.isNotEmpty()) group("On this phone") {
       files.forEachIndexed { i, f -> if (i > 0) Divider()
-        PRow(f.nameWithoutExtension.removePrefix("paisa-pulse-"), titleColor = C.accent, onClick = { runCatching { BackupOps.decode(f.readText()) }.onSuccess { pending = it }.onFailure { error = it.message } }) }
+        PRow(f.nameWithoutExtension.removePrefix("paisa-pulse-"), titleColor = C.accent, onClick = { open(f.readText()) }) }
     }
   }
   pending?.let { file ->
@@ -140,6 +157,13 @@ fun ordinal(n: Int) = n.toString() + if (n % 100 in 11..13) "th" else when (n % 
       confirmButton = { TextButton({ BackupOps.restore(file); pending = null; Ui.show("Restored ${file.transactions.size} transactions") }) { Text("Restore", color = C.expense) } },
       dismissButton = { TextButton({ pending = null }) { Text("Cancel") } })
   }
+  if (settingPassword) PasswordDialog("Backup password", "New backups are encrypted with it (AES-256). Keep it safe: without it a backup can't be opened, on any phone.",
+    onDismiss = { settingPassword = false }) { pw -> BackupPassword.set(ctx, pw); protected = true; settingPassword = false; Ui.show("Backups are now encrypted") }
+  locked?.let { text ->
+    PasswordDialog("Enter the backup password", "This backup is encrypted.", onDismiss = { locked = null }) { pw ->
+      runCatching { BackupOps.open(ctx, text, pw) }.onSuccess { pending = it; locked = null }.onFailure { Ui.show(it.message ?: "Wrong password") }
+    }
+  }
   error?.let { AlertDialog({ error = null }, confirmButton = { TextButton({ error = null }) { Text("OK") } }, title = { Text("Couldn't do that") }, text = { Text(it) }) }
 }
 
@@ -147,9 +171,18 @@ fun ordinal(n: Int) = n.toString() + if (n % 100 in 11..13) "th" else when (n % 
   val ctx = LocalContext.current
   var name by remember { mutableStateOf("Bank account") }
   var balance by remember { mutableStateOf("") }
+  var lockedBackup by remember { mutableStateOf<String?>(null) }
   val importer = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
     uri ?: return@rememberLauncherForActivityResult
-    runCatching { BackupOps.restore(BackupOps.decode(ctx.contentResolver.openInputStream(uri)!!.bufferedReader().readText())) }.onFailure { Ui.show("Not a Paisa Pulse backup") }
+    val text = runCatching { ctx.contentResolver.openInputStream(uri)!!.bufferedReader().readText() }.getOrNull() ?: return@rememberLauncherForActivityResult
+    runCatching { BackupOps.restore(BackupOps.open(ctx, text)) }
+      .onFailure { if (it is BackupOps.NeedsPassword) lockedBackup = text else Ui.show("Not a Paisa Pulse backup") }
+  }
+  lockedBackup?.let { text ->
+    PasswordDialog("Enter the backup password", "This backup is encrypted.", onDismiss = { lockedBackup = null }) { pw ->
+      runCatching { BackupOps.restore(BackupOps.open(ctx, text, pw)) }.onSuccess { BackupPassword.set(ctx, pw); lockedBackup = null }
+        .onFailure { Ui.show(it.message ?: "Wrong password") }
+    }
   }
   PScreen("", large = false, bottomInset = 40.dp) {
     item {
@@ -238,4 +271,20 @@ object AppIcons {
       PRow(if (loading) "Refreshing…" else "Refresh Rates", titleColor = C.accent, onClick = { scope.launch { loading = true; rates = com.paisapulse.app.logic.Currency.rates(ctx, true); loading = false } })
     }
   }
+}
+
+@Composable fun PasswordDialog(title: String, message: String, onDismiss: () -> Unit, onSave: (String) -> Unit) {
+  var t by remember { mutableStateOf("") }
+  AlertDialog(onDismissRequest = onDismiss, containerColor = C.card, title = { Text(title, style = T.headline, color = C.label) },
+    text = {
+      Column {
+        Text(message, style = T.footnote, color = C.secondary)
+        Spacer(Modifier.height(10.dp))
+        OutlinedTextField(t, { t = it }, singleLine = true, placeholder = { Text("Password") },
+          visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+          keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Password))
+      }
+    },
+    confirmButton = { TextButton({ if (t.isNotEmpty()) onSave(t) }) { Text("OK", color = C.accent, style = T.headline) } },
+    dismissButton = { TextButton(onDismiss) { Text("Cancel", color = C.accent, style = T.body) } })
 }

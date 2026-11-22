@@ -23,17 +23,24 @@ fun LocalDate.ms(): Long = atStartOfDay(zone).toInstant().toEpochMilli()
 
 /** Mirrors apple/Shared/Ledger.swift. */
 object Ledger {
-  fun balances(accounts: List<Account>, txns: List<Txn>): Map<String, Long> {
+  /** Investment accounts start from their latest valuation on or before `asOf`; only later transactions count. */
+  fun balances(accounts: List<Account>, txns: List<Txn>, valuations: List<com.paisapulse.app.data.Valuation> = emptyList(), asOf: Long? = null): Map<String, Long> {
     val b = HashMap<String, Long>()
+    val anchor = HashMap<String, Long>()
     accounts.forEach { b[it.id] = it.openingBalance }
+    for (v in valuations) {
+      if (asOf != null && v.at > asOf) continue
+      if ((anchor[v.accountId] ?: Long.MIN_VALUE) < v.at) { anchor[v.accountId] = v.at; b[v.accountId] = v.value }
+    }
+    fun counts(id: String, t: Txn) = anchor[id]?.let { t.occurredAt > it } ?: true
     for (t in txns) {
-      if (t.deletedAt != null) continue
+      if (t.deletedAt != null || (asOf != null && t.occurredAt > asOf)) continue
       when (t.kind) {
-        TxnType.Expense -> b[t.accountId] = (b[t.accountId] ?: 0) - t.amount
-        TxnType.Income -> b[t.accountId] = (b[t.accountId] ?: 0) + t.amount
+        TxnType.Expense -> if (counts(t.accountId, t)) b[t.accountId] = (b[t.accountId] ?: 0) - t.amount
+        TxnType.Income -> if (counts(t.accountId, t)) b[t.accountId] = (b[t.accountId] ?: 0) + t.amount
         TxnType.Transfer -> {
-          b[t.accountId] = (b[t.accountId] ?: 0) - t.amount
-          t.toAccountId?.let { b[it] = (b[it] ?: 0) + t.amount }
+          if (counts(t.accountId, t)) b[t.accountId] = (b[t.accountId] ?: 0) - t.amount
+          t.toAccountId?.let { if (counts(it, t)) b[it] = (b[it] ?: 0) + t.amount }
         }
       }
     }

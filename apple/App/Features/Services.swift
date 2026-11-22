@@ -156,6 +156,8 @@ struct OnboardingView: View {
   @State private var name = "Bank account"
   @State private var balance = ""
   @State private var restoring = false
+  @State private var lockedBackup: Data?
+  @State private var unlockText = ""
   @State private var pending: BackupFile?
   @State private var error: String?
 
@@ -195,10 +197,24 @@ struct OnboardingView: View {
         let scoped = url.startAccessingSecurityScopedResource()
         defer { if scoped { url.stopAccessingSecurityScopedResource() } }
         do {
-          let file = try BackupCodec.decode(try Data(contentsOf: url))
-          try BackupCodec.restore(file, into: context)
+          let data = try Data(contentsOf: url)
+          if BackupCrypto.isEncrypted(data) { lockedBackup = data; return }
+          try BackupCodec.restore(try BackupCodec.decode(data), into: context)
           onboarded = true
         } catch { self.error = error.localizedDescription }
+      }
+      .alert("This backup has a password", isPresented: Binding(get: { lockedBackup != nil }, set: { if !$0 { lockedBackup = nil } })) {
+        SecureField("Password", text: $unlockText)
+        Button("Restore") {
+          guard let data = lockedBackup else { return }
+          do {
+            try BackupCodec.restore(try BackupCodec.decode(try BackupCrypto.decrypt(data, password: unlockText)), into: context)
+            BackupPassword.value = unlockText
+            onboarded = true
+          } catch { self.error = "That password didn't open the backup." }
+          unlockText = ""
+        }
+        Button("Cancel", role: .cancel) { unlockText = "" }
       }
       .alert("Couldn't restore", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) { Button("OK") {} } message: { Text(error ?? "") }
     }

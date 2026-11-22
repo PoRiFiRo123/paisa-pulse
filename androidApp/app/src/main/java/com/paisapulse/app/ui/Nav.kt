@@ -35,6 +35,10 @@ sealed interface Route {
   data object Loans : Route
   data class LoanDetail(val id: String) : Route
   data object Cleanup : Route
+  data object Templates : Route
+  data object Tags : Route
+  data class TagDetail(val tag: String) : Route
+  data class Recap(val offset: Int) : Route
 }
 
 sealed interface Sheet {
@@ -52,6 +56,7 @@ sealed interface Sheet {
   data class LoanForm(val id: String?) : Sheet
   /** Ask people who owe you (Messages, QR, link). amounts: friend id → paise. */
   data class Request(val note: String?, val amounts: Map<String, Long>) : Sheet
+  data object HomeLayout : Sheet
 }
 
 data class Toast(val text: String, val undo: (() -> Unit)? = null, val id: Long = System.nanoTime())

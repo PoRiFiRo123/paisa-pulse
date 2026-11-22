@@ -8,6 +8,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,53 +31,124 @@ import java.util.Locale
   val l = remember(db) { Lookups(db) }
   val txns = remember(db) { db.liveTxns.sortedByDescending { it.occurredAt } }
   val month = Periods.month(LocalDate.now(), Prefs.monthStartDay)
-  val s = Ledger.summary(txns, month)
-  val overall = db.budgets.firstOrNull { it.categoryId == null && it.period != "weekly" }
-  val progress = Budgets.progress(db.budgets, txns, l.categories, month, Periods.week(LocalDate.now(), Prefs.weekStartDay))
-  val top = Ledger.byCategory(txns, month, l.categories).take(6)
   val title = month.start.toDate().month.getDisplayName(TextStyle.FULL, Locale.ENGLISH)
+  val off = HomeSections.hidden(Prefs.homeHidden)
 
   PScreen(title, leading = { GlassIcon("calendar", "Calendar") { Ui.push(Route.Calendar) } }, actions = { AddButton() }) {
-    group { HeroCard(s, overall?.amount) }
-    if (top.isNotEmpty()) group("Where it went") {
-      Row(Modifier.horizontalScroll(rememberScrollState()).padding(12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        top.forEach { (id, amt) ->
-          val c = l.categories[id]
-          Row(Modifier.clip(CircleShape).background(C.fill).padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            CategoryBadge(c?.icon ?: "questionmark", c?.color, 28.dp)
-            Spacer(Modifier.width(8.dp))
-            Column {
-              Text(c?.name ?: "Uncategorised", style = T.caption, color = C.secondary, maxLines = 1)
-              Text(Money.format(amt, Prefs.hideAmounts), style = T.amount(15), color = C.label)
+    HomeSections.order(Prefs.homeOrder).filter { it !in off }.forEach { key ->
+      when (key) {
+        "hero" -> group { HeroCard(Ledger.summary(txns, month), db.budgets.firstOrNull { it.categoryId == null && it.period != "weekly" }?.amount) }
+        "templates" -> {
+          val templates = db.templates.sortedBy { it.sortOrder }
+          if (templates.isNotEmpty()) group("Quick add", footer = "Tap to add it now. Save more from any transaction › Save as Template.",
+            trailing = { Text("Edit", style = T.subhead, color = C.accent, modifier = Modifier.clickable { Ui.push(Route.Templates) }) }) {
+            Row(Modifier.horizontalScroll(rememberScrollState()).padding(12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+              templates.forEach { t ->
+                Column(Modifier.clip(RoundedCornerShape(14.dp)).background(C.accent.copy(alpha = 0.12f)).clickable { quickAdd(t) }.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                  Text("⚡ ${t.name}", style = T.subhead.copy(fontWeight = FontWeight.Medium), color = C.accent, maxLines = 1)
+                  Text(Money.format(t.amount, Prefs.hideAmounts), style = T.caption, color = C.secondary)
+                }
+              }
             }
           }
         }
-      }
-      Divider()
-      PRow("Insights", leading = { Icon2("chart.bar.xaxis") }, chevron = true, onClick = { Ui.push(Route.Insights) })
-    }
-    if (progress.isNotEmpty()) group("Budgets", trailing = { Text("Edit", style = T.subhead, color = C.accent, modifier = Modifier.clickable { Ui.push(Route.Budgets) }) }) {
-      progress.forEachIndexed { i, p -> if (i > 0) Divider(); BudgetRow(p, l) }
-    }
-    val goals = db.goals.filter { it.archivedAt == null }
-    if (goals.isNotEmpty()) group("Goals", trailing = { Text("All", style = T.subhead, color = C.accent, modifier = Modifier.clickable { Ui.push(Route.Goals) }) }) {
-      goals.take(3).forEachIndexed { i, g -> if (i > 0) Divider(64.dp); GoalRow(g) }
-    }
-    val upcoming = db.recurringRules.filter { it.pausedAt == null && it.nextAt < now() + 7 * 86_400_000L }.sortedBy { it.nextAt }.take(3)
-    if (upcoming.isNotEmpty()) group("Next 7 days") {
-      upcoming.forEachIndexed { i, r ->
-        if (i > 0) Divider(64.dp)
-        val c = r.categoryId?.let { l.categories[it] }
-        PRow(r.payee ?: c?.name ?: "Recurring", subtitle = shortDate.format(r.nextAt.toDate()), leading = { CategoryBadge(c?.icon ?: "repeat", c?.color, 30.dp) }) {
-          AmountText(r.amount, TxnType.of(r.type))
+        "forecast" -> {
+          val f = Forecast.monthEnd(db.accounts, txns, db.valuations, db.recurringRules, month)
+          if (f.daysLeft > 0) group("Month-end forecast") { ForecastCard(f) }
+        }
+        "cards" -> {
+          val due = db.accounts.filter { it.kind == AccountType.Card && it.archivedAt == null && it.dueDay != null }.mapNotNull { a ->
+            val d = Cards.nextDue(a.dueDay!!)
+            val days = java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), d)
+            val amount = CardStatement.last(a, txns)?.due ?: maxOf(0L, -(Ledger.balances(listOf(a), txns)[a.id] ?: 0))
+            if (days <= 10 && amount > 0) Triple(a, d, amount) else null
+          }
+          if (due.isNotEmpty()) group("Card bills") {
+            due.forEachIndexed { i, (a, d, amount) ->
+              if (i > 0) Divider(64.dp)
+              val days = java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), d)
+              PRow(a.name, subtitle = if (days == 0L) "Due today" else "Due in $days days",
+                leading = { CategoryBadge(a.icon, a.color, 32.dp) }, onClick = { Ui.sheet = Sheet.Add(TxnType.Transfer) }) {
+                Text(Money.format(amount, Prefs.hideAmounts), style = T.amount(17), color = C.label)
+              }
+            }
+          }
+        }
+        "categories" -> {
+          val top = Ledger.byCategory(txns, month, l.categories).take(6)
+          if (top.isNotEmpty()) group("Where it went") {
+            Row(Modifier.horizontalScroll(rememberScrollState()).padding(12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+              top.forEach { (id, amt) ->
+                val c = l.categories[id]
+                Row(Modifier.clip(CircleShape).background(C.fill).padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                  CategoryBadge(c?.icon ?: "questionmark", c?.color, 28.dp)
+                  Spacer(Modifier.width(8.dp))
+                  Column {
+                    Text(c?.name ?: "Uncategorised", style = T.caption, color = C.secondary, maxLines = 1)
+                    Text(Money.format(amt, Prefs.hideAmounts), style = T.amount(15), color = C.label)
+                  }
+                }
+              }
+            }
+            Divider()
+            PRow("Insights", leading = { Icon2("chart.bar.xaxis") }, chevron = true, onClick = { Ui.push(Route.Insights) })
+          }
+        }
+        "budgets" -> {
+          val progress = Budgets.progress(db.budgets, txns, l.categories, month, Periods.week(LocalDate.now(), Prefs.weekStartDay))
+          if (progress.isNotEmpty()) group("Budgets", trailing = { Text("Edit", style = T.subhead, color = C.accent, modifier = Modifier.clickable { Ui.push(Route.Budgets) }) }) {
+            progress.forEachIndexed { i, p -> if (i > 0) Divider(); BudgetRow(p, l) }
+          }
+        }
+        "goals" -> {
+          val goals = db.goals.filter { it.archivedAt == null }
+          if (goals.isNotEmpty()) group("Goals", trailing = { Text("All", style = T.subhead, color = C.accent, modifier = Modifier.clickable { Ui.push(Route.Goals) }) }) {
+            goals.take(3).forEachIndexed { i, g -> if (i > 0) Divider(64.dp); GoalRow(g) }
+          }
+        }
+        "upcoming" -> {
+          val upcoming = db.recurringRules.filter { it.pausedAt == null && it.nextAt < now() + 7 * 86_400_000L }.sortedBy { it.nextAt }.take(3)
+          if (upcoming.isNotEmpty()) group("Next 7 days") {
+            upcoming.forEachIndexed { i, r ->
+              if (i > 0) Divider(64.dp)
+              val c = r.categoryId?.let { l.categories[it] }
+              PRow(r.payee ?: c?.name ?: "Recurring", subtitle = shortDate.format(r.nextAt.toDate()), leading = { CategoryBadge(c?.icon ?: "repeat", c?.color, 30.dp) }) {
+                AmountText(r.amount, TxnType.of(r.type))
+              }
+            }
+          }
+        }
+        "recap" -> {
+          val day = java.time.temporal.ChronoUnit.DAYS.between(month.start.toDate(), LocalDate.now())
+          if (day < 7 && txns.any { it.occurredAt < month.start }) group {
+            val last = Periods.month(-1, Prefs.monthStartDay).start.toDate().month.getDisplayName(TextStyle.FULL, Locale.ENGLISH)
+            PRow("Your $last recap", subtitle = "Where it went, your best streak and more", leading = { CategoryBadge("sparkles", "#5E5CE6", 36.dp) },
+              chevron = true, onClick = { Ui.push(Route.Recap(-1)) })
+          }
+        }
+        "recent" -> group("Recent", trailing = { Text("See all", style = T.subhead, color = C.accent, modifier = Modifier.clickable { Ui.select(Tab.Activity) }) }) {
+          if (txns.isEmpty()) EmptyHint("No transactions yet", "indianrupeesign.circle", "Tap + to add what you spent. It takes two taps.")
+          txns.take(8).forEachIndexed { i, t -> if (i > 0) Divider(64.dp); TxnRow(t, l) }
         }
       }
     }
-    group("Recent", trailing = { Text("See all", style = T.subhead, color = C.accent, modifier = Modifier.clickable { Ui.select(Tab.Activity) }) }) {
-      if (txns.isEmpty()) EmptyHint("No transactions yet", "indianrupeesign.circle", "Tap + to add what you spent. It takes two taps.")
-      txns.take(8).forEachIndexed { i, t -> if (i > 0) Divider(64.dp); TxnRow(t, l) }
+    item {
+      Text("Edit Home Screen", style = T.subhead, color = C.accent, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+        modifier = Modifier.fillMaxWidth().clickable { Ui.sheet = Sheet.HomeLayout }.padding(16.dp))
     }
   }
+}
+
+/** A template adds straight away, with Undo. */
+fun quickAdd(t: TxnTemplate) {
+  val d = Store.value
+  val acc = t.accountId?.takeIf { id -> d.accounts.any { it.id == id && it.archivedAt == null } }
+    ?: d.accounts.firstOrNull { it.id == Prefs.lastAccountId }?.id ?: d.accounts.firstOrNull { it.archivedAt == null }?.id ?: return
+  val txn = Txn(type = t.type, amount = t.amount, accountId = acc, toAccountId = if (t.type == "transfer") t.toAccountId else null,
+    categoryId = if (t.type == "transfer") null else t.categoryId, payee = t.payee ?: t.name, source = "template")
+  Store.update { it.copy(transactions = it.transactions + txn) }
+  com.paisapulse.app.work.Services.refreshWidget()
+  Ui.show("Added ${t.name} · ${Money.format(t.amount)}") { Store.update { db -> db.copy(transactions = db.transactions.map { if (it.id == txn.id) it.copy(deletedAt = now()) else it }) } }
 }
 
 @Composable fun Icon2(sym: String) = androidx.compose.material3.Icon(Sym.of(sym), null, tint = C.accent, modifier = Modifier.size(24.dp))

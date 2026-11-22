@@ -71,7 +71,7 @@ data class ReorderGroup(val title: String, val items: List<ReorderItem>)
 
 private val RowHeight = 56.dp
 
-@Composable private fun ReorderColumn(items: androidx.compose.runtime.snapshots.SnapshotStateList<ReorderItem>) {
+@Composable fun ReorderColumn(items: androidx.compose.runtime.snapshots.SnapshotStateList<ReorderItem>, trailing: (@Composable (ReorderItem) -> Unit)? = null) {
   val rowPx = with(LocalDensity.current) { RowHeight.toPx() }
   val haptic = LocalHapticFeedback.current
   var dragging by remember { mutableStateOf<String?>(null) }
@@ -95,6 +95,7 @@ private val RowHeight = 56.dp
           CategoryBadge(item.icon, item.color, 30.dp)
           Spacer(Modifier.width(12.dp))
           Text(item.name, style = T.body, color = C.label, modifier = Modifier.weight(1f))
+          trailing?.invoke(item)
           Icon(Sym.of("line.3.horizontal"), "Drag to reorder", tint = C.tertiary, modifier = Modifier.size(28.dp)
             .pointerInput(item.id) {
               detectDragGesturesAfterLongPress(

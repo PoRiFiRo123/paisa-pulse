@@ -324,3 +324,42 @@ final class Stage3Tests: XCTestCase {
     XCTAssertEqual(LoanMath.outstanding(l, [LoanPayment(loanId: l.id, amount: 4_000), LoanPayment(loanId: "x", amount: 1)]), 6_000)
   }
 }
+
+final class Batch4Tests: XCTestCase {
+  func testPayeeMemoryAndTags() {
+    let txns = [
+      Txn(type: .expense, amount: 100, accountId: "a", categoryId: "food", payee: "Swiggy", occurredAt: Date(timeIntervalSince1970: 1)),
+      Txn(type: .expense, amount: 100, accountId: "b", categoryId: "food2", payee: "Swiggy", occurredAt: Date(timeIntervalSince1970: 5)),
+      Txn(type: .expense, amount: 100, accountId: "a", payee: "Swiss Beauty", occurredAt: Date(timeIntervalSince1970: 3)),
+    ]
+    let s = PayeeMemory.suggestions("swi", txns: txns, type: .expense)
+    XCTAssertEqual(s.map(\.payee), ["Swiggy", "Swiss Beauty"])
+    XCTAssertEqual(s.first?.accountId, "b")
+    XCTAssertEqual(Tags.parse("Goa Trip, #work, goa trip"), ["goa-trip", "work"])
+  }
+
+  func testValuationsAnchorInvestments() {
+    let inv = Account(name: "Groww", type: .investment, color: "#000", icon: "x")
+    let txns = [Txn(type: .transfer, amount: 1_000, accountId: "bank", toAccountId: inv.id, occurredAt: Date(timeIntervalSince1970: 10)),
+                Txn(type: .transfer, amount: 500, accountId: "bank", toAccountId: inv.id, occurredAt: Date(timeIntervalSince1970: 30))]
+    let v = [Valuation(accountId: inv.id, value: 5_000, at: Date(timeIntervalSince1970: 20))]
+    XCTAssertEqual(Ledger.balances(accounts: [inv], txns: txns, valuations: v)[inv.id], 5_500)
+    XCTAssertEqual(Ledger.balances(accounts: [inv], txns: txns, valuations: v, asOf: Date(timeIntervalSince1970: 15))[inv.id], 1_000)
+  }
+
+  func testHomeSectionsAndCrypto() throws {
+    XCTAssertEqual(HomeSections.order("recent,hero,bogus").first, "recent")
+    XCTAssertEqual(HomeSections.order("recent").count, HomeSections.all.count)
+    let enc = try BackupCrypto.encrypt(Data("hello ₹".utf8), password: "pw", iterations: 1_000)
+    XCTAssertTrue(BackupCrypto.isEncrypted(enc))
+    XCTAssertEqual(String(data: try BackupCrypto.decrypt(enc, password: "pw"), encoding: .utf8), "hello ₹")
+    XCTAssertThrowsError(try BackupCrypto.decrypt(enc, password: "nope"))
+    XCTAssertFalse(String(data: enc, encoding: .utf8)!.contains("\\/"))
+  }
+
+  /// A file made by the Android app (same password, salt and IV format) opens here.
+  func testAndroidEncryptedBackupOpens() throws {
+    let android = #"{"paisaEncrypted":1,"kdf":"pbkdf2-sha256","iterations":1000,"salt":"6h3PSE+GI3Cj9J3rQkMoBg==","iv":"1TBb2mtOGUmVH4I7","data":"YIXToSwlOp9jkg0D1nBscKMFGVKbHmeuEw=="}"#
+    XCTAssertEqual(String(data: try BackupCrypto.decrypt(Data(android.utf8), password: "pw"), encoding: .utf8), "hello ₹")
+  }
+}

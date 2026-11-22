@@ -25,6 +25,8 @@ struct BackupFile: Codable {
   var splitGroups: [GroupDTO]?
   var loans: [LoanDTO]?
   var loanPayments: [LoanPaymentDTO]?
+  var templates: [TemplateDTO]?
+  var valuations: [ValuationDTO]?
 
   struct Empty: Codable {}
   struct AccountDTO: Codable {
@@ -40,7 +42,12 @@ struct BackupFile: Codable {
     var id, type: String; var amount: Int; var accountId: String; var toAccountId, categoryId, payee, note: String?
     var occurredAt: Int64; var source: String?; var importBatchId, externalId, currency: String?; var originalAmount: Int?
     var recurringId: String?; var deletedAt: Int64?; var createdAt, updatedAt: Int64; var cardId: String?
+    var tags: [String]?
   }
+  struct TemplateDTO: Codable {
+    var id, name, type: String; var amount: Int; var accountId, toAccountId, categoryId, payee: String?; var sortOrder: Int?; var createdAt: Int64
+  }
+  struct ValuationDTO: Codable { var id, accountId: String; var value: Int; var at: Int64 }
   struct SettingDTO: Codable { var key: String; var value: String }
   struct RuleDTO: Codable {
     var id, type: String; var amount: Int; var accountId: String; var toAccountId, categoryId, payee, note: String?
@@ -108,6 +115,8 @@ enum BackupCodec {
     let groups = try context.fetch(FetchDescriptor<SplitGroup>())
     let loans = try context.fetch(FetchDescriptor<Loan>())
     let loanPayments = try context.fetch(FetchDescriptor<LoanPayment>())
+    let templates = try context.fetch(FetchDescriptor<TxnTemplate>())
+    let valuations = try context.fetch(FetchDescriptor<Valuation>())
     let d = AppGroup.defaults
     let settings: [BackupFile.SettingDTO] = prefKeys.compactMap { key, _ in
       guard let v = d.object(forKey: key),
@@ -131,7 +140,8 @@ enum BackupCodec {
         .init(id: $0.id, type: $0.typeRaw, amount: $0.amount, accountId: $0.accountId, toAccountId: $0.toAccountId,
               categoryId: $0.categoryId, payee: $0.payee, note: $0.note, occurredAt: ms($0.occurredAt), source: $0.source,
               importBatchId: $0.importBatchId, externalId: $0.externalId, currency: $0.currency, originalAmount: $0.originalAmount,
-              recurringId: $0.recurringId, deletedAt: msOpt($0.deletedAt), createdAt: ms($0.createdAt), updatedAt: ms($0.updatedAt), cardId: $0.cardId)
+              recurringId: $0.recurringId, deletedAt: msOpt($0.deletedAt), createdAt: ms($0.createdAt), updatedAt: ms($0.updatedAt), cardId: $0.cardId,
+              tags: $0.tags.isEmpty ? nil : $0.tags)
       },
       settings: settings,
       recurringRules: rules.map {
@@ -155,7 +165,10 @@ enum BackupCodec {
       loans: loans.map { .init(id: $0.id, person: $0.person, friendId: $0.friendId, direction: $0.direction, amount: $0.amount,
                                startedAt: ms($0.startedAt), dueAt: msOpt($0.dueAt), note: $0.note, remind: $0.remind,
                                closedAt: msOpt($0.closedAt), createdAt: ms($0.createdAt)) },
-      loanPayments: loanPayments.map { .init(id: $0.id, loanId: $0.loanId, amount: $0.amount, occurredAt: ms($0.occurredAt), note: $0.note) }
+      loanPayments: loanPayments.map { .init(id: $0.id, loanId: $0.loanId, amount: $0.amount, occurredAt: ms($0.occurredAt), note: $0.note) },
+      templates: templates.map { .init(id: $0.id, name: $0.name, type: $0.typeRaw, amount: $0.amount, accountId: $0.accountId, toAccountId: $0.toAccountId,
+                                       categoryId: $0.categoryId, payee: $0.payee, sortOrder: $0.sortOrder, createdAt: ms($0.createdAt)) },
+      valuations: valuations.map { .init(id: $0.id, accountId: $0.accountId, value: $0.value, at: ms($0.at)) }
     )
     let enc = JSONEncoder()
     enc.outputFormatting = [.sortedKeys]
@@ -176,6 +189,7 @@ enum BackupCodec {
     try context.delete(model: SplitEntry.self); try context.delete(model: Goal.self); try context.delete(model: PaymentCard.self)
     try context.delete(model: SavedFilter.self); try context.delete(model: ImportBatch.self)
     try context.delete(model: SplitGroup.self); try context.delete(model: Loan.self); try context.delete(model: LoanPayment.self)
+    try context.delete(model: TxnTemplate.self); try context.delete(model: Valuation.self)
     for a in file.accounts {
       context.insert(Account(id: a.id, name: a.name, type: AccountType(rawValue: a.type) ?? .bank, institution: a.institution,
                              last4: a.last4, openingBalance: a.openingBalance, creditLimit: a.creditLimit, statementDay: a.statementDay,
@@ -189,13 +203,20 @@ enum BackupCodec {
     }
     let shares = Dictionary((file.txnSplitShares ?? []).map { ($0.id, $0.share) }, uniquingKeysWith: { a, _ in a })
     for t in file.transactions {
-      context.insert(Txn(id: t.id, type: TxnType(rawValue: t.type) ?? .expense, amount: t.amount, accountId: t.accountId,
+      let txn = Txn(id: t.id, type: TxnType(rawValue: t.type) ?? .expense, amount: t.amount, accountId: t.accountId,
                          toAccountId: t.toAccountId, categoryId: t.categoryId, payee: t.payee, note: t.note,
                          occurredAt: date(t.occurredAt), source: t.source ?? "manual", recurringId: t.recurringId,
                          importBatchId: t.importBatchId, externalId: t.externalId, currency: t.currency,
                          originalAmount: t.originalAmount, splitShare: shares[t.id], cardId: t.cardId, deletedAt: dateOpt(t.deletedAt),
-                         createdAt: date(t.createdAt), updatedAt: date(t.updatedAt)))
+                         createdAt: date(t.createdAt), updatedAt: date(t.updatedAt))
+      txn.tags = t.tags ?? []
+      context.insert(txn)
     }
+    for x in file.templates ?? [] {
+      context.insert(TxnTemplate(id: x.id, name: x.name, type: TxnType(rawValue: x.type) ?? .expense, amount: x.amount, accountId: x.accountId,
+                                 toAccountId: x.toAccountId, categoryId: x.categoryId, payee: x.payee, sortOrder: x.sortOrder ?? 0, createdAt: date(x.createdAt)))
+    }
+    for v in file.valuations ?? [] { context.insert(Valuation(id: v.id, accountId: v.accountId, value: v.value, at: date(v.at))) }
     for r in file.recurringRules ?? [] {
       context.insert(RecurringRule(id: r.id, type: TxnType(rawValue: r.type) ?? .expense, amount: r.amount, accountId: r.accountId,
                                    toAccountId: r.toAccountId, categoryId: r.categoryId, payee: r.payee, note: r.note,
@@ -279,7 +300,8 @@ enum AutoBackup {
     try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
     let name = "paisa-pulse-\(Date.now.formatted(.iso8601.year().month().day())).json"
     let url = folder.appending(path: name)
-    try BackupCodec.export(context).write(to: url, options: .atomic)
+    let plain = try BackupCodec.export(context)
+    try (BackupPassword.value.map { try BackupCrypto.encrypt(plain, password: $0) } ?? plain).write(to: url, options: .atomic)
     AppGroup.defaults.set(Date.now.timeIntervalSince1970, forKey: PrefKey.lastBackupAt)
     let files = (try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)) ?? []
     for old in files.filter({ $0.pathExtension == "json" }).sorted(by: { $0.lastPathComponent > $1.lastPathComponent }).dropFirst(14) {
@@ -312,9 +334,21 @@ struct BackupView: View {
   @State private var pending: BackupFile?
   @State private var error: String?
   @State private var files: [URL] = []
+  @State private var locked: Data?
+  @State private var unlock = ""
+  @State private var settingPassword = false
+  @State private var newPassword = ""
+  @State private var hasPassword = BackupPassword.value != nil
 
   var body: some View {
     List {
+      Section {
+        Toggle("Protect with a password", isOn: Binding(get: { hasPassword }, set: { on in
+          if on { settingPassword = true } else { BackupPassword.value = nil; hasPassword = false }
+        }))
+      } footer: {
+        Text("Backups (daily ones and saved copies) are encrypted with AES-256. Without the password nobody can open them, not even you, so keep it somewhere safe. Android uses the same format.")
+      }
       Section {
         Toggle("Daily backup", isOn: $auto)
         Button("Back Up Now") {
@@ -326,7 +360,9 @@ struct BackupView: View {
       }
       Section {
         Button {
-          if let data = try? BackupCodec.export(context) { exporting = BackupDocument(data: data) }
+          if let data = try? BackupCodec.export(context) {
+            exporting = BackupDocument(data: (BackupPassword.value.flatMap { try? BackupCrypto.encrypt(data, password: $0) }) ?? data)
+          }
         } label: { Label("Save to Google Drive or Files…", systemImage: "square.and.arrow.up.on.square") }
         Button { importing = true } label: { Label("Restore from a File…", systemImage: "square.and.arrow.down") }
       } header: { Text("Google Drive") } footer: {
@@ -361,11 +397,35 @@ struct BackupView: View {
       Text("\(pending?.transactions.count ?? 0) transactions and \(pending?.accounts.count ?? 0) accounts from \(pending.map { Date(timeIntervalSince1970: Double($0.exportedAt) / 1000).formatted(date: .abbreviated, time: .shortened) } ?? ""). Your current data on this iPhone is replaced.")
     }
     .alert("Couldn't do that", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) { Button("OK") {} } message: { Text(error ?? "") }
+    .alert("Backup password", isPresented: $settingPassword) {
+      SecureField("Password", text: $newPassword)
+      Button("Save") {
+        if newPassword.count >= 4 { BackupPassword.value = newPassword; hasPassword = true; try? AutoBackup.write(context); files = AutoBackup.list() }
+        newPassword = ""
+      }
+      Button("Cancel", role: .cancel) { newPassword = "" }
+    } message: { Text("At least 4 characters. It's kept in this iPhone's Keychain for daily backups.") }
+    .alert("This backup has a password", isPresented: Binding(get: { locked != nil }, set: { if !$0 { locked = nil } })) {
+      SecureField("Password", text: $unlock)
+      Button("Open") {
+        guard let data = locked else { return }
+        do { pending = try BackupCodec.decode(try BackupCrypto.decrypt(data, password: unlock)) }
+        catch { self.error = "That password didn't open the backup." }
+        unlock = ""
+      }
+      Button("Cancel", role: .cancel) { unlock = "" }
+    }
   }
 
   private func load(_ url: URL) {
     let scoped = url.startAccessingSecurityScopedResource()
     defer { if scoped { url.stopAccessingSecurityScopedResource() } }
-    do { pending = try BackupCodec.decode(try Data(contentsOf: url)) } catch { self.error = error.localizedDescription }
+    do {
+      let data = try Data(contentsOf: url)
+      if BackupCrypto.isEncrypted(data) {
+        if let pw = BackupPassword.value, let plain = try? BackupCrypto.decrypt(data, password: pw) { pending = try BackupCodec.decode(plain) }
+        else { locked = data }
+      } else { pending = try BackupCodec.decode(data) }
+    } catch { self.error = error.localizedDescription }
   }
 }

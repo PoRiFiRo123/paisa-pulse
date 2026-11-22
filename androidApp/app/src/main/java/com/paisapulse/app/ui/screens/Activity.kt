@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.paisapulse.app.data.*
@@ -23,7 +24,8 @@ object Search {
   fun matches(t: Txn, q: String, l: Lookups): Boolean {
     val s = q.trim().lowercase(); if (s.isEmpty()) return true
     if (Money.parse(s)?.let { it == t.amount } == true) return true
-    return listOf(t.payee, t.note, t.categoryId?.let { l.categories[it]?.name }, l.accounts[t.accountId]?.name).any { it?.lowercase()?.contains(s) == true }
+    if (s.startsWith("#")) return t.tags.orEmpty().any { it.startsWith(s.drop(1)) }
+    return (listOf(t.payee, t.note, t.categoryId?.let { l.categories[it]?.name }, l.accounts[t.accountId]?.name) + t.tags.orEmpty()).any { it?.lowercase()?.contains(s) == true }
   }
 }
 
@@ -254,6 +256,17 @@ object Search {
   val l = remember(db) { Lookups(db) }
   val (icon, color) = l.badge(t)
   val splits = db.splitEntries.filter { it.txnId == t.id }
+  val ctx = androidx.compose.ui.platform.LocalContext.current
+  var savingTemplate by remember { mutableStateOf(false) }
+  var viewing by remember { mutableStateOf(false) }
+  val receipt = remember(t.receipt) { Receipts.bitmap(ctx, t.receipt) }
+  val pickPhoto = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia()) { uri ->
+    uri ?: return@rememberLauncherForActivityResult
+    Receipts.save(ctx, uri, t.id)?.let { name ->
+      Receipts.delete(ctx, t.receipt)
+      Store.update { d -> d.copy(transactions = d.transactions.map { if (it.id == id) it.copy(receipt = name, updatedAt = now()) else it }) }
+    }
+  }
   PScreen("", large = false, back = true, actions = {
     Text("Edit", style = T.body, color = C.accent, modifier = Modifier.glass(CircleShape).padding(horizontal = 16.dp, vertical = 11.dp)
       .then(Modifier.combinedClickableCompat({ Ui.sheet = Sheet.Add(t.kind, editId = t.id) }, {})))
@@ -277,6 +290,7 @@ object Search {
         Divider(); PRow("Account", value = l.accounts[t.accountId]?.displayName ?: "—")
       }
       t.note?.takeIf { it.isNotBlank() }?.let { Divider(); PRow("Note", value = it) }
+      if (!t.tags.isNullOrEmpty()) { Divider(); PRow("Tags", value = t.tags.joinToString(" ") { "#$it" }, valueColor = C.accent) }
       if (t.source != null && t.source != "manual") { Divider(); PRow("Added by", value = t.source.replaceFirstChar { it.uppercase() }) }
     }
     t.splitShare?.let { share ->
@@ -289,11 +303,51 @@ object Search {
         }
       }
     }
+    group("Receipt") {
+      if (receipt != null) {
+        androidx.compose.foundation.Image(receipt.asImageBitmap(), "Receipt", contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+          modifier = Modifier.fillMaxWidth().height(180.dp).padding(12.dp).clip(RoundedCornerShape(12.dp)).combinedClickableCompat({ viewing = true }, {}))
+        Divider()
+        PRow("Remove Receipt", titleColor = C.expense, onClick = {
+          Receipts.delete(ctx, t.receipt)
+          Store.update { d -> d.copy(transactions = d.transactions.map { if (it.id == id) it.copy(receipt = null) else it }) }
+        })
+      } else PRow("Add a Photo of the Receipt", titleColor = C.accent, leading = { Icon2("doc.text.image") }, onClick = {
+        pickPhoto.launch(androidx.activity.result.PickVisualMediaRequest(androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly))
+      })
+    }
     group {
       PRow("Edit", titleColor = C.accent, leading = { Icon2("pencil") }, onClick = { Ui.sheet = Sheet.Add(t.kind, editId = t.id) })
+      Divider(56.dp); PRow("Save as Template", titleColor = C.accent, leading = { Icon2("bolt.fill") }, onClick = { savingTemplate = true })
       Divider(56.dp); PRow("Duplicate", titleColor = C.accent, leading = { Icon2("plus.square.on.square") }, onClick = { TxnOps.duplicate(t) })
       if (t.recurringId == null) { Divider(56.dp); PRow("Repeat…", titleColor = C.accent, leading = { Icon2("repeat") }, onClick = { Ui.sheet = Sheet.RecurringForm(null, t.id) }) }
       Divider(56.dp); PRow("Delete", titleColor = C.expense, leading = { Icon(Sym.of("trash"), null, tint = C.expense) }, onClick = { TxnOps.delete(t); Ui.pop() })
     }
   }
+  if (savingTemplate) NameDialog("Save as template", "Name, e.g. Metro", initial = t.payee ?: "", onDismiss = { savingTemplate = false }) { n ->
+    Store.update { d -> d.copy(templates = d.templates + TxnTemplate(name = n, type = t.type, amount = t.amount, accountId = t.accountId, toAccountId = t.toAccountId,
+      categoryId = t.categoryId, payee = t.payee, sortOrder = (d.templates.maxOfOrNull { it.sortOrder } ?: -1) + 1)) }
+    savingTemplate = false; Ui.show("Template saved")
+  }
+  if (viewing && receipt != null) androidx.compose.ui.window.Dialog({ viewing = false }, properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)) {
+    Box(Modifier.fillMaxSize().background(Color.Black).combinedClickableCompat({ viewing = false }, {}), contentAlignment = Alignment.Center) {
+      androidx.compose.foundation.Image(receipt.asImageBitmap(), "Receipt", modifier = Modifier.fillMaxWidth())
+    }
+  }
+}
+
+/** Receipt photos in files/receipts on this phone (not in backups). */
+object Receipts {
+  private fun dir(ctx: android.content.Context) = java.io.File(ctx.filesDir, "receipts").apply { mkdirs() }
+  fun save(ctx: android.content.Context, uri: android.net.Uri, id: String): String? = runCatching {
+    val src = ctx.contentResolver.openInputStream(uri)!!.use { android.graphics.BitmapFactory.decodeStream(it) }
+    val scale = minOf(1f, 1600f / maxOf(src.width, src.height))
+    val bmp = if (scale < 1f) android.graphics.Bitmap.createScaledBitmap(src, (src.width * scale).toInt(), (src.height * scale).toInt(), true) else src
+    val name = "$id-${System.currentTimeMillis() / 1000}.jpg"
+    java.io.File(dir(ctx), name).outputStream().use { bmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, 75, it) }
+    name
+  }.getOrNull()
+  fun delete(ctx: android.content.Context, name: String?) { name?.let { java.io.File(dir(ctx), it).delete() } }
+  fun bitmap(ctx: android.content.Context, name: String?): android.graphics.Bitmap? =
+    name?.let { java.io.File(dir(ctx), it) }?.takeIf { it.exists() }?.let { android.graphics.BitmapFactory.decodeFile(it.path) }
 }

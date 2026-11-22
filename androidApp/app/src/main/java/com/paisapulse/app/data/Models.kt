@@ -19,7 +19,8 @@ enum class AccountType(val key: String, val label: String, val plural: String, v
   Bank("bank", "Bank account", "Bank accounts", "building.columns.fill"),
   Card("card", "Credit card", "Credit cards", "creditcard.fill"),
   Cash("cash", "Cash", "Cash", "banknote.fill"),
-  Wallet("wallet", "Wallet", "Wallets", "wallet.bifold.fill");
+  Wallet("wallet", "Wallet", "Wallets", "wallet.bifold.fill"),
+  Investment("investment", "Investments", "Investments", "chart.line.uptrend.xyaxis");
   companion object { fun of(k: String?) = entries.firstOrNull { it.key == k } ?: Bank }
 }
 
@@ -53,6 +54,10 @@ enum class Frequency(val key: String, val noun: String) {
   val recurringId: String? = null, val deletedAt: Long? = null, val createdAt: Long = now(), val updatedAt: Long = now(),
   /** The debit or credit card used ("Paid with"). */
   val cardId: String? = null,
+  /** Tags like "goa-trip" (no #). */
+  val tags: List<String>? = null,
+  /** Receipt photo file name in files/receipts (this phone only). */
+  val receipt: String? = null,
   /** Your share when split (stored in BackupFile.txnSplitShares, like the iPhone app). */
   @Transient val splitShare: Long? = null,
 ) {
@@ -122,6 +127,15 @@ enum class Frequency(val key: String, val noun: String) {
   val createdAt: Long = now(), val undoneAt: Long? = null,
 )
 
+/** A one-tap transaction ("Metro ₹40"). */
+@Serializable data class TxnTemplate(
+  val id: String = newId(), val name: String, val type: String = "expense", val amount: Long, val accountId: String? = null,
+  val toAccountId: String? = null, val categoryId: String? = null, val payee: String? = null, val sortOrder: Int = 0, val createdAt: Long = now(),
+)
+
+/** An investment account's value on a date; balances use the latest one. */
+@Serializable data class Valuation(val id: String = newId(), val accountId: String, val value: Long, val at: Long = now())
+
 @Serializable data class Setting(val key: String, val value: String)
 @Serializable data class Share(val id: String, val share: Long)
 
@@ -145,6 +159,8 @@ enum class Frequency(val key: String, val noun: String) {
   val splitGroups: List<SplitGroup> = emptyList(),
   val loans: List<Loan> = emptyList(),
   val loanPayments: List<LoanPayment> = emptyList(),
+  val templates: List<TxnTemplate> = emptyList(),
+  val valuations: List<Valuation> = emptyList(),
 ) {
   val liveTxns get() = transactions.filter { it.deletedAt == null }
 }

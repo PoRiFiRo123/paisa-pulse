@@ -28,6 +28,8 @@ object Prefs {
   var autoCleanup by mutableStateOf("off"); private set
   var autoCleanupMonths by mutableStateOf(24); private set
   var lastCleanupAt by mutableStateOf(0L); private set
+  var homeOrder by mutableStateOf(""); private set
+  var homeHidden by mutableStateOf(""); private set
 
   fun init(ctx: Context) {
     sp = ctx.getSharedPreferences("paisa", Context.MODE_PRIVATE)
@@ -40,6 +42,7 @@ object Prefs {
     lastBackupAt = sp.getLong("lastBackupAt", 0L); merchantLogos = sp.getBoolean("merchantLogos", false)
     myUpiId = sp.getString("myUpiId", "")!!; myName = sp.getString("myName", "")!!
     autoCleanup = sp.getString("autoCleanup", "off")!!; autoCleanupMonths = sp.getInt("autoCleanupMonths", 24); lastCleanupAt = sp.getLong("lastCleanupAt", 0L)
+    homeOrder = sp.getString("homeOrder", "")!!; homeHidden = sp.getString("homeHidden", "")!!
   }
 
   fun set(key: String, v: Any) {
@@ -56,6 +59,7 @@ object Prefs {
       "merchantLogos" -> merchantLogos = v as Boolean
       "myUpiId" -> myUpiId = v as String; "myName" -> myName = v as String
       "autoCleanup" -> autoCleanup = v as String; "autoCleanupMonths" -> autoCleanupMonths = v as Int; "lastCleanupAt" -> lastCleanupAt = v as Long
+      "homeOrder" -> homeOrder = v as String; "homeHidden" -> homeHidden = v as String
     }
   }
 
