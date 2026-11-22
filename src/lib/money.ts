@@ -96,8 +96,8 @@ function trimDecimal(abs: number, unit: number): string {
 }
 
 function signPrefix(paise: number, sign: FormatINROptions['sign']): string {
-  if (sign === 'never' || paise === 0) return '';
-  if (paise < 0) return '-';
+  // Never a minus sign anywhere in the app (Nov 2026): direction is shown by colour or words.
+  if (sign === 'never' || paise <= 0) return '';
   return sign === 'always' ? '+' : '';
 }
 

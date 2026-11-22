@@ -34,7 +34,7 @@ export function UpcomingRow({ rule, onPress }: { rule: RecurringRule; onPress: (
           {when} · {describeFrequency(rule)}
         </Text>
       </View>
-      <Text style={[type.bodyAmount, { color: rule.type === 'income' ? colors.income : colors.label }]}>{money.signed(rule.amount, rule.type)}</Text>
+      <Text style={[type.bodyAmount, { color: rule.type === 'income' ? colors.income : rule.type === 'expense' ? colors.expense : colors.secondary }]}>{money.signed(rule.amount, rule.type)}</Text>
     </Pressable>
   );
 }

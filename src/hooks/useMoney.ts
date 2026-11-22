@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import type { TransactionType } from '@/db/schema';
-import { balance, signedAmount } from '@/lib/format';
+import { accountBalance, balance, signedAmount } from '@/lib/format';
 import { formatINR } from '@/lib/money';
 import { usePrefs } from '@/stores/prefs';
 
@@ -15,5 +15,7 @@ export function useMoney() {
     amount: useCallback((p: number) => (hidden ? MASK : formatINR(p, { decimals: 'auto' })), [hidden]),
     signed: useCallback((p: number, kind: TransactionType) => (hidden ? MASK : signedAmount(p, kind)), [hidden]),
     balance: useCallback((p: number, compact?: boolean) => (hidden ? MASK : balance(p, compact)), [hidden]),
+    /** Account balances: "₹8,360 due" below zero, never a minus sign. */
+    account: useCallback((p: number, compact?: boolean) => (hidden ? MASK : accountBalance(p, compact)), [hidden]),
   };
 }

@@ -37,7 +37,7 @@ export const TransactionRow = memo(function TransactionRow({ item, showTime = tr
   const money = useMoney();
   const visual = transactionVisual(item);
   const brand = item.type === 'transfer' ? null : matchBrand(item.payee);
-  const amountColor = item.type === 'income' ? colors.income : colors.label;
+  const amountColor = item.type === 'income' ? colors.income : item.type === 'expense' ? colors.expense : colors.secondary;
   return (
     <View style={[styles.row, { backgroundColor: colors.card }]}>
       {brand ? <BrandMark brand={brand} /> : <CategoryIcon icon={visual.icon} color={visual.color} />}

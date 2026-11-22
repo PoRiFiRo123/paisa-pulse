@@ -1,20 +1,22 @@
 import { daysUntilDay } from '@/features/accounts/presentation';
 
-import { accountLabel, balance, dayHeader, MINUS, relativeWhen, signedAmount } from '../format';
+import { accountBalance, accountLabel, balance, dayHeader, relativeWhen, signedAmount } from '../format';
 
 const at = (y: number, m: number, d: number, h = 12, min = 0) => new Date(y, m - 1, d, h, min).getTime();
 const NOW = at(2026, 9, 25, 15);
 
 describe('format', () => {
-  it('signs amounts like the designs', () => {
-    expect(signedAmount(42000, 'expense')).toBe(`${MINUS}₹420`);
-    expect(signedAmount(9000000, 'income')).toBe('+₹90,000');
+  it('never signs amounts: colour shows the direction', () => {
+    expect(signedAmount(42000, 'expense')).toBe('₹420');
+    expect(signedAmount(9000000, 'income')).toBe('₹90,000');
     expect(signedAmount(500000, 'transfer')).toBe('₹5,000');
-    expect(signedAmount(12345, 'expense')).toBe(`${MINUS}₹123.45`);
+    expect(signedAmount(12345, 'expense')).toBe('₹123.45');
   });
 
-  it('formats signed balances', () => {
-    expect(balance(-836000)).toBe(`${MINUS}₹8,360`);
+  it('formats balances without a minus sign', () => {
+    expect(balance(-836000)).toBe('₹8,360');
+    expect(accountBalance(-836000)).toBe('₹8,360 due');
+    expect(accountBalance(836000)).toBe('₹8,360');
     expect(balance(18245000)).toBe('₹1,82,450');
     expect(balance(24830000, true)).toBe('₹2.48L');
   });

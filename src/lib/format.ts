@@ -8,16 +8,19 @@ import { formatINR, formatINRCompact } from './money';
 export const MINUS = '−';
 
 export function signedAmount(paise: number, kind: TransactionType): string {
-  const body = formatINR(paise, { decimals: 'auto', sign: 'never' });
-  if (kind === 'expense') return MINUS + body;
-  if (kind === 'income') return '+' + body;
-  return body;
+  // No signs (user decision, Nov 2026): colour carries the direction (soft red expense, green income).
+  void kind;
+  return formatINR(paise, { decimals: 'auto', sign: 'never' });
 }
 
-/** Signed balance/net: "−₹8,360" / "₹1,82,450". */
+/** Balance/net without a minus sign: "₹8,360" (callers colour it or add "due"). */
 export function balance(paise: number, compact = false): string {
-  const body = compact ? formatINRCompact(Math.abs(paise)) : formatINR(Math.abs(paise), { decimals: 'auto' });
-  return paise < 0 ? MINUS + body : body;
+  return compact ? formatINRCompact(Math.abs(paise)) : formatINR(Math.abs(paise), { decimals: 'auto' });
+}
+
+/** Account balance: a card or account below zero reads "₹8,360 due". */
+export function accountBalance(paise: number, compact = false): string {
+  return balance(paise, compact) + (paise < 0 ? ' due' : '');
 }
 
 export function accountLabel(name: string | null | undefined, last4: string | null | undefined): string {

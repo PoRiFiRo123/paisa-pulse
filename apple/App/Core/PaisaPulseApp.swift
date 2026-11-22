@@ -3,7 +3,11 @@ import SwiftUI
 
 @main
 struct PaisaPulseApp: App {
-  let container = Store.makeContainer()
+  let container: ModelContainer = {
+    let c = Store.makeContainer()
+    c.mainContext.undoManager = UndoManager() // shake to undo
+    return c
+  }()
   @State private var router = Router()
   @AppStorage(PrefKey.theme, store: AppGroup.defaults) private var theme = "system"
   @AppStorage(PrefKey.accent, store: AppGroup.defaults) private var accent = "indigo"
@@ -16,7 +20,7 @@ struct PaisaPulseApp: App {
         .preferredColorScheme(theme == "light" ? .light : theme == "dark" ? .dark : nil)
         .onOpenURL { router.handle(url: $0) }
     }
-    .modelContainer(container, isUndoEnabled: true)
+    .modelContainer(container)
   }
 }
 

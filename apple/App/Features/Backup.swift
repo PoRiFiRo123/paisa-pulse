@@ -63,9 +63,9 @@ enum BackupError: LocalizedError {
 }
 
 private func ms(_ d: Date) -> Int64 { Int64((d.timeIntervalSince1970 * 1000).rounded()) }
-private func ms(_ d: Date?) -> Int64? { d.map { ms($0) } }
+private func msOpt(_ d: Date?) -> Int64? { d.map { ms($0) } }
 private func date(_ v: Int64) -> Date { Date(timeIntervalSince1970: Double(v) / 1000) }
-private func date(_ v: Int64?) -> Date? { v.map { date($0) } }
+private func dateOpt(_ v: Int64?) -> Date? { v.map { date($0) } }
 
 enum BackupCodec {
   static let prefKeys: [(String, Any.Type)] = [
@@ -95,30 +95,30 @@ enum BackupCodec {
         .init(id: $0.id, name: $0.name, type: $0.typeRaw, institution: $0.institution, last4: $0.last4,
               openingBalance: $0.openingBalance, currency: "INR", creditLimit: $0.creditLimit, statementDay: $0.statementDay,
               dueDay: $0.dueDay, color: $0.color, icon: $0.icon, sortOrder: $0.sortOrder, excludeFromTotals: $0.excludeFromTotals,
-              archivedAt: ms($0.archivedAt), createdAt: ms($0.createdAt), updatedAt: ms($0.updatedAt))
+              archivedAt: msOpt($0.archivedAt), createdAt: ms($0.createdAt), updatedAt: ms($0.updatedAt))
       },
       categories: categories.map {
         .init(id: $0.id, parentId: $0.parentId, kind: $0.kindRaw, name: $0.name, icon: $0.icon, color: $0.color,
-              sortOrder: $0.sortOrder, archivedAt: ms($0.archivedAt), createdAt: ms($0.createdAt), updatedAt: ms($0.updatedAt))
+              sortOrder: $0.sortOrder, archivedAt: msOpt($0.archivedAt), createdAt: ms($0.createdAt), updatedAt: ms($0.updatedAt))
       },
       transactions: txns.map {
         .init(id: $0.id, type: $0.typeRaw, amount: $0.amount, accountId: $0.accountId, toAccountId: $0.toAccountId,
               categoryId: $0.categoryId, payee: $0.payee, note: $0.note, occurredAt: ms($0.occurredAt), source: $0.source,
               importBatchId: $0.importBatchId, externalId: $0.externalId, currency: $0.currency, originalAmount: $0.originalAmount,
-              recurringId: $0.recurringId, deletedAt: ms($0.deletedAt), createdAt: ms($0.createdAt), updatedAt: ms($0.updatedAt))
+              recurringId: $0.recurringId, deletedAt: msOpt($0.deletedAt), createdAt: ms($0.createdAt), updatedAt: ms($0.updatedAt))
       },
       settings: settings,
       recurringRules: rules.map {
         .init(id: $0.id, type: $0.typeRaw, amount: $0.amount, accountId: $0.accountId, toAccountId: $0.toAccountId,
               categoryId: $0.categoryId, payee: $0.payee, note: $0.note, frequency: $0.frequencyRaw, interval: $0.interval,
-              startAt: ms($0.startAt), nextAt: ms($0.nextAt), endAt: ms($0.endAt), pausedAt: ms($0.pausedAt),
+              startAt: ms($0.startAt), nextAt: ms($0.nextAt), endAt: msOpt($0.endAt), pausedAt: msOpt($0.pausedAt),
               createdAt: ms($0.createdAt), updatedAt: ms($0.updatedAt))
       },
       budgets: budgets.map { .init(id: $0.id, categoryId: $0.categoryId, period: $0.period, amount: $0.amount, createdAt: ms($0.createdAt), updatedAt: ms($0.updatedAt)) },
       savedFilters: [], importBatches: [],
       friends: friends.map { .init(id: $0.id, name: $0.name, upiId: $0.upiId, createdAt: ms($0.createdAt)) },
       splitEntries: splits.map { .init(id: $0.id, friendId: $0.friendId, txnId: $0.txnId, amount: $0.amount, note: $0.note, occurredAt: ms($0.occurredAt), createdAt: ms($0.createdAt)) },
-      goals: goals.map { .init(id: $0.id, name: $0.name, icon: $0.icon, color: $0.color, target: $0.target, saved: $0.saved, deadline: ms($0.deadline), archivedAt: ms($0.archivedAt), createdAt: ms($0.createdAt)) },
+      goals: goals.map { .init(id: $0.id, name: $0.name, icon: $0.icon, color: $0.color, target: $0.target, saved: $0.saved, deadline: msOpt($0.deadline), archivedAt: msOpt($0.archivedAt), createdAt: ms($0.createdAt)) },
       txnSplitShares: txns.compactMap { t in t.splitShare.map { .init(id: t.id, share: $0) } }
     )
     let enc = JSONEncoder()
@@ -142,11 +142,11 @@ enum BackupCodec {
       context.insert(Account(id: a.id, name: a.name, type: AccountType(rawValue: a.type) ?? .bank, institution: a.institution,
                              last4: a.last4, openingBalance: a.openingBalance, creditLimit: a.creditLimit, statementDay: a.statementDay,
                              dueDay: a.dueDay, color: a.color, icon: a.icon, sortOrder: a.sortOrder, excludeFromTotals: a.excludeFromTotals ?? false,
-                             archivedAt: date(a.archivedAt), createdAt: date(a.createdAt), updatedAt: date(a.updatedAt)))
+                             archivedAt: dateOpt(a.archivedAt), createdAt: date(a.createdAt), updatedAt: date(a.updatedAt)))
     }
     for c in file.categories {
       context.insert(Category(id: c.id, parentId: c.parentId, kind: CategoryKind(rawValue: c.kind) ?? .expense, name: c.name,
-                              icon: c.icon, color: c.color, sortOrder: c.sortOrder, archivedAt: date(c.archivedAt),
+                              icon: c.icon, color: c.color, sortOrder: c.sortOrder, archivedAt: dateOpt(c.archivedAt),
                               createdAt: date(c.createdAt ?? 0), updatedAt: date(c.updatedAt ?? 0)))
     }
     let shares = Dictionary((file.txnSplitShares ?? []).map { ($0.id, $0.share) }, uniquingKeysWith: { a, _ in a })
@@ -155,14 +155,14 @@ enum BackupCodec {
                          toAccountId: t.toAccountId, categoryId: t.categoryId, payee: t.payee, note: t.note,
                          occurredAt: date(t.occurredAt), source: t.source ?? "manual", recurringId: t.recurringId,
                          importBatchId: t.importBatchId, externalId: t.externalId, currency: t.currency,
-                         originalAmount: t.originalAmount, splitShare: shares[t.id], deletedAt: date(t.deletedAt),
+                         originalAmount: t.originalAmount, splitShare: shares[t.id], deletedAt: dateOpt(t.deletedAt),
                          createdAt: date(t.createdAt), updatedAt: date(t.updatedAt)))
     }
     for r in file.recurringRules ?? [] {
       context.insert(RecurringRule(id: r.id, type: TxnType(rawValue: r.type) ?? .expense, amount: r.amount, accountId: r.accountId,
                                    toAccountId: r.toAccountId, categoryId: r.categoryId, payee: r.payee, note: r.note,
                                    frequency: Frequency(rawValue: r.frequency) ?? .monthly, interval: r.interval,
-                                   startAt: date(r.startAt), nextAt: date(r.nextAt), endAt: date(r.endAt), pausedAt: date(r.pausedAt),
+                                   startAt: date(r.startAt), nextAt: date(r.nextAt), endAt: dateOpt(r.endAt), pausedAt: dateOpt(r.pausedAt),
                                    createdAt: date(r.createdAt), updatedAt: date(r.updatedAt)))
     }
     for b in file.budgets ?? [] {
@@ -173,7 +173,7 @@ enum BackupCodec {
       context.insert(SplitEntry(id: s.id, friendId: s.friendId, txnId: s.txnId, amount: s.amount, note: s.note, occurredAt: date(s.occurredAt), createdAt: date(s.createdAt)))
     }
     for g in file.goals ?? [] {
-      context.insert(Goal(id: g.id, name: g.name, icon: g.icon, color: g.color, target: g.target, saved: g.saved, deadline: date(g.deadline), archivedAt: date(g.archivedAt), createdAt: date(g.createdAt)))
+      context.insert(Goal(id: g.id, name: g.name, icon: g.icon, color: g.color, target: g.target, saved: g.saved, deadline: dateOpt(g.deadline), archivedAt: dateOpt(g.archivedAt), createdAt: date(g.createdAt)))
     }
     let d = AppGroup.defaults
     for s in file.settings {
