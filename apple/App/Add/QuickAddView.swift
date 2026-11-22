@@ -29,6 +29,9 @@ struct QuickAddView: View {
   @State private var detent: PresentationDetent = .large
   @State private var pickingCategory = false
   @State private var error: String?
+  @State private var tagText: String
+  @Query(filter: #Predicate<Txn> { $0.deletedAt == nil }) private var history: [Txn]
+  @Query(sort: \TxnTemplate.sortOrder) private var templates: [TxnTemplate]
 
   init(request: AddRequest) {
     self.request = request
@@ -43,6 +46,7 @@ struct QuickAddView: View {
     _date = State(initialValue: e?.occurredAt ?? request.date ?? .now)
     _cardId = State(initialValue: e?.cardId)
     _currency = State(initialValue: e?.currency ?? "INR")
+    _tagText = State(initialValue: Tags.text(e?.tags ?? []))
     if let e, let orig = e.originalAmount, e.currency != nil, e.currency != "INR" {
       _expr = State(initialValue: orig % 100 == 0 ? String(orig / 100) : String(format: "%.2f", Double(orig) / 100))
       _rate = State(initialValue: Double(e.amount) / Double(orig))
@@ -175,12 +179,48 @@ struct QuickAddView: View {
 
   private var details: some View {
     Form {
+      if request.editing == nil && !templates.isEmpty {
+        Section {
+          ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+              ForEach(templates) { t in
+                Button { apply(t) } label: {
+                  Label("\(t.name) · \(Money.compact(t.amount))", systemImage: "bolt.fill").font(.subheadline)
+                    .padding(.vertical, 7).padding(.horizontal, 12).background(Color.accentColor.opacity(0.12), in: Capsule())
+                    .foregroundStyle(Color.accentColor)
+                }
+                .buttonStyle(.plain)
+              }
+            }
+          }
+          .listRowInsets(EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12))
+        }
+      }
       Section {
         TextField(type == .transfer ? "Note (optional)" : "Payee, e.g. Swiggy", text: $payee)
           .textInputAutocapitalization(.words)
           .focused($typing)
           .submitLabel(.done)
           .onSubmit { typing = false }
+        // Payee memory: what you've typed before, with its usual category and account.
+        let suggestions = typing && type != .transfer ? PayeeMemory.suggestions(payee, txns: history, type: type) : []
+        ForEach(suggestions, id: \.payee) { s in
+          Button {
+            payee = s.payee
+            if let c = s.categoryId, categories.contains(where: { $0.id == c }) { categoryId = c }
+            if accounts.contains(where: { $0.id == s.accountId }) { accountId = s.accountId }
+            typing = false
+          } label: {
+            HStack {
+              Image(systemName: "clock.arrow.circlepath").foregroundStyle(.secondary)
+              Text(s.payee).foregroundStyle(.primary)
+              Spacer()
+              if let c = s.categoryId.flatMap({ id in categories.first { $0.id == id } }) {
+                Text(c.name).font(.caption).foregroundStyle(.secondary)
+              }
+            }
+          }
+        }
         if type != .transfer {
           ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
@@ -216,6 +256,10 @@ struct QuickAddView: View {
           }
         }
         DatePicker("Date", selection: $date, in: ...Date.now.addingTimeInterval(86_400 * 366))
+        HStack {
+          Image(systemName: "number").foregroundStyle(.secondary)
+          TextField("Tags (goa trip, work)", text: $tagText).textInputAutocapitalization(.never).autocorrectionDisabled()
+        }
         if type == .expense {
           NavigationLink {
             SplitEditorView(setup: $split, total: amountPaise ?? 0)
@@ -257,6 +301,13 @@ struct QuickAddView: View {
     rate = nil
     guard code != "INR" else { return }
     Task { if let r = await Currency.rates(), let v = r.inrPer[code] { rate = v } else { rateText = ""; editingRate = true } }
+  }
+
+  private func apply(_ t: TxnTemplate) {
+    type = t.type; expr = Self.exprText(t.amount); payee = t.payee ?? t.name
+    categoryId = t.categoryId
+    if let a = t.accountId, accounts.contains(where: { $0.id == a }) { accountId = a }
+    toAccountId = t.toAccountId
   }
 
   private func defaults() {
@@ -309,6 +360,7 @@ struct QuickAddView: View {
       context.insert(txn)
     }
     txn.cardId = type == .income ? nil : cardId
+    txn.tags = Tags.parse(tagText)
     txn.currency = currency == "INR" ? nil : currency
     txn.originalAmount = currency == "INR" ? nil : enteredMinor
     // Splits: recreate this expense's shares.

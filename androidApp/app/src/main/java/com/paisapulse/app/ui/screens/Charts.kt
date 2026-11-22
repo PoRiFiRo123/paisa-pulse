@@ -67,6 +67,13 @@ import kotlin.math.sqrt
         }
       }
     }
+    if (kind == PeriodKind.Month && offset == 0) {
+      val f = Forecast.monthEnd(db.accounts, db.liveTxns, db.valuations, db.recurringRules, range)
+      if (f.daysLeft > 0) group("Month-end forecast") { ForecastCard(f) }
+    }
+    if (kind == PeriodKind.Month) group {
+      PRow("Monthly Recap", leading = { Icon2("sparkles") }, chevron = true, onClick = { Ui.push(Route.Recap(offset - if (offset == 0) 1 else 0)) })
+    }
     group("Last 6 ${kind.noun}s") {
       val max = maxOf(1L, months.maxOf { it.second })
       val accent = C.accent; val label = C.secondary
@@ -177,11 +184,11 @@ import kotlin.math.sqrt
   val db by Store.db.collectAsState()
   val pts = (11 downTo 0).map { i ->
     val end = LocalDate.now().minusMonths(i.toLong()).plusDays(1).ms()
-    end to Ledger.netWorth(db.accounts, Ledger.balances(db.accounts, db.transactions.filter { it.occurredAt <= end }))
+    end to Ledger.netWorth(db.accounts, Ledger.balances(db.accounts, db.transactions, db.valuations, asOf = end))
   }
   val accent = C.accent
   PScreen("Net Worth", back = true) {
-    group(footer = "Rebuilt from your transactions and each account's starting balance.") {
+    group(footer = "Rebuilt from your transactions, each account's starting balance and the values you enter for investments.") {
       Canvas(Modifier.fillMaxWidth().height(240.dp).padding(20.dp)) {
         val min = pts.minOf { it.second }.toFloat(); val max = pts.maxOf { it.second }.toFloat(); val span = (max - min).coerceAtLeast(1f)
         val step = size.width / (pts.size - 1)

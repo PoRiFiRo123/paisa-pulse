@@ -60,6 +60,8 @@ import kotlinx.coroutines.launch
   var pickDate by remember { mutableStateOf(false) }
   var error by remember { mutableStateOf<String?>(null) }
   var cardId by remember { mutableStateOf(editing?.cardId) }
+  var tagText by remember { mutableStateOf(Tags.text(editing?.tags)) }
+  var payeePicked by remember { mutableStateOf(editing != null) }
   var currency by remember { mutableStateOf(editing?.currency ?: "INR") }
   var rate by remember { mutableStateOf(editing?.let { e -> e.originalAmount?.takeIf { e.currency != null && e.currency != "INR" }?.let { e.amount.toDouble() / it } }) }
   var curMenu by remember { mutableStateOf(false) }
@@ -95,7 +97,7 @@ import kotlinx.coroutines.launch
     val owed = if (splitting && split.payer == null) result.entries else emptyMap()
     val txn = (editing ?: Txn(amount = amt, accountId = acc)).copy(type = type.key, amount = amt, accountId = acc,
       toAccountId = if (type == TxnType.Transfer) toAccountId else null, categoryId = if (type == TxnType.Transfer) null else categoryId,
-      payee = name, occurredAt = at, updatedAt = now(), splitShare = if (splitting && split.payer == null) result.myShare else null, cardId = if (type == TxnType.Income) null else cardId,
+      payee = name, occurredAt = at, updatedAt = now(), splitShare = if (splitting && split.payer == null) result.myShare else null, tags = Tags.parse(tagText).ifEmpty { null }, cardId = if (type == TxnType.Income) null else cardId,
       currency = currency.takeIf { it != "INR" }, originalAmount = if (currency == "INR") null else entered)
     Store.update { d ->
       val txns = if (editing != null) d.transactions.map { if (it.id == txn.id) txn else it } else d.transactions + txn
@@ -132,6 +134,7 @@ import kotlinx.coroutines.launch
           style = T.subhead, color = C.accent, modifier = Modifier.clickable { rateText = rate?.let { "%.4f".format(it) } ?: ""; rateDialog = true })
         else if (KeypadMath.isExpression(expr) && amount != null) Text("= ${Money.format(amount)}", style = T.subhead, color = C.secondary)
       }
+      val templates = if (editing == null) db.templates.sortedBy { it.sortOrder } else emptyList()
       LazyColumn(Modifier.weight(1f).graphicsLayer { compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.Offscreen }
         .drawWithContent {
           drawContent()
@@ -139,8 +142,31 @@ import kotlinx.coroutines.launch
           drawRect(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(Color.Black, Color.Transparent), startY = size.height - 18.dp.toPx(), endY = size.height),
             blendMode = androidx.compose.ui.graphics.BlendMode.DstIn)
         }) {
+        if (templates.isNotEmpty()) item {
+          Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            templates.forEach { t ->
+              Text("⚡ ${t.name} · ${Money.compact(t.amount)}", style = T.subhead, color = C.accent,
+                modifier = Modifier.clip(CircleShape).background(C.accent.copy(alpha = 0.12f)).clickable {
+                  type = TxnType.of(t.type); expr = if (t.amount % 100 == 0L) (t.amount / 100).toString() else "%.2f".format(t.amount / 100.0)
+                  payee = t.payee ?: t.name; payeePicked = true; categoryId = t.categoryId
+                  t.accountId?.takeIf { id -> accounts.any { it.id == id } }?.let { accountId = it }; toAccountId = t.toAccountId
+                }.padding(horizontal = 12.dp, vertical = 7.dp))
+            }
+          }
+        }
         group {
-          FieldRow(payee, { payee = it }, if (type == TxnType.Transfer) "Note (optional)" else "Payee, e.g. Swiggy")
+          FieldRow(payee, { payee = it; payeePicked = false }, if (type == TxnType.Transfer) "Note (optional)" else "Payee, e.g. Swiggy")
+          // Payee memory: what you've typed before, with its usual category and account.
+          val suggestions = if (!payeePicked && type != TxnType.Transfer) PayeeMemory.suggestions(payee, db.transactions, type) else emptyList()
+          suggestions.forEach { sg ->
+            Divider()
+            PRow(sg.payee, leading = { Icon(Sym.of("clock.arrow.circlepath"), null, tint = C.secondary, modifier = Modifier.size(20.dp)) },
+              value = sg.categoryId?.let { id -> db.categories.firstOrNull { it.id == id }?.name }, onClick = {
+                payee = sg.payee; payeePicked = true
+                sg.categoryId?.takeIf { id -> db.categories.any { it.id == id } }?.let { categoryId = it }
+                if (accounts.any { it.id == sg.accountId }) accountId = sg.accountId
+              })
+          }
           if (type != TxnType.Transfer) {
             Divider()
             Row(Modifier.horizontalScroll(rememberScrollState()).padding(10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -161,6 +187,11 @@ import kotlinx.coroutines.launch
           PRow("Date", onClick = { pickDate = true }) {
             Text(shortDate.format(at.toDate()) + " " + at.toDate().year + ", " + at.time(), style = T.body, color = C.label,
               modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(C.fill).padding(horizontal = 10.dp, vertical = 5.dp))
+          }
+          Divider()
+          Row(Modifier.padding(start = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Sym.of("number"), null, tint = C.secondary, modifier = Modifier.size(18.dp))
+            FieldRow(tagText, { tagText = it }, "Tags (goa trip, work)", modifier = Modifier.weight(1f))
           }
           if (type == TxnType.Expense) {
             Divider()

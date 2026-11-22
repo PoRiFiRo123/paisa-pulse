@@ -52,6 +52,7 @@ struct SettingsView: View {
         NavigationLink { BudgetsView() } label: { row("Budgets", "gauge.with.dots.needle.33percent", "#5E5CE6") }
         NavigationLink { RecurringView() } label: { row("Recurring", "repeat", "#30B0C7") }
         NavigationLink { SubscriptionsView() } label: { row("Subscriptions", "creditcard.and.123", "#32ADE6") }
+        NavigationLink { TemplatesView() } label: { row("Templates", "bolt.fill", "#FFB800") }
         NavigationLink { GoalsView() } label: { row("Goals", "target", "#1E9E5A") }
         NavigationLink { SplitsView() } label: { row("Splits", "person.2.fill", "#007AFF") }
         NavigationLink { LoansView() } label: { row("Loans", "banknote.fill", "#E5484D") }
@@ -63,10 +64,16 @@ struct SettingsView: View {
         }
       }
 
+      Section {
+        NavigationLink { HomeLayoutView() } label: { row("Home Screen", "square.grid.2x2.fill", "#5E5CE6") }
+      }
+
       Section("See") {
         NavigationLink { InsightsView() } label: { row("Insights", "chart.bar.xaxis", "#AF52DE") }
         NavigationLink { CalendarView() } label: { row("Calendar", "calendar", "#FF2D55") }
         NavigationLink { NetWorthView() } label: { row("Net Worth", "chart.line.uptrend.xyaxis", "#34C759") }
+        NavigationLink { RecapView(offset: -1) } label: { row("Monthly Recap", "sparkles", "#5E5CE6") }
+        NavigationLink { TagsView() } label: { row("Tags", "number", "#FF9500") }
         NavigationLink { ConverterView() } label: { row("Currency Converter", "dollarsign.arrow.circlepath", "#30B0C7") }
       }
 

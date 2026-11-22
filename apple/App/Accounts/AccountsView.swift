@@ -8,11 +8,12 @@ struct AccountsView: View {
   @AppStorage(PrefKey.hideAmounts, store: AppGroup.defaults) private var hidden = false
   @State private var adding: AccountType?
   @State private var reordering = false
+  @Query private var valuations: [Valuation]
   @Environment(\.modelContext) private var context
   @Namespace private var ns
 
   var body: some View {
-    let balances = Ledger.balances(accounts: accounts, txns: txns)
+    let balances = Ledger.balances(accounts: accounts, txns: txns, valuations: valuations)
     let active = accounts.filter { $0.archivedAt == nil }.sorted { ($0.type.order, $0.sortOrder) < ($1.type.order, $1.sortOrder) }
     let net = Ledger.netWorth(accounts: accounts, balances: balances)
     ScrollView {
@@ -70,6 +71,7 @@ struct AccountsView: View {
           Button { adding = .card } label: { Label("Credit card", systemImage: "creditcard.fill") }
           Button { adding = .cash } label: { Label("Cash", systemImage: "banknote.fill") }
           Button { adding = .wallet } label: { Label("Wallet (Paytm, Amazon Pay…)", systemImage: "wallet.bifold.fill") }
+          Button { adding = .investment } label: { Label("Investments (Groww, mutual funds)", systemImage: "chart.line.uptrend.xyaxis") }
           Divider()
           Button { reordering = true } label: { Label("Reorder Accounts", systemImage: "arrow.up.arrow.down") }
         } label: { Image(systemName: "plus") }
@@ -105,7 +107,7 @@ struct ZoomDestination: ViewModifier {
 }
 
 extension AccountType {
-  var order: Int { switch self { case .bank: 0; case .card: 1; case .wallet: 2; case .cash: 3 } }
+  var order: Int { switch self { case .bank: 0; case .card: 1; case .wallet: 2; case .cash: 3; case .investment: 4 } }
 }
 
 /// An account drawn as a card: gradient in the account colour, balance, and a peek of its linked cards.
@@ -315,10 +317,11 @@ struct AccountDetailView: View {
   @State private var confirmDelete = false
   @State private var editingCard: PaymentCard?
   @State private var addingCard = false
+  @Query private var valuations: [Valuation]
 
   var body: some View {
     let lookups = Lookups(accounts: accounts, categories: categories)
-    let balance = Ledger.balances(accounts: accounts, txns: txns)[account.id] ?? 0
+    let balance = Ledger.balances(accounts: accounts, txns: txns, valuations: valuations)[account.id] ?? 0
     let mine = txns.filter { $0.accountId == account.id || $0.toAccountId == account.id }
     let cards = allCards.filter { $0.accountId == account.id }.sorted { $0.createdAt < $1.createdAt }
     List {
@@ -340,6 +343,7 @@ struct AccountDetailView: View {
         }
       }
       if account.type == .card { CardSection(account: account, balance: balance, txns: mine) }
+      if account.type == .investment { ValuationSection(account: account) }
       Section("Transactions") {
         if mine.isEmpty { Text("No transactions yet").foregroundStyle(.secondary) }
         ForEach(mine.prefix(100)) { t in
@@ -401,10 +405,17 @@ struct CardSection: View {
         }
         LabeledContent("Available", value: Money.format(max(0, limit - owed)))
       }
+      if let last = CardStatement.last(account: account, txns: txns) {
+        LabeledContent("Last statement") {
+          Text(last.due == 0 && last.billed > 0 ? "\(Money.format(last.billed)) · paid" : Money.format(last.billed))
+            .foregroundStyle(last.due == 0 && last.billed > 0 ? Color.income : .secondary)
+        }
+        if last.due > 0 { LabeledContent("Still to pay", value: Money.format(last.due)) }
+      }
       if let s = account.statementDay {
         let cycle = Cards.cycle(statementDay: s)
         let spent = txns.filter { $0.type == .expense && $0.accountId == account.id && cycle.contains($0.occurredAt) }.reduce(0) { $0 + $1.amount }
-        LabeledContent("This cycle", value: Money.format(spent))
+        LabeledContent("Unbilled (this cycle)", value: Money.format(spent))
         LabeledContent("Statement on", value: Calendar.current.date(byAdding: .day, value: -1, to: cycle.end)!.formatted(.dateTime.day().month(.abbreviated)))
       }
       if let d = account.dueDay {

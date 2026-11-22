@@ -3,31 +3,113 @@ import SwiftUI
 
 struct HomeView: View {
   @Environment(Router.self) private var router
+  @Environment(\.modelContext) private var context
   @Query(filter: #Predicate<Txn> { $0.deletedAt == nil }, sort: \Txn.occurredAt, order: .reverse) private var txns: [Txn]
   @Query(sort: \Account.sortOrder) private var accounts: [Account]
   @Query(sort: \Category.sortOrder) private var categories: [Category]
   @Query private var budgets: [Budget]
   @Query(sort: \RecurringRule.nextAt) private var rules: [RecurringRule]
   @Query(sort: \Goal.createdAt) private var goals: [Goal]
+  @Query(sort: \TxnTemplate.sortOrder) private var templates: [TxnTemplate]
+  @Query private var valuations: [Valuation]
   @AppStorage(PrefKey.monthStartDay, store: AppGroup.defaults) private var monthStartDay = 1
   @AppStorage(PrefKey.weekStartDay, store: AppGroup.defaults) private var weekStartDay = 2
   @AppStorage(PrefKey.hideAmounts, store: AppGroup.defaults) private var hidden = false
+  @AppStorage(PrefKey.homeOrder, store: AppGroup.defaults) private var homeOrder = ""
+  @AppStorage(PrefKey.homeHidden, store: AppGroup.defaults) private var homeHidden = ""
+  @AppStorage(PrefKey.lastAccountId, store: AppGroup.defaults) private var lastAccountId = ""
+  @State private var editingLayout = false
 
   var body: some View {
     let lookups = Lookups(accounts: accounts, categories: categories)
     let month = Periods.month(containing: .now, startDay: monthStartDay)
-    let summary = Ledger.summary(txns, in: month)
-    let overall = budgets.first { $0.categoryId == nil && $0.period == "monthly" }
-    let progress = Budgets.progress(budgets, txns: txns, categories: lookups.categories, month: month,
-                                    week: Periods.week(containing: .now, firstWeekday: weekStartDay))
-    let top = Ledger.byCategory(txns, in: month, categories: lookups.categories).prefix(6)
-
+    let off = HomeSections.hidden(homeHidden)
     List {
-      Section {
-        HeroCard(summary: summary, budget: overall?.amount, hidden: hidden)
-          .listRowInsets(EdgeInsets())
+      ForEach(HomeSections.order(homeOrder).filter { !off.contains($0) }, id: \.self) { key in
+        section(key, lookups: lookups, month: month)
       }
+      Section {
+        Button { editingLayout = true } label: { Label("Edit Home Screen", systemImage: "square.grid.2x2") }
+          .frame(maxWidth: .infinity).font(.subheadline)
+      }
+      .listRowBackground(Color.clear)
+    }
+    .navigationTitle(month.start.formatted(.dateTime.month(.wide)))
+    .navigationDestination(for: Txn.self) { TransactionDetailView(txn: $0) }
+    .toolbar {
+      ToolbarItem(placement: .topBarLeading) {
+        NavigationLink { CalendarView() } label: { Image(systemName: "calendar") }
+          .accessibilityLabel("Calendar")
+      }
+      ToolbarItem(placement: .topBarTrailing) { AddButton() }
+    }
+    .sheet(isPresented: $editingLayout) { NavigationStack { HomeLayoutView() } }
+  }
 
+  @ViewBuilder private func section(_ key: String, lookups: Lookups, month: DateInterval) -> some View {
+    switch key {
+    case "hero":
+      let summary = Ledger.summary(txns, in: month)
+      let overall = budgets.first { $0.categoryId == nil && $0.period == "monthly" }
+      Section {
+        HeroCard(summary: summary, budget: overall?.amount, hidden: hidden).listRowInsets(EdgeInsets())
+      }
+    case "templates":
+      if !templates.isEmpty {
+        Section {
+          ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+              ForEach(templates) { t in
+                Button { quickAdd(t) } label: {
+                  VStack(alignment: .leading, spacing: 2) {
+                    Label(t.name, systemImage: "bolt.fill").font(.subheadline.weight(.medium)).lineLimit(1)
+                    Text(Money.format(t.amount, hidden: hidden)).font(.caption).foregroundStyle(.secondary)
+                  }
+                  .padding(.vertical, 8).padding(.horizontal, 12)
+                  .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+                .buttonStyle(.plain)
+              }
+            }
+            .padding(.vertical, 2)
+          }
+          .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+        } header: {
+          HStack { Text("Quick add"); Spacer(); NavigationLink("Edit") { TemplatesView() }.font(.subheadline).textCase(nil) }
+        } footer: { Text("Tap to add it now. Save more from any transaction › Save as Template.") }
+      }
+    case "forecast":
+      let f = Forecast.monthEnd(accounts: accounts, txns: txns, valuations: valuations, rules: rules, month: month)
+      if f.daysLeft > 0 {
+        Section("Month-end forecast") { ForecastCard(forecast: f, hidden: hidden) }
+      }
+    case "cards":
+      let due = accounts.filter { $0.type == .card && $0.archivedAt == nil && $0.dueDay != nil }.compactMap { a -> (Account, Date, Int)? in
+        let d = Cards.nextDue(dueDay: a.dueDay!)
+        let days = Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: .now), to: d).day ?? 99
+        let amount = CardStatement.last(account: a, txns: txns).map(\.due) ?? max(0, -(Ledger.balances(accounts: [a], txns: txns)[a.id] ?? 0))
+        return days <= 10 && amount > 0 ? (a, d, amount) : nil
+      }
+      if !due.isEmpty {
+        Section("Card bills") {
+          ForEach(due, id: \.0.id) { a, d, amount in
+            Button { router.add = AddRequest(type: .transfer) } label: {
+              HStack(spacing: 12) {
+                CategoryBadge(icon: a.icon, color: a.color, size: 32)
+                VStack(alignment: .leading, spacing: 2) {
+                  Text(a.name).foregroundStyle(.primary)
+                  Text("Due \(d.formatted(.relative(presentation: .named)))").font(.footnote)
+                    .foregroundStyle(d < Date.now.addingTimeInterval(3 * 86_400) ? Color.expense : .secondary)
+                }
+                Spacer()
+                Text(Money.format(amount, hidden: hidden)).fontDesign(.rounded).fontWeight(.semibold).foregroundStyle(.primary)
+              }
+            }
+          }
+        }
+      }
+    case "categories":
+      let top = Ledger.byCategory(txns, in: month, categories: lookups.categories).prefix(6)
       if !top.isEmpty {
         Section("Where it went") {
           ScrollView(.horizontal, showsIndicators: false) {
@@ -51,7 +133,9 @@ struct HomeView: View {
           NavigationLink { InsightsView() } label: { Label("Insights", systemImage: "chart.bar.xaxis") }
         }
       }
-
+    case "budgets":
+      let progress = Budgets.progress(budgets, txns: txns, categories: lookups.categories, month: month,
+                                      week: Periods.week(containing: .now, firstWeekday: weekStartDay))
       if !progress.isEmpty {
         Section {
           ForEach(progress) { p in BudgetRow(progress: p, lookups: lookups) }
@@ -59,7 +143,7 @@ struct HomeView: View {
           HStack { Text("Budgets"); Spacer(); NavigationLink("Edit") { BudgetsView() }.font(.subheadline).textCase(nil) }
         }
       }
-
+    case "goals":
       let activeGoals = goals.filter { $0.archivedAt == nil }
       if !activeGoals.isEmpty {
         Section {
@@ -68,7 +152,7 @@ struct HomeView: View {
           HStack { Text("Goals"); Spacer(); NavigationLink("All") { GoalsView() }.font(.subheadline).textCase(nil) }
         }
       }
-
+    case "upcoming":
       let upcoming = rules.filter { $0.pausedAt == nil && $0.nextAt < Date.now.addingTimeInterval(7 * 86_400) }.prefix(3)
       if !upcoming.isEmpty {
         Section("Next 7 days") {
@@ -86,7 +170,23 @@ struct HomeView: View {
           }
         }
       }
-
+    case "recap":
+      // The first week of a month: last month's recap.
+      if Calendar.current.dateComponents([.day], from: month.start, to: .now).day ?? 99 < 7,
+         txns.contains(where: { $0.occurredAt < month.start }) {
+        Section {
+          NavigationLink { RecapView(offset: -1) } label: {
+            HStack(spacing: 12) {
+              CategoryBadge(icon: "sparkles", color: "#5E5CE6", size: 36)
+              VStack(alignment: .leading, spacing: 2) {
+                Text("Your \(Periods.month(offset: -1, startDay: monthStartDay).start.formatted(.dateTime.month(.wide))) recap").font(.headline)
+                Text("Where it went, your best streak and more").font(.footnote).foregroundStyle(.secondary)
+              }
+            }
+          }
+        }
+      }
+    case "recent":
       Section {
         if txns.isEmpty {
           EmptyHint(title: "No transactions yet", icon: "indianrupeesign.circle",
@@ -102,16 +202,21 @@ struct HomeView: View {
           Button("See all") { router.tab = .activity }.font(.subheadline).textCase(nil)
         }
       }
+    default:
+      EmptyView()
     }
-    .navigationTitle(month.start.formatted(.dateTime.month(.wide)))
-    .navigationDestination(for: Txn.self) { TransactionDetailView(txn: $0) }
-    .toolbar {
-      ToolbarItem(placement: .topBarLeading) {
-        NavigationLink { CalendarView() } label: { Image(systemName: "calendar") }
-          .accessibilityLabel("Calendar")
-      }
-      ToolbarItem(placement: .topBarTrailing) { AddButton() }
-    }
+  }
+
+  /// A template adds straight away, with Undo.
+  private func quickAdd(_ t: TxnTemplate) {
+    guard let accountId = t.accountId.flatMap({ id in accounts.first { $0.id == id && $0.archivedAt == nil }?.id })
+      ?? accounts.first(where: { $0.id == lastAccountId })?.id ?? accounts.first?.id else { return }
+    let txn = Txn(type: t.type, amount: t.amount, accountId: accountId, toAccountId: t.toAccountId, categoryId: t.categoryId,
+                  payee: t.payee ?? t.name, source: "template")
+    context.insert(txn)
+    try? context.save()
+    WidgetRefresh.now()
+    router.show("Added \(t.name) · \(Money.format(t.amount))") { txn.deletedAt = .now; try? context.save(); WidgetRefresh.now() }
   }
 }
 

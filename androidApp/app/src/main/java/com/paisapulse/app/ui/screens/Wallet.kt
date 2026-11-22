@@ -43,12 +43,12 @@ import com.paisapulse.app.data.*
 import com.paisapulse.app.logic.*
 import com.paisapulse.app.ui.*
 
-val AccountType.order get() = when (this) { AccountType.Bank -> 0; AccountType.Card -> 1; AccountType.Wallet -> 2; AccountType.Cash -> 3 }
+val AccountType.order get() = when (this) { AccountType.Bank -> 0; AccountType.Card -> 1; AccountType.Wallet -> 2; AccountType.Cash -> 3; AccountType.Investment -> 4 }
 
 /** Accounts as a wallet: cards overlap like Apple Wallet; tap one to open it (same as the iPhone app). */
 @Composable fun AccountsScreen() {
   val db by Store.db.collectAsState()
-  val b = Ledger.balances(db.accounts, db.transactions)
+  val b = Ledger.balances(db.accounts, db.transactions, db.valuations)
   val active = db.accounts.filter { it.archivedAt == null }.sortedWith(compareBy({ it.kind.order }, { it.sortOrder }))
   val net = Ledger.netWorth(db.accounts, b)
   var menu by remember { mutableStateOf(false) }
@@ -56,7 +56,7 @@ val AccountType.order get() = when (this) { AccountType.Bank -> 0; AccountType.C
     Box {
       GlassIcon("plus", "Add account") { menu = true }
       DropdownMenu(menu, { menu = false }, modifier = Modifier.background(C.card)) {
-        listOf("bank" to "Bank account", "card" to "Credit card", "cash" to "Cash", "wallet" to "Wallet (Paytm, Amazon Pay…)").forEach { (k, l) ->
+        listOf("bank" to "Bank account", "card" to "Credit card", "cash" to "Cash", "wallet" to "Wallet (Paytm, Amazon Pay…)", "investment" to "Investments (Groww, mutual funds)").forEach { (k, l) ->
           DropdownMenuItem({ Text(l, style = T.body) }, { menu = false; Ui.sheet = Sheet.AccountNew(k) }, leadingIcon = { Icon(Sym.of(AccountType.of(k).icon), null) })
         }
         HorizontalDivider(color = C.separator)

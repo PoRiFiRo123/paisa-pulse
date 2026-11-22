@@ -54,7 +54,7 @@ import java.time.temporal.ChronoUnit
   val db by Store.db.collectAsState()
   val a = db.accounts.firstOrNull { it.id == id } ?: run { LaunchedEffect(Unit) { Ui.pop() }; return }
   val l = remember(db) { Lookups(db) }
-  val balance = Ledger.balances(db.accounts, db.transactions)[a.id] ?: 0
+  val balance = Ledger.balances(db.accounts, db.transactions, db.valuations)[a.id] ?: 0
   val mine = db.liveTxns.filter { it.accountId == a.id || it.toAccountId == a.id }.sortedByDescending { it.occurredAt }
   var menu by remember { mutableStateOf(false) }
   PScreen(a.name, back = true, actions = {
@@ -73,7 +73,7 @@ import java.time.temporal.ChronoUnit
   }) {
     val cards = db.cards.filter { it.accountId == a.id && it.archivedAt == null }.sortedBy { it.createdAt }
     item { Box(Modifier.padding(16.dp)) { WalletCard(a, balance, cards) } }
-    if (a.kind != AccountType.Cash) group(if (a.kind == AccountType.Card) "Card" else "Linked cards",
+    if (a.kind != AccountType.Cash && a.kind != AccountType.Investment) group(if (a.kind == AccountType.Card) "Card" else "Linked cards",
       footer = if (cards.isEmpty()) "Scan the card with the camera or type it in. Only the last 4 digits, network and expiry are kept." else "Tap the stack to spread it. Long-press a card to edit or remove it.") {
       if (cards.isNotEmpty()) Box(Modifier.padding(12.dp)) { CardStack(cards, a.color) { Ui.sheet = Sheet.CardForm(a.id, it.id) } }
       PRow(if (a.kind == AccountType.Card) (if (cards.isEmpty()) "Add Card Details" else "Add Add-on Card") else "Add Debit Card", titleColor = C.accent,
@@ -92,8 +92,12 @@ import java.time.temporal.ChronoUnit
       }
       a.statementDay?.let { sd ->
         val cyc = Cards.cycle(sd)
-        Divider(); PRow("This cycle", value = Money.format(mine.filter { it.kind == TxnType.Expense && it.accountId == a.id && it.occurredAt in cyc }.sumOf { it.amount }))
+        Divider(); PRow("Unbilled (this cycle)", value = Money.format(mine.filter { it.kind == TxnType.Expense && it.accountId == a.id && it.occurredAt in cyc }.sumOf { it.amount }))
         Divider(); PRow("Statement on", value = shortDate.format(cyc.end.toDate().minusDays(1)))
+      }
+      CardStatement.last(a, db.liveTxns)?.let { st ->
+        Divider(); PRow("Last statement", value = "${Money.format(st.paid)} paid of ${Money.format(st.billed)}")
+        Divider(); PRow("Still to pay", value = if (st.due > 0) Money.format(st.due) else "Paid in full", valueColor = if (st.due > 0) C.expense else C.income)
       }
       a.dueDay?.let { dd ->
         val due = Cards.nextDue(dd); val days = ChronoUnit.DAYS.between(LocalDate.now(), due)
@@ -102,6 +106,7 @@ import java.time.temporal.ChronoUnit
       if (owed > 0) { Divider(); PRow("Pay Bill (${Money.format(owed)})", titleColor = C.accent, leading = { Icon2("indianrupeesign.circle") },
         onClick = { Ui.sheet = Sheet.Add(TxnType.Transfer) }) }
     }
+    if (a.kind == AccountType.Investment) valuationSection(a, db.valuations)
     group("Transactions") {
       if (mine.isEmpty()) PRow("No transactions yet", titleColor = C.secondary)
       mine.take(100).forEachIndexed { i, t -> if (i > 0) Divider(64.dp); TxnRow(t, l) }

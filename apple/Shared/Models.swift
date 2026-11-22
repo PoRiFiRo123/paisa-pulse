@@ -11,7 +11,7 @@ enum TxnType: String, Codable, CaseIterable, Identifiable {
 }
 
 enum AccountType: String, Codable, CaseIterable, Identifiable {
-  case bank, card, cash, wallet
+  case bank, card, cash, wallet, investment
   var id: String { rawValue }
   var label: String {
     switch self {
@@ -19,6 +19,7 @@ enum AccountType: String, Codable, CaseIterable, Identifiable {
     case .card: "Credit card"
     case .cash: "Cash"
     case .wallet: "Wallet"
+    case .investment: "Investments"
     }
   }
   var plural: String {
@@ -27,6 +28,7 @@ enum AccountType: String, Codable, CaseIterable, Identifiable {
     case .card: "Credit cards"
     case .cash: "Cash"
     case .wallet: "Wallets"
+    case .investment: "Investments"
     }
   }
   var defaultIcon: String {
@@ -35,6 +37,7 @@ enum AccountType: String, Codable, CaseIterable, Identifiable {
     case .card: "creditcard.fill"
     case .cash: "banknote.fill"
     case .wallet: "wallet.bifold.fill"
+    case .investment: "chart.line.uptrend.xyaxis"
     }
   }
 }
@@ -149,6 +152,10 @@ enum Frequency: String, Codable, CaseIterable, Identifiable {
   var splitShare: Int?
   /// The debit or credit card used ("Paid with"), if any.
   var cardId: String?
+  /// Tags like "goa-trip" (no #), for trips and projects that span categories.
+  var tags: [String] = []
+  /// File name of a receipt photo in Documents/receipts (kept on this phone, not in backups).
+  var receipt: String?
   var deletedAt: Date?
   var createdAt: Date
   var updatedAt: Date
@@ -395,5 +402,38 @@ enum Frequency: String, Codable, CaseIterable, Identifiable {
 
   init(id: String = UUID().uuidString.lowercased(), loanId: String, amount: Int, occurredAt: Date = .now, note: String? = nil) {
     self.id = id; self.loanId = loanId; self.amount = amount; self.occurredAt = occurredAt; self.note = note
+  }
+}
+
+/// A one-tap transaction ("Metro ₹40").
+@Model final class TxnTemplate {
+  @Attribute(.unique) var id: String
+  var name: String
+  var typeRaw: String
+  var amount: Int
+  var accountId: String?
+  var toAccountId: String?
+  var categoryId: String?
+  var payee: String?
+  var sortOrder: Int
+  var createdAt: Date
+
+  init(id: String = UUID().uuidString.lowercased(), name: String, type: TxnType, amount: Int, accountId: String? = nil,
+       toAccountId: String? = nil, categoryId: String? = nil, payee: String? = nil, sortOrder: Int = 0, createdAt: Date = .now) {
+    self.id = id; self.name = name; self.typeRaw = type.rawValue; self.amount = amount; self.accountId = accountId
+    self.toAccountId = toAccountId; self.categoryId = categoryId; self.payee = payee; self.sortOrder = sortOrder; self.createdAt = createdAt
+  }
+  var type: TxnType { TxnType(rawValue: typeRaw) ?? .expense }
+}
+
+/// The value of an investment account on a date (Groww, mutual funds, PF). Balances use the latest one.
+@Model final class Valuation {
+  @Attribute(.unique) var id: String
+  var accountId: String
+  var value: Int
+  var at: Date
+
+  init(id: String = UUID().uuidString.lowercased(), accountId: String, value: Int, at: Date = .now) {
+    self.id = id; self.accountId = accountId; self.value = value; self.at = at
   }
 }

@@ -69,7 +69,7 @@ object Services {
   fun refreshNotifications() {
     val d = Store.value
     if (Prefs.notifyBills) {
-      val b = Ledger.balances(d.accounts, d.transactions)
+      val b = Ledger.balances(d.accounts, d.transactions, d.valuations)
       d.accounts.filter { it.kind == AccountType.Card && it.archivedAt == null && it.dueDay != null }.forEach { a ->
         val owed = maxOf(0L, -(b[a.id] ?: 0)); val due = Cards.nextDue(a.dueDay!!)
         val days = ChronoUnit.DAYS.between(LocalDate.now(), due)
@@ -128,11 +128,23 @@ object BackupOps {
     require(db.transactions.all { it.amount > 0 }) { "This backup contains an invalid amount." }
     return db
   }
+  class NeedsPassword : Exception("This backup is protected with a password.")
+  /** What's written to files: encrypted when a backup password is set (same format as iPhone). */
+  fun exportFile(c: Context): String = BackupPassword.get(c)?.let { BackupCrypto.encrypt(export().toByteArray(), it) } ?: export()
+  /** Opens a plain or encrypted backup. Without a password it tries the saved one, else throws NeedsPassword. */
+  fun open(c: Context, text: String, password: String? = null): Db {
+    if (!BackupCrypto.isEncrypted(text)) return decode(text)
+    val pw = password ?: BackupPassword.get(c) ?: throw NeedsPassword()
+    val plain = try { BackupCrypto.decrypt(text, pw) } catch (e: BackupCrypto.WrongPassword) {
+      if (password == null) throw NeedsPassword() else throw IllegalArgumentException("Wrong password.")
+    }
+    return decode(String(plain, Charsets.UTF_8))
+  }
   fun restore(db: Db) { Store.replace(db.copy(settings = emptyList())); Prefs.applySettings(db.settings); Services.refreshWidget() }
   private fun dir(c: Context) = File(c.filesDir, "backups").apply { mkdirs() }
   fun list(c: Context) = dir(c).listFiles { f -> f.extension == "json" }?.sortedByDescending { it.name } ?: emptyList()
   fun write(c: Context) {
-    File(dir(c), fileName()).writeText(export()); Prefs.set("lastBackupAt", now())
+    File(dir(c), fileName()).writeText(exportFile(c)); Prefs.set("lastBackupAt", now())
     list(c).drop(14).forEach { it.delete() }
   }
   fun runIfDue(c: Context) {
@@ -145,5 +157,32 @@ object BackupOps {
       listOf(java.time.Instant.ofEpochMilli(t.occurredAt).toString(), t.type, "%.2f".format(t.amount / 100.0), t.splitShare?.let { "%.2f".format(it / 100.0) } ?: "",
         q(a[t.accountId]), q(t.toAccountId?.let { a[it] }), q(t.categoryId?.let { c[it] }), q(t.payee), q(t.note)).joinToString(",")
     }).joinToString("\n")
+  }
+}
+
+/** The backup password, encrypted with a key that never leaves this phone's Android Keystore. */
+object BackupPassword {
+  private const val ALIAS = "paisa_backup_password"
+  private fun prefs(c: Context) = c.getSharedPreferences("paisa_secure", Context.MODE_PRIVATE)
+  private fun key(): javax.crypto.SecretKey {
+    val ks = java.security.KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
+    (ks.getEntry(ALIAS, null) as? java.security.KeyStore.SecretKeyEntry)?.let { return it.secretKey }
+    val g = javax.crypto.KeyGenerator.getInstance(android.security.keystore.KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
+    g.init(android.security.keystore.KeyGenParameterSpec.Builder(ALIAS, android.security.keystore.KeyProperties.PURPOSE_ENCRYPT or android.security.keystore.KeyProperties.PURPOSE_DECRYPT)
+      .setBlockModes(android.security.keystore.KeyProperties.BLOCK_MODE_GCM).setEncryptionPaddings(android.security.keystore.KeyProperties.ENCRYPTION_PADDING_NONE).build())
+    return g.generateKey()
+  }
+  fun get(c: Context): String? = runCatching {
+    val v = prefs(c).getString("pw", null) ?: return null
+    val (iv, data) = v.split(':').map { java.util.Base64.getDecoder().decode(it) }
+    val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding").apply { init(javax.crypto.Cipher.DECRYPT_MODE, key(), javax.crypto.spec.GCMParameterSpec(128, iv)) }
+    String(cipher.doFinal(data), Charsets.UTF_8)
+  }.getOrNull()
+  fun set(c: Context, password: String?) {
+    if (password.isNullOrEmpty()) { prefs(c).edit().remove("pw").apply(); return }
+    val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding").apply { init(javax.crypto.Cipher.ENCRYPT_MODE, key()) }
+    val data = cipher.doFinal(password.toByteArray())
+    val b = java.util.Base64.getEncoder()
+    prefs(c).edit().putString("pw", b.encodeToString(cipher.iv) + ":" + b.encodeToString(data)).apply()
   }
 }

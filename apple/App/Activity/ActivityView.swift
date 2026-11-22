@@ -264,7 +264,8 @@ enum Search {
     let q = q.trimmingCharacters(in: .whitespaces).lowercased()
     if q.isEmpty { return true }
     if let paise = Money.parse(q), t.amount == paise { return true }
-    let fields = [t.payee, t.note, t.categoryId.flatMap { l.categories[$0]?.name }, l.accounts[t.accountId]?.name]
+    if q.hasPrefix("#") { return t.tags.contains { $0.hasPrefix(String(q.dropFirst())) } }
+    let fields = [t.payee, t.note, t.categoryId.flatMap { l.categories[$0]?.name }, l.accounts[t.accountId]?.name] + t.tags.map { Optional($0) }
     return fields.contains { $0?.lowercased().contains(q) == true }
   }
 }

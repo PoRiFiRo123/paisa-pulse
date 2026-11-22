@@ -3,6 +3,8 @@ import SwiftData
 import SwiftUI
 
 struct InsightsView: View {
+  @Query private var valuations: [Valuation]
+  @Query private var rules: [RecurringRule]
   @Query(filter: #Predicate<Txn> { $0.deletedAt == nil }) private var txns: [Txn]
   @Query private var accounts: [Account]
   @Query private var categories: [Category]
@@ -90,6 +92,14 @@ struct InsightsView: View {
             }
           }
         }
+      }
+
+      if kind == .month && offset == 0 {
+        let f = Forecast.monthEnd(accounts: accounts, txns: txns, valuations: valuations, rules: rules, month: range)
+        Section("Month-end forecast") { ForecastCard(forecast: f, hidden: false) }
+      }
+      if kind == .month {
+        Section { NavigationLink { RecapView(offset: offset == 0 ? -1 : offset) } label: { Label("Monthly Recap", systemImage: "sparkles") } }
       }
 
       let biggest = txns.filter { $0.type == .expense && range.contains($0.occurredAt) }.sorted { $0.effectiveAmount > $1.effectiveAmount }.prefix(5)
@@ -206,11 +216,12 @@ extension Array {
 struct NetWorthView: View {
   @Query private var accounts: [Account]
   @Query(filter: #Predicate<Txn> { $0.deletedAt == nil }) private var txns: [Txn]
+  @Query private var valuations: [Valuation]
 
   var body: some View {
     let points: [(Date, Int)] = (0..<12).reversed().map { i in
       let end = Calendar.current.date(byAdding: .month, value: -i, to: .now)!
-      let b = Ledger.balances(accounts: accounts, txns: txns.filter { $0.occurredAt <= end })
+      let b = Ledger.balances(accounts: accounts, txns: txns, valuations: valuations, asOf: end)
       return (end, Ledger.netWorth(accounts: accounts, balances: b))
     }
     List {
@@ -225,7 +236,7 @@ struct NetWorthView: View {
         .chartYAxis { AxisMarks { v in AxisGridLine(); AxisValueLabel { if let d = v.as(Double.self) { Text(Money.compact(Int(d * 100))) } } } }
         .frame(height: 240).padding(.vertical, 8)
       } footer: {
-        Text("Rebuilt from your transactions and each account's starting balance.")
+        Text("Rebuilt from your transactions, each account's starting balance and the values you record for investments (Accounts › + › Investments).")
       }
       Section {
         ForEach(points.reversed().prefix(6), id: \.0) { p in
