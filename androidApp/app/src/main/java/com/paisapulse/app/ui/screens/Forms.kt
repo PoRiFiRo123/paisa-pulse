@@ -27,11 +27,11 @@ private fun rupees(p: Long?) = p?.let { if (it % 100 == 0L) (it / 100).toString(
   }
 }
 
-@Composable fun AccountForm(id: String?) {
+@Composable fun AccountForm(id: String?, initialType: String = "bank") {
   val db = Store.value
   val a = id?.let { i -> db.accounts.firstOrNull { it.id == i } }
   var name by remember { mutableStateOf(a?.name ?: "") }
-  var type by remember { mutableStateOf(a?.kind ?: AccountType.Bank) }
+  var type by remember { mutableStateOf(a?.kind ?: AccountType.of(initialType)) }
   var inst by remember { mutableStateOf(a?.institution ?: "") }
   var last4 by remember { mutableStateOf(a?.last4 ?: "") }
   var opening by remember { mutableStateOf(rupees(a?.openingBalance?.let { kotlin.math.abs(it) }?.takeIf { it != 0L })) }
@@ -49,7 +49,8 @@ private fun rupees(p: Long?) = p?.let { if (it % 100 == 0L) (it / 100).toString(
       last4 = d4.takeIf { it.length == 4 }, openingBalance = signed, creditLimit = if (type == AccountType.Card) Money.parse(limit) else null,
       statementDay = if (type == AccountType.Card && sd > 0) sd else null, dueDay = if (type == AccountType.Card && dd > 0) dd else null,
       color = color, icon = type.icon, excludeFromTotals = exclude, updatedAt = now())
-    Store.update { d -> d.copy(accounts = if (a == null) d.accounts + acc else d.accounts.map { if (it.id == acc.id) acc else it }) }
+    Store.update { d -> d.copy(accounts = if (a == null) d.accounts + acc else d.accounts.map { if (it.id == acc.id) acc else it },
+      cards = if (a == null && type == AccountType.Card && acc.last4 != null) d.cards + PaymentCard(accountId = acc.id, kind = "credit", last4 = acc.last4, color = acc.color) else d.cards) }
     Services.refreshNotifications()
   }) {
     group {

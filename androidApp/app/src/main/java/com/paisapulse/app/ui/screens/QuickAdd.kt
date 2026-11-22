@@ -26,6 +26,7 @@ import com.paisapulse.app.ui.*
 import com.paisapulse.app.work.Services
 import java.time.Instant
 import java.time.LocalTime
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable fun QuickAddSheet(req: Sheet.Add) {
@@ -44,7 +45,21 @@ import java.time.LocalTime
   var pickSplit by remember { mutableStateOf(false) }
   var pickDate by remember { mutableStateOf(false) }
   var error by remember { mutableStateOf<String?>(null) }
-  val amount = KeypadMath.evaluate(expr)?.let { Money.paise(it) }
+  var cardId by remember { mutableStateOf(editing?.cardId) }
+  var currency by remember { mutableStateOf(editing?.currency ?: "INR") }
+  var rate by remember { mutableStateOf(editing?.let { e -> e.originalAmount?.takeIf { e.currency != null && e.currency != "INR" }?.let { e.amount.toDouble() / it } }) }
+  var curMenu by remember { mutableStateOf(false) }
+  var rateDialog by remember { mutableStateOf(false) }
+  var rateText by remember { mutableStateOf("") }
+  val ctx = androidx.compose.ui.platform.LocalContext.current
+  val scope = rememberCoroutineScope()
+  LaunchedEffect(Unit) { editing?.originalAmount?.takeIf { editing.currency != null && editing.currency != "INR" }?.let { o -> expr = if (o % 100 == 0L) (o / 100).toString() else "%.2f".format(o / 100.0) } }
+  val entered = KeypadMath.evaluate(expr)?.let { Money.paise(it) }
+  val amount = if (currency == "INR") entered else rate?.let { r -> entered?.let { Currency.toPaise(it, r) } }
+  fun pickCurrency(code: String) {
+    currency = code; rate = null
+    if (code != "INR") scope.launch { val r = Currency.rates(ctx)?.inrPer?.get(code); if (r != null) rate = r else { rateText = ""; rateDialog = true } }
+  }
   val kindCats = db.categories.filter { it.archivedAt == null && it.parentId == null && it.kind == (if (type == TxnType.Income) "income" else "expense") }.sortedBy { it.sortOrder }
 
   fun save() {
@@ -55,7 +70,8 @@ import java.time.LocalTime
     val shares = if (type == TxnType.Expense && splitWith.isNotEmpty()) Splits.equalShares(amt, splitWith.size) else null
     val txn = (editing ?: Txn(amount = amt, accountId = acc)).copy(type = type.key, amount = amt, accountId = acc,
       toAccountId = if (type == TxnType.Transfer) toAccountId else null, categoryId = if (type == TxnType.Transfer) null else categoryId,
-      payee = name, occurredAt = at, updatedAt = now(), splitShare = shares?.first)
+      payee = name, occurredAt = at, updatedAt = now(), splitShare = shares?.first, cardId = if (type == TxnType.Income) null else cardId,
+      currency = currency.takeIf { it != "INR" }, originalAmount = if (currency == "INR") null else entered)
     Store.update { d ->
       val txns = if (editing != null) d.transactions.map { if (it.id == txn.id) txn else it } else d.transactions + txn
       val entries = d.splitEntries.filterNot { it.txnId == txn.id } + (shares?.let { s -> splitWith.map { SplitEntry(friendId = it, txnId = txn.id, amount = s.second, note = name, occurredAt = at) } } ?: emptyList())
@@ -77,10 +93,18 @@ import java.time.LocalTime
       // Amount
       Column(Modifier.fillMaxWidth().padding(vertical = 14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Row(verticalAlignment = Alignment.Bottom) {
-          Text("₹", style = T.amount(30), color = C.secondary, modifier = Modifier.padding(bottom = 8.dp, end = 4.dp))
+          Box {
+            Text(Currency.symbol(currency), style = T.amount(if (currency == "INR") 30 else 22), color = C.secondary,
+              modifier = Modifier.padding(bottom = 8.dp, end = 4.dp).clickable { curMenu = true })
+            DropdownMenu(curMenu, { curMenu = false }, modifier = Modifier.background(C.card).heightIn(max = 400.dp)) {
+              Currency.common.forEach { c -> DropdownMenuItem({ Text("${c.code} · ${c.name}", style = T.body) }, { curMenu = false; pickCurrency(c.code) }) }
+            }
+          }
           AnimatedContent(expr, label = "amt") { e -> Text(e, style = T.amount(56, FontWeight.Bold), color = type.color(C), maxLines = 1) }
         }
-        if (KeypadMath.isExpression(expr) && amount != null) Text("= ${Money.format(amount)}", style = T.subhead, color = C.secondary)
+        if (currency != "INR") Text(amount?.let { "≈ ${Money.format(it)} · 1 $currency = ₹${"%.2f".format(rate ?: 0.0)}" } ?: "Tap to set the rate for $currency",
+          style = T.subhead, color = C.accent, modifier = Modifier.clickable { rateText = rate?.let { "%.4f".format(it) } ?: ""; rateDialog = true })
+        else if (KeypadMath.isExpression(expr) && amount != null) Text("= ${Money.format(amount)}", style = T.subhead, color = C.secondary)
       }
       LazyColumn(Modifier.weight(1f)) {
         group {
@@ -99,6 +123,8 @@ import java.time.LocalTime
         group {
           PickerRow(if (type == TxnType.Transfer) "From" else "Account", accounts.map { it.id to it.displayName }, accountId ?: "") { accountId = it }
           if (type == TxnType.Transfer) { Divider(); PickerRow("To", listOf("" to "Choose") + accounts.filter { it.id != accountId }.map { it.id to it.displayName }, toAccountId ?: "") { toAccountId = it.ifEmpty { null } } }
+          val accountCards = db.cards.filter { it.accountId == accountId && it.archivedAt == null }
+          if (type != TxnType.Income && accountCards.isNotEmpty()) { Divider(); PickerRow("Paid with", listOf("" to "Account") + accountCards.map { it.id to it.title }, cardId ?: "") { cardId = it.ifEmpty { null } } }
           Divider()
           PRow("Date", onClick = { pickDate = true }) {
             Text(shortDate.format(at.toDate()) + " " + at.toDate().year + ", " + at.time(), style = T.body, color = C.label,
@@ -136,6 +162,11 @@ import java.time.LocalTime
         at = d.atTime(t).atZone(zone).toInstant().toEpochMilli()
       }; pickDate = false }) { Text("OK") } }) { DatePicker(st) }
   }
+  if (rateDialog) AlertDialog({ rateDialog = false }, containerColor = C.card, title = { Text("Rupees per 1 $currency") },
+    text = { Column { Text("Use the rate on your card statement or forex card for an exact match.", style = T.footnote, color = C.secondary)
+      OutlinedTextField(rateText, { rateText = it }, singleLine = true, placeholder = { Text("e.g. 83.25") }) } },
+    confirmButton = { TextButton({ rateText.toDoubleOrNull()?.takeIf { it > 0 }?.let { rate = it }; rateDialog = false }) { Text("Use") } },
+    dismissButton = { TextButton({ rateDialog = false }) { Text("Cancel") } })
   error?.let { e -> AlertDialog({ error = null }, confirmButton = { TextButton({ error = null }) { Text("OK") } }, title = { Text("Can't save") }, text = { Text(e) }) }
 }
 

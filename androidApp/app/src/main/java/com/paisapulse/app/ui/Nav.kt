@@ -27,6 +27,7 @@ sealed interface Route {
   data object Splits : Route
   data class Friend(val id: String) : Route
   data object Backup : Route
+  data object Converter : Route
 }
 
 sealed interface Sheet {
@@ -36,6 +37,8 @@ sealed interface Sheet {
   data class BudgetForm(val id: String?) : Sheet
   data class RecurringForm(val id: String?, val fromTxn: String? = null) : Sheet
   data class GoalForm(val id: String?) : Sheet
+  data class CardForm(val accountId: String, val id: String?) : Sheet
+  data class AccountNew(val type: String) : Sheet
 }
 
 data class Toast(val text: String, val undo: (() -> Unit)? = null, val id: Long = System.nanoTime())

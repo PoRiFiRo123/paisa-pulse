@@ -21,6 +21,7 @@ struct BackupFile: Codable {
   var splitEntries: [SplitDTO]?
   var goals: [GoalDTO]?
   var txnSplitShares: [ShareDTO]?
+  var cards: [CardDTO]?
 
   struct Empty: Codable {}
   struct AccountDTO: Codable {
@@ -35,7 +36,7 @@ struct BackupFile: Codable {
   struct TxnDTO: Codable {
     var id, type: String; var amount: Int; var accountId: String; var toAccountId, categoryId, payee, note: String?
     var occurredAt: Int64; var source: String?; var importBatchId, externalId, currency: String?; var originalAmount: Int?
-    var recurringId: String?; var deletedAt: Int64?; var createdAt, updatedAt: Int64
+    var recurringId: String?; var deletedAt: Int64?; var createdAt, updatedAt: Int64; var cardId: String?
   }
   struct SettingDTO: Codable { var key: String; var value: String }
   struct RuleDTO: Codable {
@@ -49,6 +50,10 @@ struct BackupFile: Codable {
     var id, name, icon, color: String; var target, saved: Int; var deadline, archivedAt: Int64?; var createdAt: Int64
   }
   struct ShareDTO: Codable { var id: String; var share: Int }
+  struct CardDTO: Codable {
+    var id, accountId, kind, network, last4: String; var expiryMonth, expiryYear: Int?; var nameOnCard, label, color: String?
+    var archivedAt: Int64?; var createdAt: Int64
+  }
 }
 
 enum BackupError: LocalizedError {
@@ -82,6 +87,7 @@ enum BackupCodec {
     let friends = try context.fetch(FetchDescriptor<Friend>())
     let splits = try context.fetch(FetchDescriptor<SplitEntry>())
     let goals = try context.fetch(FetchDescriptor<Goal>())
+    let cards = try context.fetch(FetchDescriptor<PaymentCard>())
     let d = AppGroup.defaults
     let settings: [BackupFile.SettingDTO] = prefKeys.compactMap { key, _ in
       guard let v = d.object(forKey: key),
@@ -105,7 +111,7 @@ enum BackupCodec {
         .init(id: $0.id, type: $0.typeRaw, amount: $0.amount, accountId: $0.accountId, toAccountId: $0.toAccountId,
               categoryId: $0.categoryId, payee: $0.payee, note: $0.note, occurredAt: ms($0.occurredAt), source: $0.source,
               importBatchId: $0.importBatchId, externalId: $0.externalId, currency: $0.currency, originalAmount: $0.originalAmount,
-              recurringId: $0.recurringId, deletedAt: msOpt($0.deletedAt), createdAt: ms($0.createdAt), updatedAt: ms($0.updatedAt))
+              recurringId: $0.recurringId, deletedAt: msOpt($0.deletedAt), createdAt: ms($0.createdAt), updatedAt: ms($0.updatedAt), cardId: $0.cardId)
       },
       settings: settings,
       recurringRules: rules.map {
@@ -119,7 +125,10 @@ enum BackupCodec {
       friends: friends.map { .init(id: $0.id, name: $0.name, upiId: $0.upiId, createdAt: ms($0.createdAt)) },
       splitEntries: splits.map { .init(id: $0.id, friendId: $0.friendId, txnId: $0.txnId, amount: $0.amount, note: $0.note, occurredAt: ms($0.occurredAt), createdAt: ms($0.createdAt)) },
       goals: goals.map { .init(id: $0.id, name: $0.name, icon: $0.icon, color: $0.color, target: $0.target, saved: $0.saved, deadline: msOpt($0.deadline), archivedAt: msOpt($0.archivedAt), createdAt: ms($0.createdAt)) },
-      txnSplitShares: txns.compactMap { t in t.splitShare.map { .init(id: t.id, share: $0) } }
+      txnSplitShares: txns.compactMap { t in t.splitShare.map { .init(id: t.id, share: $0) } },
+      cards: cards.map { .init(id: $0.id, accountId: $0.accountId, kind: $0.kind, network: $0.network, last4: $0.last4, expiryMonth: $0.expiryMonth,
+                               expiryYear: $0.expiryYear, nameOnCard: $0.nameOnCard, label: $0.label, color: $0.color,
+                               archivedAt: msOpt($0.archivedAt), createdAt: ms($0.createdAt)) }
     )
     let enc = JSONEncoder()
     enc.outputFormatting = [.sortedKeys]
@@ -137,7 +146,7 @@ enum BackupCodec {
   @MainActor static func restore(_ file: BackupFile, into context: ModelContext) throws {
     try context.delete(model: Txn.self); try context.delete(model: Account.self); try context.delete(model: Category.self)
     try context.delete(model: RecurringRule.self); try context.delete(model: Budget.self); try context.delete(model: Friend.self)
-    try context.delete(model: SplitEntry.self); try context.delete(model: Goal.self)
+    try context.delete(model: SplitEntry.self); try context.delete(model: Goal.self); try context.delete(model: PaymentCard.self)
     for a in file.accounts {
       context.insert(Account(id: a.id, name: a.name, type: AccountType(rawValue: a.type) ?? .bank, institution: a.institution,
                              last4: a.last4, openingBalance: a.openingBalance, creditLimit: a.creditLimit, statementDay: a.statementDay,
@@ -155,7 +164,7 @@ enum BackupCodec {
                          toAccountId: t.toAccountId, categoryId: t.categoryId, payee: t.payee, note: t.note,
                          occurredAt: date(t.occurredAt), source: t.source ?? "manual", recurringId: t.recurringId,
                          importBatchId: t.importBatchId, externalId: t.externalId, currency: t.currency,
-                         originalAmount: t.originalAmount, splitShare: shares[t.id], deletedAt: dateOpt(t.deletedAt),
+                         originalAmount: t.originalAmount, splitShare: shares[t.id], cardId: t.cardId, deletedAt: dateOpt(t.deletedAt),
                          createdAt: date(t.createdAt), updatedAt: date(t.updatedAt)))
     }
     for r in file.recurringRules ?? [] {
@@ -174,6 +183,11 @@ enum BackupCodec {
     }
     for g in file.goals ?? [] {
       context.insert(Goal(id: g.id, name: g.name, icon: g.icon, color: g.color, target: g.target, saved: g.saved, deadline: dateOpt(g.deadline), archivedAt: dateOpt(g.archivedAt), createdAt: date(g.createdAt)))
+    }
+    for c in file.cards ?? [] {
+      context.insert(PaymentCard(id: c.id, accountId: c.accountId, kind: c.kind, network: c.network, last4: c.last4, expiryMonth: c.expiryMonth,
+                                 expiryYear: c.expiryYear, nameOnCard: c.nameOnCard, label: c.label, color: c.color,
+                                 archivedAt: dateOpt(c.archivedAt), createdAt: date(c.createdAt)))
     }
     let d = AppGroup.defaults
     for s in file.settings {

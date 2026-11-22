@@ -125,3 +125,21 @@ final class LedgerTests: XCTestCase {
     XCTAssertThrowsError(try BackupCodec.decode(Data("{\"hello\":1}".utf8)))
   }
 }
+
+final class CardNumberTests: XCTestCase {
+  func testParsesScannedCardKeepingOnlyLast4() {
+    let s = CardNumber.parse(["AXIS BANK", "4111 1111 1111 1111", "VALID THRU 08/29", "NISHIT KIRANI", "VISA"])
+    XCTAssertEqual(s?.network, "visa")
+    XCTAssertEqual(s?.last4, "1111")
+    XCTAssertEqual(s?.month, 8)
+    XCTAssertEqual(s?.year, 2029)
+    XCTAssertEqual(s?.name, "NISHIT KIRANI")
+  }
+  func testNetworks() {
+    XCTAssertEqual(CardNumber.network("5555555555554444"), "mastercard")
+    XCTAssertEqual(CardNumber.network("6521000000000000"), "rupay")
+    XCTAssertEqual(CardNumber.network("378282246310005"), "amex")
+    XCTAssertFalse(CardNumber.luhn("4111111111111112"))
+    XCTAssertNil(CardNumber.parse(["Call 1800 419 5555", "08/29"]))
+  }
+}

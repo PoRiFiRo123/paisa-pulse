@@ -28,31 +28,6 @@ import java.time.temporal.ChronoUnit
   }
 }
 
-@Composable fun AccountsScreen() {
-  val db by Store.db.collectAsState()
-  val b = Ledger.balances(db.accounts, db.transactions)
-  val active = db.accounts.filter { it.archivedAt == null }.sortedBy { it.sortOrder }
-  val net = Ledger.netWorth(db.accounts, b)
-  PScreen("Accounts", actions = { GlassIcon("plus", "Add account") { Ui.sheet = Sheet.AccountForm(null) } }) {
-    group {
-      Column(Modifier.padding(20.dp)) {
-        Text("Net worth", style = T.subhead, color = C.secondary)
-        Text(Money.format(net, Prefs.hideAmounts), style = T.amount(36, FontWeight.Bold), color = if (net < 0) C.expense else C.label)
-        Text(if (net < 0) "You owe more than you have" else "Across ${active.size} accounts", style = T.footnote, color = C.secondary)
-      }
-      Divider()
-      PRow("Net worth over time", leading = { Icon2("chart.line.uptrend.xyaxis") }, chevron = true, onClick = { Ui.push(Route.NetWorth) })
-    }
-    if (db.accounts.isEmpty()) item { EmptyHint("No accounts", "creditcard.fill", "Add your bank account, card or cash to start.") }
-    AccountType.entries.forEach { type ->
-      val items = active.filter { it.kind == type }
-      if (items.isNotEmpty()) group(type.plural) { items.forEachIndexed { i, a -> if (i > 0) Divider(64.dp); AccountRow(a, b[a.id] ?: 0) } }
-    }
-    val archived = db.accounts.filter { it.archivedAt != null }
-    if (archived.isNotEmpty()) group("Archived") { archived.forEachIndexed { i, a -> if (i > 0) Divider(64.dp); AccountRow(a, b[a.id] ?: 0) } }
-  }
-}
-
 @Composable fun AccountRow(a: Account, balance: Long) {
   Column(Modifier.fillMaxWidth().clickable { Ui.push(Route.AccountDetail(a.id)) }.padding(horizontal = 16.dp, vertical = 10.dp)) {
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -95,11 +70,13 @@ import java.time.temporal.ChronoUnit
       }
     }
   }) {
-    group {
-      Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-        CategoryBadge(a.icon, a.color, 52.dp); Spacer(Modifier.width(14.dp))
-        Column { Text(a.kind.label, style = T.subhead, color = C.secondary); BalanceText(a, balance, T.amount(32, FontWeight.Bold)) }
-      }
+    val cards = db.cards.filter { it.accountId == a.id && it.archivedAt == null }.sortedBy { it.createdAt }
+    item { Box(Modifier.padding(16.dp)) { WalletCard(a, balance, cards) } }
+    if (a.kind != AccountType.Cash) group(if (a.kind == AccountType.Card) "Card" else "Linked cards",
+      footer = if (cards.isEmpty()) "Scan the card with the camera or type it in. Only the last 4 digits, network and expiry are kept." else "Tap the stack to spread it. Long-press a card to edit or remove it.") {
+      if (cards.isNotEmpty()) Box(Modifier.padding(12.dp)) { CardStack(cards, a.color) { Ui.sheet = Sheet.CardForm(a.id, it.id) } }
+      PRow(if (a.kind == AccountType.Card) (if (cards.isEmpty()) "Add Card Details" else "Add Add-on Card") else "Add Debit Card", titleColor = C.accent,
+        leading = { Icon2("creditcard.fill") }, onClick = { Ui.sheet = Sheet.CardForm(a.id, null) })
     }
     if (a.kind == AccountType.Card) group("Card") {
       val owed = maxOf(0L, -balance)

@@ -9,6 +9,7 @@ struct QuickAddView: View {
   @Query(filter: #Predicate<Account> { $0.archivedAt == nil }, sort: \Account.sortOrder) private var accounts: [Account]
   @Query(filter: #Predicate<Category> { $0.archivedAt == nil }, sort: \Category.sortOrder) private var categories: [Category]
   @Query(sort: \Friend.name) private var friends: [Friend]
+  @Query(filter: #Predicate<PaymentCard> { $0.archivedAt == nil }) private var cards: [PaymentCard]
   @AppStorage(PrefKey.lastAccountId, store: AppGroup.defaults) private var lastAccountId = ""
 
   @State private var type: TxnType
@@ -20,6 +21,11 @@ struct QuickAddView: View {
   @State private var toAccountId: String?
   @State private var date: Date
   @State private var splitWith: Set<String>
+  @State private var cardId: String?
+  @State private var currency: String
+  @State private var rate: Double?
+  @State private var editingRate = false
+  @State private var rateText = ""
   @State private var detent: PresentationDetent = .large
   @State private var pickingCategory = false
   @State private var error: String?
@@ -36,15 +42,29 @@ struct QuickAddView: View {
     _toAccountId = State(initialValue: e?.toAccountId)
     _date = State(initialValue: e?.occurredAt ?? request.date ?? .now)
     _splitWith = State(initialValue: [])
+    _cardId = State(initialValue: e?.cardId)
+    _currency = State(initialValue: e?.currency ?? "INR")
+    if let e, let orig = e.originalAmount, e.currency != nil, e.currency != "INR" {
+      _expr = State(initialValue: orig % 100 == 0 ? String(orig / 100) : String(format: "%.2f", Double(orig) / 100))
+      _rate = State(initialValue: Double(e.amount) / Double(orig))
+    }
   }
 
   private static func exprText(_ paise: Int) -> String {
     paise % 100 == 0 ? String(paise / 100) : String(format: "%.2f", Double(paise) / 100)
   }
 
-  private var amountPaise: Int? {
+  /// What was typed, in the chosen currency's minor units.
+  private var enteredMinor: Int? {
     guard let d = KeypadMath.evaluate(expr) else { return nil }
     return Money.paise(from: d)
+  }
+  /// Always INR paise (converted when a foreign currency is picked).
+  private var amountPaise: Int? {
+    guard let m = enteredMinor else { return nil }
+    if currency == "INR" { return m }
+    guard let rate else { return nil }
+    return Currency.toPaise(m, rate: rate)
   }
 
   var body: some View {
@@ -79,6 +99,11 @@ struct QuickAddView: View {
       .sheet(isPresented: $pickingCategory) {
         CategoryPicker(kind: type == .income ? .income : .expense, selection: $categoryId)
       }
+      .alert("Rupees per 1 \(currency)", isPresented: $editingRate) {
+        TextField("e.g. 83.25", text: $rateText).keyboardType(.decimalPad)
+        Button("Use") { if let r = Double(rateText), r > 0 { rate = r } }
+        Button("Cancel", role: .cancel) {}
+      } message: { Text("Use the rate on your card statement or forex card for an exact match.") }
       .alert("Can't save", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
         Button("OK", role: .cancel) {}
       } message: { Text(error ?? "") }
@@ -95,7 +120,14 @@ struct QuickAddView: View {
   private var amountDisplay: some View {
     VStack(spacing: 2) {
       HStack(alignment: .firstTextBaseline, spacing: 4) {
-        Text("₹").font(.system(size: 30, weight: .semibold, design: .rounded)).foregroundStyle(.secondary)
+        Menu {
+          ForEach(Currency.common, id: \.code) { c in
+            Button { pickCurrency(c.code) } label: { Text("\(c.code) · \(c.name)") }
+          }
+        } label: {
+          Text(Currency.symbol(currency)).font(.system(size: currency == "INR" ? 30 : 22, weight: .semibold, design: .rounded)).foregroundStyle(.secondary)
+        }
+        .accessibilityLabel("Currency \(currency)")
         Text(expr)
           .font(.system(size: 56, weight: .bold, design: .rounded))
           .foregroundStyle(type.color)
@@ -103,7 +135,14 @@ struct QuickAddView: View {
           .contentTransition(.numericText())
           .animation(.snappy, value: expr)
       }
-      if KeypadMath.isExpression(expr), let p = amountPaise {
+      if currency != "INR" {
+        Button {
+          rateText = rate.map { String(format: "%.4f", $0) } ?? ""; editingRate = true
+        } label: {
+          Text(amountPaise.map { "≈ \(Money.format($0)) · 1 \(currency) = ₹\(String(format: "%.2f", rate ?? 0))" } ?? "Tap to set the rate for \(currency)")
+            .font(.subheadline)
+        }
+      } else if KeypadMath.isExpression(expr), let p = amountPaise {
         Text("= \(Money.format(p))").font(.subheadline).foregroundStyle(.secondary)
       }
     }
@@ -149,6 +188,13 @@ struct QuickAddView: View {
             ForEach(accounts.filter { $0.id != accountId }) { Text($0.displayName).tag(String?.some($0.id)) }
           }
         }
+        let accountCards = cards.filter { $0.accountId == accountId }
+        if type != .income, !accountCards.isEmpty {
+          Picker("Paid with", selection: $cardId) {
+            Text("Account").tag(String?.none)
+            ForEach(accountCards) { Text($0.title).tag(String?.some($0.id)) }
+          }
+        }
         DatePicker("Date", selection: $date, in: ...Date.now.addingTimeInterval(86_400 * 366))
         if type == .expense, !friends.isEmpty {
           NavigationLink {
@@ -185,6 +231,13 @@ struct QuickAddView: View {
     .accessibilityAddTraits(selected ? .isSelected : [])
   }
 
+  private func pickCurrency(_ code: String) {
+    currency = code
+    rate = nil
+    guard code != "INR" else { return }
+    Task { if let r = await Currency.rates(), let v = r.inrPer[code] { rate = v } else { rateText = ""; editingRate = true } }
+  }
+
   private func defaults() {
     if accountId == nil || !accounts.contains(where: { $0.id == accountId }) {
       accountId = accounts.first(where: { $0.id == lastAccountId })?.id ?? accounts.first?.id
@@ -212,6 +265,9 @@ struct QuickAddView: View {
                 payee: name.isEmpty ? nil : name, note: note.isEmpty ? nil : note, occurredAt: date)
       context.insert(txn)
     }
+    txn.cardId = type == .income ? nil : cardId
+    txn.currency = currency == "INR" ? nil : currency
+    txn.originalAmount = currency == "INR" ? nil : enteredMinor
     // Splits: recreate this expense's shares.
     let old = ((try? context.fetch(FetchDescriptor<SplitEntry>())) ?? []).filter { $0.txnId == txn.id }
     old.forEach { context.delete($0) }

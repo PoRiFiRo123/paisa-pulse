@@ -34,9 +34,15 @@ struct SettingsView: View {
         } label: { row("Theme", "circle.lefthalf.filled", "#5856D6") }
         Picker(selection: $accent) {
           ForEach(Palette.accents, id: \.key) { a in
-            Label { Text(a.name) } icon: { Image(systemName: "circle.fill").foregroundStyle(Palette.accent(a.key)) }.tag(a.key)
+            // Menus repaint SF Symbols in the tint colour, so draw each colour as an image.
+            Label { Text(a.name) } icon: { Image(uiImage: Swatch.image(a.light)).renderingMode(.original) }.tag(a.key)
           }
         } label: { row("Accent colour", "paintpalette.fill", "#FF2D55") }
+        Picker(selection: Binding(get: { AppIcons.current }, set: { AppIcons.set($0) })) {
+          ForEach(AppIcons.all, id: \.key) { i in
+            Label { Text(i.name) } icon: { Image(uiImage: Swatch.image(i.swatch)).renderingMode(.original) }.tag(i.key)
+          }
+        } label: { row("App icon", "app.badge.fill", "#007AFF") }
       }
 
       Section("Money") {
@@ -57,6 +63,7 @@ struct SettingsView: View {
         NavigationLink { InsightsView() } label: { row("Insights", "chart.bar.xaxis", "#AF52DE") }
         NavigationLink { CalendarView() } label: { row("Calendar", "calendar", "#FF2D55") }
         NavigationLink { NetWorthView() } label: { row("Net Worth", "chart.line.uptrend.xyaxis", "#34C759") }
+        NavigationLink { ConverterView() } label: { row("Currency Converter", "dollarsign.arrow.circlepath", "#30B0C7") }
       }
 
       Section {
@@ -120,5 +127,63 @@ struct SettingsView: View {
       Text(title).foregroundStyle(.primary)
       if let value { Spacer(); Text(value).foregroundStyle(.secondary) }
     }
+  }
+}
+
+
+/// A filled circle image that keeps its colour inside menus.
+enum Swatch {
+  static func image(_ hex: String, size: CGFloat = 20) -> UIImage {
+    UIGraphicsImageRenderer(size: CGSize(width: size, height: size)).image { _ in
+      UIColor(Color(hex: hex)).setFill()
+      UIBezierPath(ovalIn: CGRect(x: 1, y: 1, width: size - 2, height: size - 2)).fill()
+    }.withRenderingMode(.alwaysOriginal)
+  }
+}
+
+/// Alternate app icons (asset catalog sets AppIcon-<Name>, included via ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS).
+enum AppIcons {
+  static let all: [(key: String, name: String, swatch: String)] = [
+    ("", "Default", "#5E5CE6"), ("AppIcon-Midnight", "Midnight", "#1C1C3A"), ("AppIcon-Saffron", "Saffron", "#FF9933"),
+    ("AppIcon-Mint", "Mint", "#34C7A0"), ("AppIcon-Mono", "Mono", "#8E8E93"),
+  ]
+  static var current: String { UIApplication.shared.alternateIconName ?? "" }
+  static func set(_ key: String) {
+    guard UIApplication.shared.supportsAlternateIcons else { return }
+    UIApplication.shared.setAlternateIconName(key.isEmpty ? nil : key)
+  }
+}
+
+/// Currency converter: any amount to and from rupees, using cached rates (works offline after the first load).
+struct ConverterView: View {
+  @State private var code = "USD"
+  @State private var amount = "100"
+  @State private var rates: Currency.Rates? = Currency.cached
+  @State private var loading = false
+
+  var body: some View {
+    let rate = rates?.inrPer[code]
+    let value = Double(amount.replacingOccurrences(of: ",", with: "")) ?? 0
+    Form {
+      Section {
+        Picker("Currency", selection: $code) { ForEach(Currency.common.filter { $0.code != "INR" }, id: \.code) { Text("\($0.code) · \($0.name)").tag($0.code) } }
+        TextField("Amount", text: $amount).keyboardType(.decimalPad).font(.title2.weight(.semibold))
+      }
+      if let rate {
+        Section("In rupees") {
+          LabeledContent("\(Currency.symbol(code)) \(amount) =") { Text(Money.format(Int((value * rate * 100).rounded()))).font(.title3.weight(.bold)) }
+          LabeledContent("₹\(amount) =") { Text(String(format: "%@ %.2f", Currency.symbol(code), value / rate)) }
+          LabeledContent("1 \(code)", value: String(format: "₹%.4f", rate))
+        }
+      }
+      Section {
+        Button(loading ? "Refreshing…" : "Refresh Rates") { Task { loading = true; rates = await Currency.rates(force: true); loading = false } }.disabled(loading)
+      } footer: {
+        Text(rates.map { "Mid-market rates from open.er-api.com, updated \(Date(timeIntervalSince1970: $0.at).formatted(.relative(presentation: .named))). Banks and forex cards add a markup." }
+             ?? "Rates need an internet connection the first time. Only currency codes are requested.")
+      }
+    }
+    .navigationTitle("Converter")
+    .task { if rates == nil || Date.now.timeIntervalSince1970 - (rates?.at ?? 0) > Currency.maxAge { rates = await Currency.rates() } }
   }
 }

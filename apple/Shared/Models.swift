@@ -147,6 +147,8 @@ enum Frequency: String, Codable, CaseIterable, Identifiable {
   var originalAmount: Int?
   /// Split with friends: your share in paise (nil = not split). See Splits.swift.
   var splitShare: Int?
+  /// The debit or credit card used ("Paid with"), if any.
+  var cardId: String?
   var deletedAt: Date?
   var createdAt: Date
   var updatedAt: Date
@@ -155,14 +157,14 @@ enum Frequency: String, Codable, CaseIterable, Identifiable {
        toAccountId: String? = nil, categoryId: String? = nil, payee: String? = nil, note: String? = nil,
        occurredAt: Date = .now, source: String = "manual", recurringId: String? = nil,
        importBatchId: String? = nil, externalId: String? = nil, currency: String? = nil,
-       originalAmount: Int? = nil, splitShare: Int? = nil, deletedAt: Date? = nil,
+       originalAmount: Int? = nil, splitShare: Int? = nil, cardId: String? = nil, deletedAt: Date? = nil,
        createdAt: Date = .now, updatedAt: Date = .now) {
     self.id = id; self.typeRaw = type.rawValue; self.amount = amount; self.accountId = accountId
     self.toAccountId = type == .transfer ? toAccountId : nil
     self.categoryId = type == .transfer ? nil : categoryId
     self.payee = payee; self.note = note; self.occurredAt = occurredAt; self.source = source
     self.recurringId = recurringId; self.importBatchId = importBatchId; self.externalId = externalId
-    self.currency = currency; self.originalAmount = originalAmount; self.splitShare = splitShare
+    self.currency = currency; self.originalAmount = originalAmount; self.splitShare = splitShare; self.cardId = cardId
     self.deletedAt = deletedAt; self.createdAt = createdAt; self.updatedAt = updatedAt
   }
 
@@ -276,4 +278,37 @@ enum Frequency: String, Codable, CaseIterable, Identifiable {
     self.id = id; self.name = name; self.icon = icon; self.color = color; self.target = target
     self.saved = saved; self.deadline = deadline; self.archivedAt = archivedAt; self.createdAt = createdAt
   }
+}
+
+/// A debit card linked to a bank account, or a credit card (linked to its own card account).
+/// Only the last 4 digits, network and expiry are stored: never the full number or the CVV.
+@Model final class PaymentCard {
+  @Attribute(.unique) var id: String
+  var accountId: String
+  /// "debit" | "credit"
+  var kind: String
+  /// visa | mastercard | rupay | amex | diners | discover | other
+  var network: String
+  var last4: String
+  var expiryMonth: Int?
+  var expiryYear: Int?
+  var nameOnCard: String?
+  var label: String?
+  var color: String?
+  var archivedAt: Date?
+  var createdAt: Date
+
+  init(id: String = UUID().uuidString.lowercased(), accountId: String, kind: String = "debit", network: String = "other",
+       last4: String, expiryMonth: Int? = nil, expiryYear: Int? = nil, nameOnCard: String? = nil, label: String? = nil,
+       color: String? = nil, archivedAt: Date? = nil, createdAt: Date = .now) {
+    self.id = id; self.accountId = accountId; self.kind = kind; self.network = network; self.last4 = last4
+    self.expiryMonth = expiryMonth; self.expiryYear = expiryYear; self.nameOnCard = nameOnCard; self.label = label
+    self.color = color; self.archivedAt = archivedAt; self.createdAt = createdAt
+  }
+
+  var expiryText: String? {
+    guard let m = expiryMonth, let y = expiryYear else { return nil }
+    return String(format: "%02d/%02d", m, y % 100)
+  }
+  var title: String { label ?? "\(CardNumber.networkName(network)) ••\(last4)" }
 }

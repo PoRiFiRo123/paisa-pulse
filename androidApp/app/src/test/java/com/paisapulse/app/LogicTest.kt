@@ -69,3 +69,16 @@ class LogicTest {
     assertEquals(4, back.version)
   }
 }
+
+class CardNumberTest {
+  @org.junit.Test fun parsesScannedCardKeepingOnlyLast4() {
+    val s = com.paisapulse.app.logic.CardNumber.parse(listOf("AXIS BANK", "4111 1111 1111 1111", "VALID THRU 08/29", "NISHIT KIRANI", "VISA"))!!
+    org.junit.Assert.assertEquals("visa", s.network); org.junit.Assert.assertEquals("1111", s.last4)
+    org.junit.Assert.assertEquals(8, s.month); org.junit.Assert.assertEquals(2029, s.year); org.junit.Assert.assertEquals("NISHIT KIRANI", s.name)
+  }
+  @org.junit.Test fun networks() {
+    org.junit.Assert.assertEquals("mastercard", com.paisapulse.app.logic.CardNumber.network("5555555555554444"))
+    org.junit.Assert.assertEquals("rupay", com.paisapulse.app.logic.CardNumber.network("6521000000000000"))
+    org.junit.Assert.assertNull(com.paisapulse.app.logic.CardNumber.parse(listOf("Call 1800 419 5555", "08/29")))
+  }
+}

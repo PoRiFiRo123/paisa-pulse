@@ -47,7 +47,9 @@ import java.io.File
     group("Appearance") {
       PickerRow("Theme", listOf("system" to "System", "light" to "Light", "dark" to "Dark"), Prefs.theme, leading = { Badge("circle.lefthalf.filled", "#5856D6") }) { Prefs.set("theme", it) }
       Divider(56.dp)
-      PickerRow("Accent colour", accents.map { it.first to it.second }, Prefs.accent, leading = { Badge("paintpalette.fill", "#FF2D55") }) { Prefs.set("accent", it) }
+      ColorPickerRow("Accent colour", accents.map { Triple(it.first, it.second, it.third.first) }, Prefs.accent, leading = { Badge("paintpalette.fill", "#FF2D55") }) { Prefs.set("accent", it) }
+      Divider(56.dp)
+      ColorPickerRow("App icon", AppIcons.all, AppIcons.current(ctx), leading = { Badge("square.grid.2x2.fill", "#007AFF") }) { AppIcons.set(ctx, it) }
     }
     group("Money") {
       PRow("Categories", leading = { Badge("square.grid.2x2.fill", "#FF9500") }, chevron = true, onClick = { Ui.push(Route.Categories) })
@@ -62,6 +64,7 @@ import java.io.File
       PRow("Insights", leading = { Badge("chart.bar.xaxis", "#AF52DE") }, chevron = true, onClick = { Ui.push(Route.Insights) })
       Divider(56.dp); PRow("Calendar", leading = { Badge("calendar", "#FF2D55") }, chevron = true, onClick = { Ui.push(Route.Calendar) })
       Divider(56.dp); PRow("Net Worth", leading = { Badge("chart.line.uptrend.xyaxis", "#34C759") }, chevron = true, onClick = { Ui.push(Route.NetWorth) })
+      Divider(56.dp); PRow("Currency Converter", leading = { Badge("indianrupeesign.circle", "#30B0C7") }, chevron = true, onClick = { Ui.push(Route.Converter) })
     }
     group("Notifications", footer = "Budget alerts at 80% and 100%. Bill reminders 3 days before a card's due day.") {
       ToggleRow("Budget alerts", Prefs.notifyBudgets, leading = { Badge("bell.badge.fill", "#FF9500") }) { notif("notifyBudgets", it) }
@@ -159,6 +162,72 @@ fun ordinal(n: Int) = n.toString() + if (n % 100 in 11..13) "th" else when (n % 
         Prefs.set("onboarded", true)
       })
       Divider(); PRow("Restore from a Backup", titleColor = C.accent, onClick = { importer.launch(arrayOf("application/json", "*/*")) })
+    }
+  }
+}
+
+
+/** Menu picker whose options show their real colour (accent colours, app icons). */
+@Composable fun ColorPickerRow(title: String, options: List<Triple<String, String, String>>, selected: String, leading: @Composable () -> Unit, onSelect: (String) -> Unit) {
+  var open by remember { mutableStateOf(false) }
+  Box {
+    PRow(title, leading = leading, onClick = { open = true }) {
+      Box(Modifier.size(14.dp).background(hex(options.firstOrNull { it.first == selected }?.third ?: "#8E8E93"), androidx.compose.foundation.shape.CircleShape))
+      Spacer(Modifier.width(6.dp))
+      Text(options.firstOrNull { it.first == selected }?.second ?: "", style = T.body, color = C.accent)
+      Icon(Sym.of("chevron.up.chevron.down"), null, tint = C.accent, modifier = Modifier.padding(start = 2.dp).size(16.dp))
+    }
+    DropdownMenu(open, { open = false }, modifier = Modifier.background(C.card), offset = androidx.compose.ui.unit.DpOffset(200.dp, 0.dp)) {
+      options.forEach { (k, name, color) ->
+        DropdownMenuItem({ Text(name, style = T.body) }, { onSelect(k); open = false },
+          leadingIcon = { Box(Modifier.size(20.dp).background(hex(color), androidx.compose.foundation.shape.CircleShape)) },
+          trailingIcon = { if (k == selected) Icon(Sym.of("checkmark"), null, tint = C.accent) })
+      }
+    }
+  }
+}
+
+/** Alternate launcher icons via activity-aliases (same set as the iPhone app). */
+object AppIcons {
+  val all = listOf(Triple("Default", "Default", "#5E5CE6"), Triple("Midnight", "Midnight", "#1C1C3A"), Triple("Saffron", "Saffron", "#FF9933"),
+    Triple("Mint", "Mint", "#34C7A0"), Triple("Mono", "Mono", "#8E8E93"))
+  fun current(ctx: android.content.Context): String = all.firstOrNull { (k, _, _) ->
+    ctx.packageManager.getComponentEnabledSetting(android.content.ComponentName(ctx, "com.paisapulse.app.Icon$k")) == android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+  }?.first ?: "Default"
+  fun set(ctx: android.content.Context, key: String) {
+    all.forEach { (k, _, _) ->
+      ctx.packageManager.setComponentEnabledSetting(android.content.ComponentName(ctx, "com.paisapulse.app.Icon$k"),
+        if (k == key) android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED else android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+        android.content.pm.PackageManager.DONT_KILL_APP)
+    }
+    Ui.show("Icon changes in a few seconds")
+  }
+}
+
+@Composable fun ConverterScreen() {
+  val ctx = LocalContext.current
+  val scope = rememberCoroutineScope()
+  var code by remember { mutableStateOf("USD") }
+  var amount by remember { mutableStateOf("100") }
+  var rates by remember { mutableStateOf(com.paisapulse.app.logic.Currency.cached(ctx)) }
+  var loading by remember { mutableStateOf(false) }
+  LaunchedEffect(Unit) { if (rates == null || System.currentTimeMillis() - (rates?.at ?: 0) > com.paisapulse.app.logic.Currency.MAX_AGE) rates = com.paisapulse.app.logic.Currency.rates(ctx) }
+  val rate = rates?.inrPer?.get(code)
+  val v = amount.replace(",", "").toDoubleOrNull() ?: 0.0
+  val sym = com.paisapulse.app.logic.Currency.symbol(code)
+  PScreen("Converter", back = true) {
+    group {
+      PickerRow("Currency", com.paisapulse.app.logic.Currency.common.filter { it.code != "INR" }.map { it.code to "${it.code} · ${it.name}" }, code) { code = it }
+      Divider(); FieldRow(amount, { amount = it }, "Amount", number = true)
+    }
+    if (rate != null) group("In rupees") {
+      PRow("$sym $amount =", value = Money.format(Math.round(v * rate * 100)), valueColor = C.label)
+      Divider(); PRow("₹$amount =", value = "$sym ${"%.2f".format(v / rate)}")
+      Divider(); PRow("1 $code", value = "₹${"%.4f".format(rate)}")
+    }
+    group(footer = rates?.let { "Mid-market rates from open.er-api.com, updated ${shortDate.format(java.time.Instant.ofEpochMilli(it.at).atZone(java.time.ZoneId.systemDefault()).toLocalDate())}. Banks and forex cards add a markup." }
+      ?: "Rates need an internet connection the first time. Only currency codes are requested.") {
+      PRow(if (loading) "Refreshing…" else "Refresh Rates", titleColor = C.accent, onClick = { scope.launch { loading = true; rates = com.paisapulse.app.logic.Currency.rates(ctx, true); loading = false } })
     }
   }
 }
