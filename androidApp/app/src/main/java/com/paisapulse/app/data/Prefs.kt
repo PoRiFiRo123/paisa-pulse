@@ -23,6 +23,11 @@ object Prefs {
   var autoBackup by mutableStateOf(true); private set
   var lastBackupAt by mutableStateOf(0L); private set
   var merchantLogos by mutableStateOf(false); private set
+  var myUpiId by mutableStateOf(""); private set
+  var myName by mutableStateOf(""); private set
+  var autoCleanup by mutableStateOf("off"); private set
+  var autoCleanupMonths by mutableStateOf(24); private set
+  var lastCleanupAt by mutableStateOf(0L); private set
 
   fun init(ctx: Context) {
     sp = ctx.getSharedPreferences("paisa", Context.MODE_PRIVATE)
@@ -33,6 +38,8 @@ object Prefs {
     notifyBudgets = sp.getBoolean("notifyBudgets", false); notifyBills = sp.getBoolean("notifyBills", false)
     notifyWeekly = sp.getBoolean("notifyWeekly", false); autoBackup = sp.getBoolean("autoBackup", true)
     lastBackupAt = sp.getLong("lastBackupAt", 0L); merchantLogos = sp.getBoolean("merchantLogos", false)
+    myUpiId = sp.getString("myUpiId", "")!!; myName = sp.getString("myName", "")!!
+    autoCleanup = sp.getString("autoCleanup", "off")!!; autoCleanupMonths = sp.getInt("autoCleanupMonths", 24); lastCleanupAt = sp.getLong("lastCleanupAt", 0L)
   }
 
   fun set(key: String, v: Any) {
@@ -47,6 +54,8 @@ object Prefs {
       "notifyBills" -> notifyBills = v as Boolean; "notifyWeekly" -> notifyWeekly = v as Boolean
       "autoBackup" -> autoBackup = v as Boolean; "lastBackupAt" -> lastBackupAt = v as Long
       "merchantLogos" -> merchantLogos = v as Boolean
+      "myUpiId" -> myUpiId = v as String; "myName" -> myName = v as String
+      "autoCleanup" -> autoCleanup = v as String; "autoCleanupMonths" -> autoCleanupMonths = v as Int; "lastCleanupAt" -> lastCleanupAt = v as Long
     }
   }
 
@@ -55,13 +64,16 @@ object Prefs {
     Setting("onboarded", onboarded.toString()), Setting("theme", "\"$theme\""), Setting("accent", "\"$accent\""),
     Setting("monthStartDay", monthStartDay.toString()), Setting("weekStartDay", weekStartDay.toString()),
     Setting("hideAmounts", hideAmounts.toString()), Setting("merchantLogos", merchantLogos.toString()),
+    Setting("myUpiId", "\"$myUpiId\""), Setting("myName", "\"$myName\""), Setting("autoCleanup", "\"$autoCleanup\""),
+    Setting("autoCleanupMonths", autoCleanupMonths.toString()),
   )
 
   fun applySettings(list: List<Setting>) {
     for (s in list) {
       val v = s.value.trim().removeSurrounding("\"")
       when (s.key) {
-        "theme", "accent" -> set(s.key, v)
+        "theme", "accent", "myUpiId", "myName", "autoCleanup" -> set(s.key, v)
+        "autoCleanupMonths" -> v.toIntOrNull()?.let { set(s.key, it) }
         "monthStartDay", "weekStartDay" -> v.toIntOrNull()?.let { set(s.key, it) }
         "hideAmounts", "merchantLogos" -> v.toBooleanStrictOrNull()?.let { set(s.key, it) }
       }

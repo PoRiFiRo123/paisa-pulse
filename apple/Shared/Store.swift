@@ -4,7 +4,7 @@ import SwiftData
 enum Store {
   static let schema = Schema([
     Account.self, Category.self, Txn.self, Budget.self, RecurringRule.self,
-    Friend.self, SplitEntry.self, Goal.self, PaymentCard.self, SavedFilter.self, ImportBatch.self,
+    Friend.self, SplitEntry.self, Goal.self, PaymentCard.self, SavedFilter.self, ImportBatch.self, SplitGroup.self, Loan.self, LoanPayment.self,
   ])
 
   /// The database lives in the App Group so the widget can read it.

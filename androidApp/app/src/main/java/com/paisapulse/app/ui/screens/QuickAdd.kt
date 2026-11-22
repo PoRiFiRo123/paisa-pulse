@@ -40,7 +40,18 @@ import kotlinx.coroutines.launch
   var accountId by remember { mutableStateOf(editing?.accountId ?: req.accountId ?: accounts.firstOrNull { it.id == Prefs.lastAccountId }?.id ?: accounts.firstOrNull()?.id) }
   var toAccountId by remember { mutableStateOf(editing?.toAccountId) }
   var at by remember { mutableLongStateOf(editing?.occurredAt ?: req.date ?: now()) }
-  var splitWith by remember { mutableStateOf(editing?.let { e -> db.splitEntries.filter { it.txnId == e.id }.map { it.friendId }.toSet() } ?: emptySet()) }
+  var split by remember {
+    mutableStateOf(editing?.let { e ->
+      val old = db.splitEntries.filter { it.txnId == e.id }
+      if (old.isEmpty()) SplitSetup() else {
+        val base = SplitSetup(people = old.map { it.friendId }, groupId = old.first().groupId)
+        val share = e.splitShare
+        if (share != null && share != SplitMath.compute(e.amount, base).myShare)
+          base.copy(mode = SplitMode.Amount, includeMe = share > 0, values = old.associate { it.friendId to it.amount } + ("me" to share))
+        else base
+      }
+    } ?: SplitSetup())
+  }
   var pickCategory by remember { mutableStateOf(false) }
   var pickSplit by remember { mutableStateOf(false) }
   var pickDate by remember { mutableStateOf(false) }
@@ -67,14 +78,25 @@ import kotlinx.coroutines.launch
     val acc = accountId ?: return run { error = "Add an account first (Accounts tab)." }
     if (type == TxnType.Transfer && (toAccountId == null || toAccountId == acc)) { error = "Pick a different account to move money to."; return }
     val name = payee.trim().ifEmpty { null }
-    val shares = if (type == TxnType.Expense && splitWith.isNotEmpty()) Splits.equalShares(amt, splitWith.size) else null
+    val result = SplitMath.compute(amt, split)
+    val splitting = type == TxnType.Expense && !split.isEmpty
+    if (splitting && !result.valid) { error = "The split amounts don't add up to the total."; return }
+    // A friend paid: nothing left your account yet, so it's only "you owe them" (settle up later).
+    if (splitting && split.payer != null && editing == null) {
+      val entries = result.entries.map { (f, v) -> SplitEntry(friendId = f, amount = v, note = name, groupId = split.groupId, occurredAt = at) }
+      Store.update { it.copy(splitEntries = it.splitEntries + entries) }
+      Ui.sheet = null
+      Ui.show("You owe ${db.friends.firstOrNull { it.id == split.payer }?.name ?: "them"} ${Money.format(result.myShare)}")
+      return
+    }
+    val owed = if (splitting && split.payer == null) result.entries else emptyMap()
     val txn = (editing ?: Txn(amount = amt, accountId = acc)).copy(type = type.key, amount = amt, accountId = acc,
       toAccountId = if (type == TxnType.Transfer) toAccountId else null, categoryId = if (type == TxnType.Transfer) null else categoryId,
-      payee = name, occurredAt = at, updatedAt = now(), splitShare = shares?.first, cardId = if (type == TxnType.Income) null else cardId,
+      payee = name, occurredAt = at, updatedAt = now(), splitShare = if (splitting && split.payer == null) result.myShare else null, cardId = if (type == TxnType.Income) null else cardId,
       currency = currency.takeIf { it != "INR" }, originalAmount = if (currency == "INR") null else entered)
     Store.update { d ->
       val txns = if (editing != null) d.transactions.map { if (it.id == txn.id) txn else it } else d.transactions + txn
-      val entries = d.splitEntries.filterNot { it.txnId == txn.id } + (shares?.let { s -> splitWith.map { SplitEntry(friendId = it, txnId = txn.id, amount = s.second, note = name, occurredAt = at) } } ?: emptyList())
+      val entries = d.splitEntries.filterNot { it.txnId == txn.id } + owed.map { (f, v) -> SplitEntry(friendId = f, txnId = txn.id, amount = v, note = name, groupId = split.groupId, occurredAt = at) }
       d.copy(transactions = txns, splitEntries = entries)
     }
     Prefs.set("lastAccountId", acc)
@@ -83,6 +105,7 @@ import kotlinx.coroutines.launch
     if (editing != null) Ui.show("Saved") else Ui.show("Added ${Money.format(amt)}") {
       Store.update { d -> d.copy(transactions = d.transactions.map { if (it.id == txn.id) it.copy(deletedAt = now()) else it }) }
     }
+    if (editing == null && owed.isNotEmpty()) Ui.sheet = Sheet.Request(name ?: categoryId?.let { id -> db.categories.firstOrNull { it.id == id }?.name }, owed)
   }
 
   PSheet({ Ui.sheet = null }) {
@@ -130,10 +153,14 @@ import kotlinx.coroutines.launch
             Text(shortDate.format(at.toDate()) + " " + at.toDate().year + ", " + at.time(), style = T.body, color = C.label,
               modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(C.fill).padding(horizontal = 10.dp, vertical = 5.dp))
           }
-          if (type == TxnType.Expense && db.friends.isNotEmpty()) {
+          if (type == TxnType.Expense) {
             Divider()
-            PRow("Split", value = if (splitWith.isEmpty()) "No" else amount?.let { "${splitWith.size + 1} people · yours ${Money.format(Splits.equalShares(it, splitWith.size).first)}" } ?: "${splitWith.size + 1} people",
-              chevron = true, onClick = { pickSplit = true })
+            val r = SplitMath.compute(amount ?: 0, split)
+            PRow("Split", value = when {
+              split.isEmpty -> "No"
+              split.payer == null -> "${split.people.size + if (split.includeMe) 1 else 0} people · yours ${Money.format(r.myShare)}"
+              else -> "${db.friends.firstOrNull { it.id == split.payer }?.name ?: "They"} paid · you owe ${Money.format(r.myShare)}"
+            }, chevron = true, onClick = { pickSplit = true })
           }
         }
       }
@@ -142,17 +169,7 @@ import kotlinx.coroutines.launch
   }
 
   if (pickCategory) CategoryPickerDialog(if (type == TxnType.Income) "income" else "expense", categoryId, { categoryId = it; pickCategory = false }) { pickCategory = false }
-  if (pickSplit) AlertDialog({ pickSplit = false }, confirmButton = { TextButton({ pickSplit = false }) { Text("Done") } }, containerColor = C.card,
-    title = { Text("Split with", style = T.headline) }, text = {
-      Column {
-        Store.value.friends.sortedBy { it.name }.forEach { f ->
-          val on = f.id in splitWith
-          PRow(f.name, leading = { Icon(Sym.of(if (on) "checkmark.circle.fill" else "circle"), null, tint = if (on) C.accent else C.secondary) },
-            onClick = { splitWith = if (on) splitWith - f.id else splitWith + f.id })
-        }
-        Text("Split equally between you and the people you pick. They'll owe you their share; settle up in Splits.", style = T.footnote, color = C.secondary)
-      }
-    })
+  if (pickSplit) SplitEditorDialog(split, amount ?: 0, onChange = { split = it }) { pickSplit = false }
   if (pickDate) {
     val st = rememberDatePickerState(initialSelectedDateMillis = at + java.util.TimeZone.getDefault().getOffset(at))
     DatePickerDialog({ pickDate = false }, confirmButton = { TextButton({

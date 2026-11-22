@@ -59,6 +59,7 @@ import java.io.File
       Divider(56.dp); PRow("Subscriptions", leading = { Badge("creditcard.and.123", "#32ADE6") }, chevron = true, onClick = { Ui.push(Route.Subscriptions) })
       Divider(56.dp); PRow("Goals", leading = { Badge("target", "#1E9E5A") }, chevron = true, onClick = { Ui.push(Route.Goals) })
       Divider(56.dp); PRow("Splits", leading = { Badge("person.2.fill", "#007AFF") }, chevron = true, onClick = { Ui.push(Route.Splits) })
+      Divider(56.dp); PRow("Loans", leading = { Badge("banknote.fill", "#E5484D") }, chevron = true, onClick = { Ui.push(Route.Loans) })
       Divider(56.dp); PickerRow("Month starts on", (1..28).map { it to ordinal(it) }, Prefs.monthStartDay, leading = { Badge("calendar", "#FF3B30") }) { Prefs.set("monthStartDay", it) }
       Divider(56.dp); PickerRow("Week starts on", listOf(1 to "Sunday", 2 to "Monday"), Prefs.weekStartDay, leading = { Badge("calendar.day.timeline.left", "#FF9500") }) { Prefs.set("weekStartDay", it) }
     }
@@ -82,6 +83,7 @@ import java.io.File
       PRow("Import Statement", leading = { Badge("doc.text.viewfinder", "#007AFF") }, chevron = true, onClick = { Ui.push(Route.Import()) })
       Divider(56.dp); PRow("Add from Screenshots", leading = { Badge("photo.on.rectangle", "#AF52DE") }, chevron = true, onClick = { Ui.push(Route.Capture("screenshot")) })
       Divider(56.dp); PRow("Say It (voice)", leading = { Badge("mic.fill", "#FF2D55") }, chevron = true, onClick = { Ui.push(Route.Capture("voice")) })
+      Divider(56.dp); PRow("Clean Up Data", leading = { Badge("trash.fill", "#8E8E93") }, chevron = true, onClick = { Ui.push(Route.Cleanup) })
       Divider(56.dp); PRow("Backup & Restore", leading = { Badge("externaldrive.fill", "#5E5CE6") }, chevron = true, onClick = { Ui.push(Route.Backup) })
       Divider(56.dp); PRow("Export CSV", leading = { Badge("tablecells.fill", "#1E9E5A") }, onClick = {
         val dir = File(ctx.cacheDir, "share").apply { mkdirs() }

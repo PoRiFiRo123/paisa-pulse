@@ -56,6 +56,8 @@ struct ToastMessage: Identifiable, Equatable {
   var toast: ToastMessage?
   /// Screenshot capture sheet (Add button menu, Settings).
   var capture = false
+  /// After saving a split: ask the people who owe you (Messages, QR, link).
+  var request: SplitRequest?
 
   /// paisapulse://add?type=expense|income|transfer (widget, Control Center, Shortcuts).
   func handle(url: URL) {

@@ -22,6 +22,9 @@ struct BackupFile: Codable {
   var goals: [GoalDTO]?
   var txnSplitShares: [ShareDTO]?
   var cards: [CardDTO]?
+  var splitGroups: [GroupDTO]?
+  var loans: [LoanDTO]?
+  var loanPayments: [LoanPaymentDTO]?
 
   struct Empty: Codable {}
   struct AccountDTO: Codable {
@@ -44,8 +47,14 @@ struct BackupFile: Codable {
     var frequency: String; var interval: Int; var startAt, nextAt: Int64; var endAt, pausedAt: Int64?; var createdAt, updatedAt: Int64
   }
   struct BudgetDTO: Codable { var id: String; var categoryId: String?; var period: String?; var amount: Int; var createdAt, updatedAt: Int64 }
-  struct FriendDTO: Codable { var id, name: String; var upiId: String?; var createdAt: Int64 }
-  struct SplitDTO: Codable { var id, friendId: String; var txnId: String?; var amount: Int; var note: String?; var occurredAt, createdAt: Int64 }
+  struct FriendDTO: Codable { var id, name: String; var upiId: String?; var createdAt: Int64; var phone: String? }
+  struct SplitDTO: Codable { var id, friendId: String; var txnId: String?; var amount: Int; var note: String?; var occurredAt, createdAt: Int64; var groupId: String? }
+  struct GroupDTO: Codable { var id, name: String; var memberIds: [String]; var createdAt: Int64 }
+  struct LoanDTO: Codable {
+    var id, person: String; var friendId: String?; var direction: String; var amount: Int; var startedAt: Int64; var dueAt: Int64?
+    var note: String?; var remind: Bool?; var closedAt: Int64?; var createdAt: Int64
+  }
+  struct LoanPaymentDTO: Codable { var id, loanId: String; var amount: Int; var occurredAt: Int64; var note: String? }
   struct GoalDTO: Codable {
     var id, name, icon, color: String; var target, saved: Int; var deadline, archivedAt: Int64?; var createdAt: Int64
   }
@@ -80,7 +89,8 @@ enum BackupCodec {
   static let prefKeys: [(String, Any.Type)] = [
     (PrefKey.onboarded, Bool.self), (PrefKey.theme, String.self), (PrefKey.accent, String.self),
     (PrefKey.monthStartDay, Int.self), (PrefKey.weekStartDay, Int.self), (PrefKey.hideAmounts, Bool.self),
-    (PrefKey.merchantLogos, Bool.self),
+    (PrefKey.merchantLogos, Bool.self), (PrefKey.myUpiId, String.self), (PrefKey.myName, String.self),
+    (PrefKey.autoCleanup, String.self), (PrefKey.autoCleanupMonths, Int.self),
   ]
 
   @MainActor static func export(_ context: ModelContext, now: Date = .now) throws -> Data {
@@ -95,6 +105,9 @@ enum BackupCodec {
     let cards = try context.fetch(FetchDescriptor<PaymentCard>())
     let filters = try context.fetch(FetchDescriptor<SavedFilter>())
     let batches = try context.fetch(FetchDescriptor<ImportBatch>())
+    let groups = try context.fetch(FetchDescriptor<SplitGroup>())
+    let loans = try context.fetch(FetchDescriptor<Loan>())
+    let loanPayments = try context.fetch(FetchDescriptor<LoanPayment>())
     let d = AppGroup.defaults
     let settings: [BackupFile.SettingDTO] = prefKeys.compactMap { key, _ in
       guard let v = d.object(forKey: key),
@@ -131,13 +144,18 @@ enum BackupCodec {
       savedFilters: filters.map { .init(id: $0.id, name: $0.name, filters: $0.filters, sortOrder: $0.sortOrder, createdAt: ms($0.createdAt), updatedAt: ms($0.updatedAt)) },
       importBatches: batches.map { .init(id: $0.id, accountId: $0.accountId, fileName: $0.fileName, template: $0.template, count: $0.count,
                                          createdAt: ms($0.createdAt), undoneAt: msOpt($0.undoneAt)) },
-      friends: friends.map { .init(id: $0.id, name: $0.name, upiId: $0.upiId, createdAt: ms($0.createdAt)) },
-      splitEntries: splits.map { .init(id: $0.id, friendId: $0.friendId, txnId: $0.txnId, amount: $0.amount, note: $0.note, occurredAt: ms($0.occurredAt), createdAt: ms($0.createdAt)) },
+      friends: friends.map { .init(id: $0.id, name: $0.name, upiId: $0.upiId, createdAt: ms($0.createdAt), phone: $0.phone) },
+      splitEntries: splits.map { .init(id: $0.id, friendId: $0.friendId, txnId: $0.txnId, amount: $0.amount, note: $0.note, occurredAt: ms($0.occurredAt), createdAt: ms($0.createdAt), groupId: $0.groupId) },
       goals: goals.map { .init(id: $0.id, name: $0.name, icon: $0.icon, color: $0.color, target: $0.target, saved: $0.saved, deadline: msOpt($0.deadline), archivedAt: msOpt($0.archivedAt), createdAt: ms($0.createdAt)) },
       txnSplitShares: txns.compactMap { t in t.splitShare.map { .init(id: t.id, share: $0) } },
       cards: cards.map { .init(id: $0.id, accountId: $0.accountId, kind: $0.kind, network: $0.network, last4: $0.last4, expiryMonth: $0.expiryMonth,
                                expiryYear: $0.expiryYear, nameOnCard: $0.nameOnCard, label: $0.label, color: $0.color,
-                               archivedAt: msOpt($0.archivedAt), createdAt: ms($0.createdAt)) }
+                               archivedAt: msOpt($0.archivedAt), createdAt: ms($0.createdAt)) },
+      splitGroups: groups.map { .init(id: $0.id, name: $0.name, memberIds: $0.memberIds, createdAt: ms($0.createdAt)) },
+      loans: loans.map { .init(id: $0.id, person: $0.person, friendId: $0.friendId, direction: $0.direction, amount: $0.amount,
+                               startedAt: ms($0.startedAt), dueAt: msOpt($0.dueAt), note: $0.note, remind: $0.remind,
+                               closedAt: msOpt($0.closedAt), createdAt: ms($0.createdAt)) },
+      loanPayments: loanPayments.map { .init(id: $0.id, loanId: $0.loanId, amount: $0.amount, occurredAt: ms($0.occurredAt), note: $0.note) }
     )
     let enc = JSONEncoder()
     enc.outputFormatting = [.sortedKeys]
@@ -157,6 +175,7 @@ enum BackupCodec {
     try context.delete(model: RecurringRule.self); try context.delete(model: Budget.self); try context.delete(model: Friend.self)
     try context.delete(model: SplitEntry.self); try context.delete(model: Goal.self); try context.delete(model: PaymentCard.self)
     try context.delete(model: SavedFilter.self); try context.delete(model: ImportBatch.self)
+    try context.delete(model: SplitGroup.self); try context.delete(model: Loan.self); try context.delete(model: LoanPayment.self)
     for a in file.accounts {
       context.insert(Account(id: a.id, name: a.name, type: AccountType(rawValue: a.type) ?? .bank, institution: a.institution,
                              last4: a.last4, openingBalance: a.openingBalance, creditLimit: a.creditLimit, statementDay: a.statementDay,
@@ -187,9 +206,18 @@ enum BackupCodec {
     for b in file.budgets ?? [] {
       context.insert(Budget(id: b.id, categoryId: b.categoryId, period: b.period ?? "monthly", amount: b.amount, createdAt: date(b.createdAt), updatedAt: date(b.updatedAt)))
     }
-    for f in file.friends ?? [] { context.insert(Friend(id: f.id, name: f.name, upiId: f.upiId, createdAt: date(f.createdAt))) }
+    for f in file.friends ?? [] { context.insert(Friend(id: f.id, name: f.name, upiId: f.upiId, phone: f.phone, createdAt: date(f.createdAt))) }
     for s in file.splitEntries ?? [] {
-      context.insert(SplitEntry(id: s.id, friendId: s.friendId, txnId: s.txnId, amount: s.amount, note: s.note, occurredAt: date(s.occurredAt), createdAt: date(s.createdAt)))
+      context.insert(SplitEntry(id: s.id, friendId: s.friendId, txnId: s.txnId, amount: s.amount, note: s.note, groupId: s.groupId,
+                                occurredAt: date(s.occurredAt), createdAt: date(s.createdAt)))
+    }
+    for g in file.splitGroups ?? [] { context.insert(SplitGroup(id: g.id, name: g.name, memberIds: g.memberIds, createdAt: date(g.createdAt))) }
+    for l in file.loans ?? [] {
+      context.insert(Loan(id: l.id, person: l.person, friendId: l.friendId, direction: l.direction, amount: l.amount, startedAt: date(l.startedAt),
+                          dueAt: dateOpt(l.dueAt), note: l.note, remind: l.remind ?? true, closedAt: dateOpt(l.closedAt), createdAt: date(l.createdAt)))
+    }
+    for p in file.loanPayments ?? [] {
+      context.insert(LoanPayment(id: p.id, loanId: p.loanId, amount: p.amount, occurredAt: date(p.occurredAt), note: p.note))
     }
     for g in file.goals ?? [] {
       context.insert(Goal(id: g.id, name: g.name, icon: g.icon, color: g.color, target: g.target, saved: g.saved, deadline: dateOpt(g.deadline), archivedAt: dateOpt(g.archivedAt), createdAt: date(g.createdAt)))

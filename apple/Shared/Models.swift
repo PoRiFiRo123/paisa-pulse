@@ -234,10 +234,11 @@ enum Frequency: String, Codable, CaseIterable, Identifiable {
   @Attribute(.unique) var id: String
   var name: String
   var upiId: String?
+  var phone: String?
   var createdAt: Date
 
-  init(id: String = UUID().uuidString.lowercased(), name: String, upiId: String? = nil, createdAt: Date = .now) {
-    self.id = id; self.name = name; self.upiId = upiId; self.createdAt = createdAt
+  init(id: String = UUID().uuidString.lowercased(), name: String, upiId: String? = nil, phone: String? = nil, createdAt: Date = .now) {
+    self.id = id; self.name = name; self.upiId = upiId; self.phone = phone; self.createdAt = createdAt
   }
 }
 
@@ -250,13 +251,15 @@ enum Frequency: String, Codable, CaseIterable, Identifiable {
   var txnId: String?
   var amount: Int
   var note: String?
+  /// The split group it belongs to, if any.
+  var groupId: String?
   var occurredAt: Date
   var createdAt: Date
 
   init(id: String = UUID().uuidString.lowercased(), friendId: String, txnId: String? = nil, amount: Int,
-       note: String? = nil, occurredAt: Date = .now, createdAt: Date = .now) {
+       note: String? = nil, groupId: String? = nil, occurredAt: Date = .now, createdAt: Date = .now) {
     self.id = id; self.friendId = friendId; self.txnId = txnId; self.amount = amount; self.note = note
-    self.occurredAt = occurredAt; self.createdAt = createdAt
+    self.groupId = groupId; self.occurredAt = occurredAt; self.createdAt = createdAt
   }
 }
 
@@ -344,5 +347,53 @@ enum Frequency: String, Codable, CaseIterable, Identifiable {
        count: Int, createdAt: Date = .now, undoneAt: Date? = nil) {
     self.id = id; self.accountId = accountId; self.fileName = fileName; self.template = template
     self.count = count; self.createdAt = createdAt; self.undoneAt = undoneAt
+  }
+}
+
+/// A saved set of people you split with (flatmates, a trip).
+@Model final class SplitGroup {
+  @Attribute(.unique) var id: String
+  var name: String
+  var memberIds: [String]
+  var createdAt: Date
+
+  init(id: String = UUID().uuidString.lowercased(), name: String, memberIds: [String], createdAt: Date = .now) {
+    self.id = id; self.name = name; self.memberIds = memberIds; self.createdAt = createdAt
+  }
+}
+
+/// Money you lent or borrowed, separate from split balances.
+@Model final class Loan {
+  @Attribute(.unique) var id: String
+  var person: String
+  var friendId: String?
+  /// "lent" | "borrowed"
+  var direction: String
+  var amount: Int
+  var startedAt: Date
+  var dueAt: Date?
+  var note: String?
+  var remind: Bool
+  var closedAt: Date?
+  var createdAt: Date
+
+  init(id: String = UUID().uuidString.lowercased(), person: String, friendId: String? = nil, direction: String = "lent", amount: Int,
+       startedAt: Date = .now, dueAt: Date? = nil, note: String? = nil, remind: Bool = true, closedAt: Date? = nil, createdAt: Date = .now) {
+    self.id = id; self.person = person; self.friendId = friendId; self.direction = direction; self.amount = amount
+    self.startedAt = startedAt; self.dueAt = dueAt; self.note = note; self.remind = remind; self.closedAt = closedAt; self.createdAt = createdAt
+  }
+  var lent: Bool { direction == "lent" }
+}
+
+/// A part repayment of a loan.
+@Model final class LoanPayment {
+  @Attribute(.unique) var id: String
+  var loanId: String
+  var amount: Int
+  var occurredAt: Date
+  var note: String?
+
+  init(id: String = UUID().uuidString.lowercased(), loanId: String, amount: Int, occurredAt: Date = .now, note: String? = nil) {
+    self.id = id; self.loanId = loanId; self.amount = amount; self.occurredAt = occurredAt; self.note = note
   }
 }

@@ -44,6 +44,9 @@ import dev.chrisbanes.haze.hazeSource
           is Sheet.CardForm -> CardFormSheet(sh.accountId, sh.id)
           is Sheet.AccountNew -> AccountForm(null, sh.type)
           is Sheet.Reorder -> ReorderSheet(sh.what)
+          is Sheet.GroupForm -> GroupFormSheet(sh.id)
+          is Sheet.LoanForm -> LoanFormSheet(sh.id)
+          is Sheet.Request -> RequestSheet(sh.note, sh.amounts)
           null -> {}
         }
       }
@@ -65,12 +68,16 @@ import dev.chrisbanes.haze.hazeSource
     Route.Recurring -> RecurringScreen()
     Route.Goals -> GoalsScreen()
     Route.Splits -> SplitsScreen()
-    is Route.Friend -> FriendScreen(r.id)
+    is Route.Friend -> FriendScreen(r.id, r.groupId)
     Route.Backup -> BackupScreen()
     Route.Converter -> ConverterScreen()
     Route.Subscriptions -> SubscriptionsScreen()
     is Route.Import -> ImportScreen(r.accountId)
     is Route.Capture -> CaptureScreen(r.mode)
+    is Route.Group -> GroupScreen(r.id)
+    Route.Loans -> LoansScreen()
+    is Route.LoanDetail -> LoanDetailScreen(r.id)
+    Route.Cleanup -> CleanupScreen()
   }
 }
 

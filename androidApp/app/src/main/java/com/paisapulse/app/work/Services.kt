@@ -17,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
 import java.time.DayOfWeek
+import java.time.Instant
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.TimeUnit
@@ -48,6 +49,7 @@ object Services {
       )
     }
     BackupOps.runIfDue(ctx)
+    com.paisapulse.app.ui.screens.DataCleanup.runIfDue(ctx)
     refreshNotifications()
     refreshWidget()
   }
@@ -74,6 +76,16 @@ object Services {
         if (owed > 0 && days in 0..3) once("bill-${a.id}-$due") {
           notify(a.id.hashCode(), "${a.name} bill due ${if (days == 0L) "today" else "in $days days"}", "${Money.format(owed)} to pay by ${due.dayOfMonth} ${due.month.name.lowercase().replaceFirstChar { it.uppercase() }.take(3)}. Pay on time to avoid interest.")
         }
+      }
+    }
+    // Loans: on the day they're due.
+    val today = LocalDate.now()
+    d.loans.filter { it.closedAt == null && it.remind != false && it.dueAt != null }.forEach { l ->
+      val left = LoanMath.outstanding(l, d.loanPayments)
+      val due = Instant.ofEpochMilli(l.dueAt!!).atZone(zone).toLocalDate()
+      if (left > 0 && due == today && java.time.LocalTime.now().hour >= 9) once("loan-${l.id}-$due") {
+        notify(l.id.hashCode(), if (l.lent) "${l.person} is due to pay you back" else "Loan from ${l.person} is due",
+          "${Money.format(left)} ${if (l.lent) "to get back" else "to pay back"} today.")
       }
     }
     if (Prefs.notifyWeekly && LocalDate.now().dayOfWeek == DayOfWeek.SUNDAY && java.time.LocalTime.now().hour >= 18) once("weekly-${LocalDate.now()}") {

@@ -282,3 +282,45 @@ final class Batch2LogicTests: XCTestCase {
     XCTAssertEqual(FilterPayload.parse(#"{"filters":{"monthOffset":null,"accountIds":[],"categoryIds":["c"],"types":[]},"search":""}"#)?.filter.categoryId, "c")
   }
 }
+
+final class Stage3Tests: XCTestCase {
+  func testSplits() {
+    let r = SplitMath.compute(total: 100_000, SplitSetup(people: ["a", "b"]))
+    XCTAssertEqual(r.myShare, 33_334)
+    XCTAssertEqual(r.entries, ["a": 33_333, "b": 33_333])
+    XCTAssertEqual(SplitMath.compute(total: 90_000, SplitSetup(people: ["a", "b"], payer: "a")).entries, ["a": -30_000])
+    let shares = SplitMath.compute(total: 90_000, SplitSetup(people: ["a"], mode: .shares, values: ["me": 2, "a": 1]))
+    XCTAssertEqual(shares.myShare, 60_000)
+    XCTAssertEqual(SplitMath.compute(total: 90_000, SplitSetup(people: ["a"], mode: .amount, values: ["me": 50_000, "a": 30_000])).unassigned, 10_000)
+    XCTAssertEqual(SplitMath.compute(total: 90_000, SplitSetup(people: ["a", "b"], includeMe: false)).entries, ["a": 45_000, "b": 45_000])
+  }
+
+  func testPayLinks() {
+    let upi = SplitMath.upiURL(to: "me@okaxis", name: "Nishit", amount: 50_000, note: "Dinner")!.absoluteString
+    XCTAssertTrue(upi.hasPrefix("upi://pay?pa=me@okaxis&pn=Nishit&am=500.00&cu=INR"), upi)
+    let page = SplitMath.payPageURL(to: "me@okaxis", name: "Nishit", amount: 1_250, note: nil)!.absoluteString
+    XCTAssertEqual(page, "https://porifiro123.github.io/paisa-pulse/pay/#pa=me@okaxis&pn=Nishit&am=12.50")
+  }
+
+  func testCleanupFoldsIntoOpeningBalances() {
+    let d = { (s: Double) in Date(timeIntervalSince1970: s) }
+    let txns = [
+      Txn(type: .expense, amount: 1_000, accountId: "a", occurredAt: d(1_000)),
+      Txn(type: .income, amount: 5_000, accountId: "a", occurredAt: d(2_000)),
+      Txn(type: .transfer, amount: 2_000, accountId: "a", toAccountId: "c", occurredAt: d(3_000)),
+      Txn(type: .expense, amount: 700, accountId: "a", occurredAt: d(3_500), deletedAt: d(4_000)),
+      Txn(type: .expense, amount: 9_999, accountId: "a", occurredAt: d(10_000)),
+    ]
+    let plan = Cleanup.plan(txns, before: d(5_000))
+    XCTAssertEqual(plan.delta, ["a": 2_000, "c": 2_000])
+    XCTAssertEqual(plan.remove.count, 4)
+    XCTAssertEqual(Cleanup.months(key: "quarterly", custom: 0), 3)
+    XCTAssertEqual(Cleanup.months(key: "custom", custom: 18), 18)
+    XCTAssertNil(Cleanup.months(key: "off", custom: 5))
+  }
+
+  func testLoans() {
+    let l = Loan(person: "Ashwin", amount: 10_000)
+    XCTAssertEqual(LoanMath.outstanding(l, [LoanPayment(loanId: l.id, amount: 4_000), LoanPayment(loanId: "x", amount: 1)]), 6_000)
+  }
+}

@@ -16,4 +16,9 @@ enum PrefKey {
   static let autoBackup = "autoBackup"
   static let lastBackupAt = "lastBackupAt"
   static let merchantLogos = "merchantLogos"
+  static let myUpiId = "myUpiId"            // your UPI ID, for split requests
+  static let myName = "myName"
+  static let autoCleanup = "autoCleanup"    // off | monthly | quarterly | halfyearly | yearly | custom
+  static let autoCleanupMonths = "autoCleanupMonths"
+  static let lastCleanupAt = "lastCleanupAt"
 }

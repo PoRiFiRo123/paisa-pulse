@@ -64,6 +64,7 @@ enum Maintenance {
     try? context.save()
     Notifier.refresh(context)
     AutoBackup.runIfDue(context)
+    DataCleanup.runIfDue(context)
     WidgetRefresh.now()
   }
 }
