@@ -7,6 +7,7 @@ enum DemoData {
     guard UserDefaults.standard.bool(forKey: "PaisaDemo") else { return }
     try? context.delete(model: Txn.self); try? context.delete(model: Account.self); try? context.delete(model: Budget.self)
     try? context.delete(model: Goal.self); try? context.delete(model: Friend.self); try? context.delete(model: SplitEntry.self)
+    try? context.delete(model: PaymentCard.self)
     try? context.save()
     Seed.ensureCategories(context)
     let cats = (try? context.fetch(FetchDescriptor<Category>())) ?? []
@@ -16,6 +17,9 @@ enum DemoData {
     let card = Account(name: "MyZone", type: .card, institution: "Axis Bank", last4: "9021", openingBalance: 0, creditLimit: 15_000_000, statementDay: 12, dueDay: 2, color: "#2C2C2E", icon: "creditcard.fill", sortOrder: 2)
     let cash = Account(name: "Cash", type: .cash, openingBalance: 320_000, color: "#34C759", icon: "banknote.fill", sortOrder: 3)
     [axis, bob, card, cash].forEach { context.insert($0) }
+    context.insert(PaymentCard(accountId: axis.id, kind: "debit", network: "visa", last4: "4417", expiryMonth: 8, expiryYear: 2029, nameOnCard: "NISHIT KIRANI", label: "Axis Debit"))
+    context.insert(PaymentCard(accountId: axis.id, kind: "debit", network: "rupay", last4: "7302", expiryMonth: 3, expiryYear: 2028, nameOnCard: "NISHIT KIRANI", color: "#1E9E5A"))
+    context.insert(PaymentCard(accountId: card.id, kind: "credit", network: "mastercard", last4: "9021", expiryMonth: 9, expiryYear: 2031, nameOnCard: "NISHIT KIRANI"))
     let now = Date.now
     let items: [(Int, String, String, Int, Account)] = [
       (0, "Swiggy", "Food & Dining", 42_800, card), (0, "Namma Metro", "Metro/Auto/Cab", 4_500, axis),

@@ -60,6 +60,10 @@ object Demo {
     Store.replace(Db(accounts = listOf(axis, bob, card, cash), categories = cats, transactions = txns, friends = listOf(ritwik),
       splitEntries = listOf(SplitEntry(friendId = ritwik.id, txnId = dinner.id, amount = 120_000, note = "Toit", occurredAt = dinner.occurredAt)),
       budgets = listOf(Budget(amount = 5_000_000), Budget(categoryId = cat("Food & Dining"), amount = 800_000)),
+      cards = listOf(
+        PaymentCard(accountId = axis.id, kind = "debit", network = "visa", last4 = "4417", expiryMonth = 8, expiryYear = 2029, nameOnCard = "NISHIT KIRANI", label = "Axis Debit"),
+        PaymentCard(accountId = axis.id, kind = "debit", network = "rupay", last4 = "7302", expiryMonth = 3, expiryYear = 2028, nameOnCard = "NISHIT KIRANI", color = "#1E9E5A"),
+        PaymentCard(accountId = card.id, kind = "credit", network = "mastercard", last4 = "9021", expiryMonth = 9, expiryYear = 2031, nameOnCard = "NISHIT KIRANI")),
       goals = listOf(Goal(name = "Germany fund", icon = "airplane", color = "#007AFF", target = 50_000_000, saved = 12_500_000, deadline = n + 240 * day))))
     Prefs.set("onboarded", true)
   }
