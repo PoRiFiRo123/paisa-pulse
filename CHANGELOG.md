@@ -5,6 +5,11 @@ Newest first. Every push to `main` becomes a GitHub Release `build-<number>` wit
 
 ## [Unreleased]
 
+- Keyboards: a "hide keyboard" button floats above every keyboard on iPhone (number pads included),
+  tapping outside a field puts it away, and fields have a Done key (both phones).
+- Quick Add: the keypad sits on its own raised panel, the details fade into it instead of being cut
+  off, and it steps aside while you type a payee.
+
 - New on both phones: **Splits, version 2.** Pick people from your contacts (the ones you split with
   most come first), choose who paid, and split equally, by amounts or by shares, with or without you.
   Save groups (flatmates, a trip) and settle up a whole group at once. After saving, ask everyone to

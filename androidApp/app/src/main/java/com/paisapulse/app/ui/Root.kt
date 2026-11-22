@@ -10,6 +10,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import com.paisapulse.app.data.Prefs
 import com.paisapulse.app.ui.screens.*
 import dev.chrisbanes.haze.hazeSource
@@ -17,7 +21,15 @@ import dev.chrisbanes.haze.hazeSource
 @Composable fun Root(locked: Boolean, unlock: () -> Unit) {
   val haze = remember { dev.chrisbanes.haze.HazeState() }
   CompositionLocalProvider(LocalHaze provides haze) {
-    Box(Modifier.fillMaxSize().background(C.background)) {
+    val focus = androidx.compose.ui.platform.LocalFocusManager.current
+    // Tap anywhere outside a field to put the keyboard away (fields also get a Done key).
+    Box(Modifier.fillMaxSize().background(C.background).pointerInput(Unit) {
+      awaitEachGesture {
+        awaitFirstDown(pass = androidx.compose.ui.input.pointer.PointerEventPass.Initial)
+        val up = waitForUpOrCancellation(pass = androidx.compose.ui.input.pointer.PointerEventPass.Initial)
+        if (up != null) focus.clearFocus()
+      }
+    }) {
       if (!Prefs.onboarded) OnboardingScreen() else {
         Box(Modifier.fillMaxSize().hazeSource(haze)) {
           val stack = Ui.stack

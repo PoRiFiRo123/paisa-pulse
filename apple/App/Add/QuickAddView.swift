@@ -66,6 +66,8 @@ struct QuickAddView: View {
     return Currency.toPaise(m, rate: rate)
   }
 
+  @FocusState private var typing: Bool
+
   var body: some View {
     NavigationStack {
       VStack(spacing: 0) {
@@ -77,10 +79,26 @@ struct QuickAddView: View {
 
         amountDisplay.padding(.vertical, detent == .large ? 14 : 6)
 
-        if detent == .large { details } else { Spacer(minLength: 0) }
+        if detent == .large {
+          details
+            .scrollDismissesKeyboard(.interactively)
+            // Fade the list into the keypad instead of cutting rows off.
+            .mask(VStack(spacing: 0) { Color.black; LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom).frame(height: 18) })
+        } else { Spacer(minLength: 0) }
 
-        Keypad(expr: $expr).padding(.horizontal).padding(.bottom, 8)
+        if !typing {
+          Keypad(expr: $expr)
+            .padding(.horizontal).padding(.top, 10).padding(.bottom, 8)
+            .background {
+              UnevenRoundedRectangle(topLeadingRadius: 24, topTrailingRadius: 24, style: .continuous)
+                .fill(Color(.systemGroupedBackground))
+                .shadow(color: .black.opacity(0.12), radius: 10, y: -2)
+                .ignoresSafeArea(edges: .bottom)
+            }
+            .transition(.move(edge: .bottom).combined(with: .opacity))
+        }
       }
+      .animation(.snappy, value: typing)
       .background(Color(.systemGroupedBackground))
       .navigationTitle(request.editing == nil ? "New \(type.label)" : "Edit \(type.label)")
       .navigationBarTitleDisplayMode(.inline)
@@ -160,6 +178,9 @@ struct QuickAddView: View {
       Section {
         TextField(type == .transfer ? "Note (optional)" : "Payee, e.g. Swiggy", text: $payee)
           .textInputAutocapitalization(.words)
+          .focused($typing)
+          .submitLabel(.done)
+          .onSubmit { typing = false }
         if type != .transfer {
           ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
