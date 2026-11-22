@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import type { TransactionItem } from '@/features/transactions/list';
 import { useMoney } from '@/hooks/useMoney';
-import { accountLabel, relativeWhen } from '@/lib/format';
+import { relativeWhen } from '@/lib/format';
 import { type } from '@/theme/typography';
 import { useTheme } from '@/theme/useTheme';
 
@@ -22,9 +22,10 @@ export function transactionTitle(t: TransactionItem): string {
 export function transactionSubtitle(t: TransactionItem, showTime = true): string {
   const parts: string[] = [];
   if (t.type === 'transfer') {
-    parts.push(`${accountLabel(t.accountName, t.accountLast4)} → ${accountLabel(t.toAccountName, t.toAccountLast4)}`);
+    // Names only: the card digits made rows truncate on phones; the detail screen still shows them.
+    parts.push(`${t.accountName} → ${t.toAccountName ?? ''}`);
   } else {
-    parts.push(t.categoryName ?? 'Uncategorised', accountLabel(t.accountName, t.accountLast4));
+    parts.push(t.categoryName ?? 'Uncategorised', t.accountName);
   }
   if (showTime) parts.push(relativeWhen(t.occurredAt));
   return parts.join(' · ');

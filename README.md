@@ -1,6 +1,8 @@
 # Paisa Pulse
 
 A free, local-first personal finance tracker for India. Expo + TypeScript, Liquid Glass on iOS 26.
+
+**Install:** [latest release](https://github.com/PoRiFiRo123/paisa-pulse/releases/latest) — Android APK and an iPhone .ipa for a free Apple ID. See [docs/INSTALL.md](docs/INSTALL.md). Builds come from GitHub Actions on every push to `main` ([CHANGELOG](CHANGELOG.md)).
 See `SPEC.md` for the product spec and `CLAUDE.md` for project context.
 
 ```bash
