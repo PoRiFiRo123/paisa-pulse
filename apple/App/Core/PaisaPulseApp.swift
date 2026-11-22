@@ -24,6 +24,7 @@ struct PaisaPulseApp: App {
           if let url = n.object as? URL { router.handle(url: url) }
         }
         .task {
+          KeyboardDismiss.shared.install()
           QuickActions.install()
           if let url = QuickActions.pending { QuickActions.pending = nil; router.handle(url: url) }
         }

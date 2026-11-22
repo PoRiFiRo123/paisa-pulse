@@ -267,10 +267,12 @@ fun PRow(
 
 /** Text field styled like an iOS form row. */
 @Composable fun FieldRow(value: String, onChange: (String) -> Unit, placeholder: String, number: Boolean = false, modifier: Modifier = Modifier) {
+  val focus = androidx.compose.ui.platform.LocalFocusManager.current
   androidx.compose.foundation.text.BasicTextField(value, onChange, singleLine = true,
     textStyle = T.body.copy(color = C.label), cursorBrush = androidx.compose.ui.graphics.SolidColor(C.accent),
     keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = if (number) androidx.compose.ui.text.input.KeyboardType.Decimal else androidx.compose.ui.text.input.KeyboardType.Text,
-      capitalization = androidx.compose.ui.text.input.KeyboardCapitalization.Words),
+      capitalization = androidx.compose.ui.text.input.KeyboardCapitalization.Words, imeAction = androidx.compose.ui.text.input.ImeAction.Done),
+    keyboardActions = androidx.compose.foundation.text.KeyboardActions(onDone = { focus.clearFocus() }),
     modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 15.dp),
     decorationBox = { inner -> Box { if (value.isEmpty()) Text(placeholder, style = T.body, color = C.tertiary); inner() } })
 }

@@ -14,6 +14,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -129,7 +132,13 @@ import kotlinx.coroutines.launch
           style = T.subhead, color = C.accent, modifier = Modifier.clickable { rateText = rate?.let { "%.4f".format(it) } ?: ""; rateDialog = true })
         else if (KeypadMath.isExpression(expr) && amount != null) Text("= ${Money.format(amount)}", style = T.subhead, color = C.secondary)
       }
-      LazyColumn(Modifier.weight(1f)) {
+      LazyColumn(Modifier.weight(1f).graphicsLayer { compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.Offscreen }
+        .drawWithContent {
+          drawContent()
+          // Fade the last rows into the keypad instead of cutting them off.
+          drawRect(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(Color.Black, Color.Transparent), startY = size.height - 18.dp.toPx(), endY = size.height),
+            blendMode = androidx.compose.ui.graphics.BlendMode.DstIn)
+        }) {
         group {
           FieldRow(payee, { payee = it }, if (type == TxnType.Transfer) "Note (optional)" else "Payee, e.g. Swiggy")
           if (type != TxnType.Transfer) {
@@ -164,7 +173,16 @@ import kotlinx.coroutines.launch
           }
         }
       }
-      Keypad(expr) { expr = it }
+      // Same as iPhone: the keypad sits on its own raised panel and steps aside while the text keyboard is up.
+      @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+      val ime = WindowInsets.isImeVisible
+      androidx.compose.animation.AnimatedVisibility(!ime, enter = androidx.compose.animation.slideInVertically { it } + androidx.compose.animation.fadeIn(),
+        exit = androidx.compose.animation.slideOutVertically { it } + androidx.compose.animation.fadeOut()) {
+        Box(Modifier.fillMaxWidth().shadow(10.dp, RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp), ambientColor = Color.Black.copy(alpha = 0.12f))
+          .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)).background(C.background).padding(top = 10.dp)) {
+          Keypad(expr) { expr = it }
+        }
+      }
     }
   }
 
