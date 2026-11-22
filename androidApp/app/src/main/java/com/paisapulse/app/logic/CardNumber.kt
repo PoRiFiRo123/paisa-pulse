@@ -36,7 +36,10 @@ object CardNumber {
   fun networkName(n: String) = when (n) { "visa" -> "Visa"; "mastercard" -> "Mastercard"; "rupay" -> "RuPay"; "amex" -> "Amex"; "diners" -> "Diners"; "discover" -> "Discover"; else -> "Card" }
   val networks = listOf("visa", "mastercard", "rupay", "amex", "diners", "discover", "other")
 
-  private val skip = setOf("VISA", "RUPAY", "MASTERCARD", "DEBIT", "CREDIT", "PLATINUM", "PLATINUM DEBIT", "SIGNATURE", "VALID THRU", "VALID FROM")
+  /** Words printed on cards that are never the cardholder's name (same list as the iPhone app). */
+  private val cardWords = listOf("BANK", "CARD", "DEBIT", "CREDIT", "VALID", "THRU", "FROM", "PLATINUM", "SIGNATURE", "CLASSIC", "GOLD",
+    "WORLD", "SELECT", "INFINITE", "RUPAY", "VISA", "MASTERCARD", "AMEX", "INTERNATIONAL", "ELECTRONIC", "ONLY", "MEMBER", "SINCE",
+    "BUSINESS", "PREPAID", "CONTACTLESS")
 
   fun parse(lines: List<String>): Scan? {
     var found: String? = null
@@ -57,7 +60,7 @@ object CardNumber {
     val m = Regex("""(0[1-9]|1[0-2])\s?/\s?(\d{2,4})""").find(text)
     val month = m?.groupValues?.get(1)?.toInt()
     val year = m?.groupValues?.get(2)?.toInt()?.let { if (it < 100) 2000 + it else it }
-    val name = lines.map { it.trim() }.firstOrNull { t -> t.length in 5..26 && t == t.uppercase() && t.all { it.isLetter() || it == ' ' || it == '.' } && t !in skip }
+    val name = lines.map { it.trim() }.firstOrNull { t -> t.length in 5..26 && t == t.uppercase() && t.all { it.isLetter() || it == ' ' || it == '.' } && cardWords.none { t.contains(it) } }
     return Scan(network(number), number.takeLast(4), month, year, name)
   }
 }
