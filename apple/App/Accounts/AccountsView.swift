@@ -144,6 +144,7 @@ struct WalletCard: View {
     }
     .foregroundStyle(.white)
     .frame(height: 200)
+    .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
     .contentShape(RoundedRectangle(cornerRadius: 24))
     .accessibilityElement(children: .combine)
   }

@@ -104,7 +104,7 @@ import java.util.Locale
         drawArc(ringColor, -90f, 360f * sweep, false, style = st)
       }
       Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("${kotlin.math.round(ratio * 100).toInt()}%", style = T.headline, color = C.label)
+        Text("${Math.round(ratio * 100)}%", style = T.headline, color = C.label)
         Text(if (budget != null) "of budget" else "of income", style = T.caption2, color = C.secondary)
       }
     }
