@@ -10,7 +10,7 @@ Downloads: [latest release](https://github.com/PoRiFiRo123/paisa-pulse/releases/
 
 ## iPhone (free Apple ID)
 A free Apple ID allows 3 sideloaded apps at a time, and each install lasts 7 days until it is refreshed.
-Paisa Pulse uses 2 of the 3 (the app and its widget).
+Paisa Pulse uses 2 of the 3 (the app and its widget). The iPhone app is native Swift; the Android app is the Expo one, and backups move between them.
 
 **One-time setup, needs a computer once:** install [SideStore](https://sidestore.io) by following its
 guide (it creates a pairing file with your Apple ID). After that, everything happens on the phone.
@@ -27,9 +27,9 @@ Without SideStore: [Sideloadly](https://sideloadly.io) on Windows/Mac installs t
 (refresh weekly the same way).
 
 ### Not in the free iPhone build
-- **Siri & Shortcuts** (it would take a third app slot) and **iCloud backups** (Apple only gives iCloud
-  to paid accounts). Backups are saved daily in Files › On My iPhone › Paisa Pulse › backups. Copy one to
-  iCloud Drive or Google Drive now and then.
+- **iCloud backups** (Apple only gives iCloud to paid accounts). Backups are saved daily in Files › On My
+  iPhone › Paisa Pulse › backups; Settings › Backup & Restore › Save to Google Drive keeps a copy off the phone.
+- **Statement import, voice and screenshot capture** aren't ported to the Swift app yet.
 
 ## Keeping Android updates installable
 Every APK is signed with the same key so updates install over each other. Set it permanently once:

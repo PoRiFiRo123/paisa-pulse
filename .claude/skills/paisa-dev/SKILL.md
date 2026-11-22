@@ -13,13 +13,18 @@ Read `CLAUDE.md` (project context and decisions) and `SPEC.md` first. This skill
 - Schema change: edit `src/db/schema.ts`, `npm run db:generate`. Never hand-edit `src/db/migrations/`.
 - Money is integer paise. Never floats.
 
+## iPhone = native Swift (`apple/`)
+- Edit Swift under `apple/App`, `apple/Shared` (also compiled into the widget), `apple/Widget`, tests in `apple/Tests`. There is no Swift compiler here: push and read the CI `ios` job (`dev.sh logs ios`, look for `error:`).
+- Screenshots of every push are on the `ci-screenshots` branch (see CLAUDE.md). Look at them before calling UI work done.
+- Keep the backup JSON compatible with `src/features/backup/backup.ts` (v4).
+
 ## Builds (GitHub Actions, `.github/workflows/build.yml`)
-- Push to `claude/**` or `main` builds three jobs: `tests`, `android` (release APK), `ios` (unsigned archive on `macos-26`, ad-hoc signed with the App Group entitlement, packaged as `PaisaPulse.ipa`).
+- Push to `claude/**` or `main` builds three jobs: `tests` (RN), `android` (release APK from the Expo app), `ios` (the Swift app: XcodeGen, unsigned archive on `macos-26`, ad-hoc signed with the App Group, `PaisaPulse.ipa`; unit tests; simulator screenshots).
 - Only `main` publishes a GitHub Release `build-<run number>` with both files. Branches upload artifacts only.
 - `scripts/dev.sh ci` shows the latest run; `scripts/dev.sh logs ios` prints a failed job's log.
 - No EAS for iOS: EAS signing needs the paid Apple Developer Program. The user installs with a free Apple ID via SideStore.
 
-## The free Apple ID build (`app.config.js`)
+## The free Apple ID build (Expo, legacy: `app.config.js`)
 - `PAISA_FREE_SIGNING=1` (CI sets it for iOS): keeps app + widget (2 of the 3 free app slots), drops the Siri/Shortcuts extension (`targets/intents`) and the iCloud container. Backups go to Files › On My iPhone › Paisa Pulse.
 - In code, gate with `FREE_SIGNING` from `src/lib/native.ts` (hide Siri UI, skip iCloud store).
 - SideStore/AltStore rename the App Group to `group.com.paisapulse.app.<TEAMID>`. Always get the group from `appGroup()` (`src/features/widgets/publish.ts`) in JS and `Snapshot.appGroup` / `Shared.appGroup` in Swift; both read `ALTAppGroups` from Info.plist (`modules/app-group`).

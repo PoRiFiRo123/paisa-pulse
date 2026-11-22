@@ -138,3 +138,11 @@ Load the `paisa-dev` skill (`.claude/skills/paisa-dev/SKILL.md`) before any work
 - **CI** (`.github/workflows/build.yml`): every push builds a release APK and a free-Apple-ID .ipa; `main` publishes Release `build-<run number>`. No EAS for iOS (needs a paid account).
 - **Free signing** (`app.config.js`, `PAISA_FREE_SIGNING=1`): app + widget only, no Siri extension, no iCloud; App Group resolved at run time from `ALTAppGroups` (`modules/app-group`). Chosen with the user: app + widget, same iOS look on Android.
 - **Updates** (`src/features/updates`): compares `build-N` with `BUILD_NUMBER`; Android opens the APK, iPhone opens SideStore.
+
+## Native iPhone app (Swift, Nov 2026)
+The user chose to rewrite iOS in SwiftUI; Android stays on this Expo app. Code in `apple/` (XcodeGen `project.yml`; CI generates the project on macOS). Load `paisa-dev` first.
+- `apple/Shared` (app + widget): SwiftData models mirroring this repo's tables (ids as strings, paise ints), `Ledger`/`Periods`/`Budgets`/`Recurrence`/`Splits`/`Cards` pure maths, `Money` (en_IN, **never a minus sign**), `AppGroup` (ALTAppGroups), `Store` (DB in the App Group).
+- `apple/App`: screens. Backups use this app's v4 JSON (`BackupCodec`), plus `friends`, `splitEntries`, `goals`, `txnSplitShares` keys the RN app ignores.
+- **No minus signs anywhere** (user decision, both apps): expense soft red (#E5484D / #FF6B6B), income green, transfers grey, account below zero reads "₹X due".
+- Not ported yet: statement import, voice, screenshot capture, currencies, merchant logos, alternate icons, saved filters.
+- CI `ios` job: build, unit tests (`apple/Tests`), simulator screenshots (launch args `-PaisaDemo YES -PaisaTab <tab>` / `-PaisaAdd YES`) pushed to the `ci-screenshots` branch (read them with `gh api repos/PoRiFiRo123/paisa-pulse/contents/<name>.png?ref=ci-screenshots`).
