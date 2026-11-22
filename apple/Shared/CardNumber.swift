@@ -39,6 +39,11 @@ enum CardNumber {
     }
   }
 
+  /// Words printed on cards that are never the cardholder's name.
+  static let cardWords = ["BANK", "CARD", "DEBIT", "CREDIT", "VALID", "THRU", "FROM", "PLATINUM", "SIGNATURE", "CLASSIC", "GOLD",
+                          "WORLD", "SELECT", "INFINITE", "RUPAY", "VISA", "MASTERCARD", "AMEX", "INTERNATIONAL", "ELECTRONIC", "ONLY",
+                          "MEMBER", "SINCE", "BUSINESS", "PREPAID", "CONTACTLESS"]
+
   static let networks = ["visa", "mastercard", "rupay", "amex", "diners", "discover", "other"]
 
   /// Text lines from the camera → card details, or nil until a valid number is seen.
@@ -72,7 +77,7 @@ enum CardNumber {
     let name = lines.first { l in
       let t = l.trimmingCharacters(in: .whitespaces)
       return t.count >= 5 && t.count <= 26 && t == t.uppercased() && t.allSatisfy { $0.isLetter || $0 == " " || $0 == "." }
-        && !["VISA", "RUPAY", "MASTERCARD", "DEBIT", "CREDIT", "PLATINUM", "PLATINUM DEBIT", "SIGNATURE", "VALID THRU", "VALID FROM"].contains(t)
+        && !cardWords.contains { t.contains($0) }
     }?.trimmingCharacters(in: .whitespaces)
     return Scan(network: network(number), last4: String(number.suffix(4)), month: month, year: year, name: name)
   }
