@@ -3,8 +3,7 @@ name: Build Android + iOS
 # Every push to main builds:
 #   - PaisaPulse.apk : Android, release build, signed with the same key every time so a new APK
 #                      installs over the old one and keeps your data.
-#   - PaisaPulse.ipa : iOS, built for a FREE Apple ID (PAISA_FREE_SIGNING=1: app + widget, no Siri,
-#                      no iCloud). Ad-hoc signed with its entitlements; install it with SideStore,
+#   - PaisaPulse.ipa : iOS, the native SwiftUI app in apple/, built for a FREE Apple ID (app + widget). Ad-hoc signed with its entitlements; install it with SideStore,
 #                      AltStore or Sideloadly, which re-sign it with your Apple ID.
 # ...and publishes both as a GitHub Release "build-<run number>" that the in-app update check reads.
 # Pushes to claude/** branches build and test the same way but publish no release (artifacts only).
@@ -84,51 +83,96 @@ jobs:
         with: { name: android, path: PaisaPulse.apk, retention-days: 14 }
 
   ios:
+    # Native SwiftUI app in apple/ (XcodeGen project). Free Apple ID friendly: app + widget only.
     runs-on: macos-26
-    timeout-minutes: 90
-    env:
-      PAISA_FREE_SIGNING: '1'
+    timeout-minutes: 75
+    defaults:
+      run:
+        working-directory: apple
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: npm }
       - run: xcodebuild -version && sw_vers
-      - run: npm ci --no-audit --no-fund
-      - name: Generate the iOS project (free-signing variant)
-        run: npx expo prebuild --platform ios --clean
-      - name: Build (unsigned)
+      - name: Generate the Xcode project
+        run: brew install xcodegen >/dev/null && xcodegen generate
+      - name: Build (unsigned archive)
         run: |
-          WS=$(ls -d ios/*.xcworkspace | head -1)
-          SCHEME=$(basename "$WS" .xcworkspace)
-          echo "SCHEME=$SCHEME" >> "$GITHUB_ENV"
           set -o pipefail
-          xcodebuild -workspace "$WS" -scheme "$SCHEME" -configuration Release \
-            -sdk iphoneos -destination 'generic/platform=iOS' \
-            -archivePath build/app.xcarchive archive \
+          mkdir -p build
+          xcodebuild -project PaisaPulse.xcodeproj -scheme PaisaPulse -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' -archivePath build/app.xcarchive archive \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
-            | tee build/xcodebuild.log | grep -E "error:|warning: .*Swift|\*\* (ARCHIVE|BUILD)" || true
+            CURRENT_PROJECT_VERSION=${{ github.run_number }} \
+            | tee build/xcodebuild.log | grep -E "error:|\*\* (ARCHIVE|BUILD)" || true
           test -d build/app.xcarchive/Products/Applications
-      - name: Ad-hoc sign with entitlements and package the .ipa
+      - name: Ad-hoc sign with the App Group and package the .ipa
         run: |
           APP=$(ls -d build/app.xcarchive/Products/Applications/*.app | head -1)
-          # Only the App Group survives a free Apple ID; SideStore/AltStore read it from the signature.
-          /usr/bin/python3 - <<'PY'
-          import plistlib
-          plistlib.dump({'com.apple.security.application-groups': ['group.com.paisapulse.app']}, open('/tmp/groups.entitlements', 'wb'))
-          PY
-          for ext in "$APP"/PlugIns/*.appex; do
-            [ -d "$ext" ] && codesign --force --sign - --entitlements /tmp/groups.entitlements "$ext"
-          done
-          find "$APP/Frameworks" -maxdepth 1 \( -name '*.framework' -o -name '*.dylib' \) -exec codesign --force --sign - {} \; 2>/dev/null || true
+          /usr/bin/python3 -c "import plistlib; plistlib.dump({'com.apple.security.application-groups': ['group.com.paisapulse.app']}, open('/tmp/groups.entitlements', 'wb'))"
+          for ext in "$APP"/PlugIns/*.appex; do [ -d "$ext" ] && codesign --force --sign - --entitlements /tmp/groups.entitlements "$ext"; done
           codesign --force --sign - --entitlements /tmp/groups.entitlements "$APP"
           codesign -d --entitlements - "$APP"
-          ls "$APP/PlugIns" || true
-          mkdir -p Payload && cp -R "$APP" Payload/
-          zip -qry PaisaPulse.ipa Payload
-          ls -la PaisaPulse.ipa
+          ls "$APP/PlugIns"
+          mkdir -p Payload && cp -R "$APP" Payload/ && zip -qry ../PaisaPulse.ipa Payload
+          ls -la ../PaisaPulse.ipa
       - uses: actions/upload-artifact@v4
         if: always()
-        with: { name: ios, path: "PaisaPulse.ipa\nbuild/xcodebuild.log", retention-days: 14, if-no-files-found: warn }
+        with:
+          name: ios
+          path: |
+            PaisaPulse.ipa
+            apple/build/xcodebuild.log
+          retention-days: 14
+          if-no-files-found: warn
+      - name: Pick a simulator
+        run: |
+          UDID=$(xcrun simctl list devices available -j | /usr/bin/python3 -c "
+          import json,sys
+          d=json.load(sys.stdin)['devices']
+          rts=sorted([k for k in d if 'iOS' in k], key=lambda k: [int(x) for x in k.split('iOS-')[-1].split('-')])
+          for rt in reversed(rts):
+            for dev in d[rt]:
+              if 'iPhone' in dev['name'] and 'Pro' in dev['name'] and 'Max' not in dev['name']:
+                print(dev['udid']); sys.exit()
+          ")
+          echo "UDID=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl list devices | grep "$UDID"
+      - name: Unit tests
+        run: |
+          set -o pipefail
+          xcodebuild test -project PaisaPulse.xcodeproj -scheme PaisaPulse -destination "id=$UDID" \
+            -derivedDataPath build/dd CODE_SIGNING_ALLOWED=NO | tee build/test.log | grep -E "error:|Test Case .*(passed|failed)|\*\* TEST" || true
+          grep -q "\*\* TEST SUCCEEDED \*\*" build/test.log
+      - name: Screenshots (simulator, sample data)
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          APP=$(ls -d build/dd/Build/Products/Debug-iphonesimulator/PaisaPulse.app | head -1)
+          xcrun simctl boot "$UDID" || true
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl status_bar "$UDID" override --time 9:41 --batteryLevel 100 --batteryState charged --cellularBars 4 --wifiBars 3
+          xcrun simctl install "$UDID" "$APP"
+          mkdir -p shots
+          for mode in light dark; do
+            xcrun simctl ui "$UDID" appearance $mode
+            xcrun simctl terminate "$UDID" com.paisapulse.app || true
+            xcrun simctl launch "$UDID" com.paisapulse.app -PaisaDemo YES
+            sleep 6
+            for tab in home activity accounts settings; do
+              xcrun simctl openurl "$UDID" "paisapulse://tab/$tab"; sleep 3
+              xcrun simctl io "$UDID" screenshot "shots/$tab-$mode.png"
+            done
+            xcrun simctl openurl "$UDID" "paisapulse://tab/home"; sleep 2
+            xcrun simctl openurl "$UDID" "paisapulse://add?type=expense"; sleep 3
+            xcrun simctl io "$UDID" screenshot "shots/add-$mode.png"
+          done
+          ls -la shots
+          # Publish to the ci-screenshots branch so they can be viewed without downloading artifacts.
+          cd shots
+          git init -q -b ci-screenshots
+          git -c user.name=ci -c user.email=ci@users.noreply.github.com add .
+          git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm "Screenshots for ${{ github.sha }} (build ${{ github.run_number }})"
+          git push -fq "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" ci-screenshots
 
   release:
     if: github.ref == 'refs/heads/main'
