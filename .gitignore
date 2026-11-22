@@ -45,3 +45,9 @@ yarn-error.*
 /apple/PaisaPulse.xcodeproj
 /apple/build
 /apple/Payload
+
+# Kotlin Android app build output
+/androidApp/.gradle
+/androidApp/build
+/androidApp/app/build
+/androidApp/local.properties

@@ -146,3 +146,11 @@ The user chose to rewrite iOS in SwiftUI; Android stays on this Expo app. Code i
 - **No minus signs anywhere** (user decision, both apps): expense soft red (#E5484D / #FF6B6B), income green, transfers grey, account below zero reads "₹X due".
 - Not ported yet: statement import, voice, screenshot capture, currencies, merchant logos, alternate icons, saved filters.
 - CI `ios` job: build, unit tests (`apple/Tests`), simulator screenshots (launch args `-PaisaDemo YES -PaisaTab <tab>` / `-PaisaAdd YES`) pushed to the `ci-screenshots` branch (read them with `gh api repos/PoRiFiRo123/paisa-pulse/contents/<name>.png?ref=ci-screenshots`).
+
+## Two native apps, one product (decided with the user, 22 Nov 2026)
+- **iOS = Swift (`apple/`), Android = Kotlin + Jetpack Compose (`androidApp/`).** The Expo app (`app/`, `src/`) is retired: keep it only as a reference for porting (parsers, brands, import).
+- **Parity rule: every feature, screen and UX change ships on both apps together, looking and behaving the same.** Android mirrors the iOS design: same layout, colours, sheets, floating glass tab bar (blur via Haze), motion. Fonts/icons: Inter + rounded Material Symbols mapped from the SF Symbol names stored in data (Apple licenses SF Pro/SF Symbols for Apple platforms only). Only exception: voice capture is Android-only.
+- **Data deletion:** "Delete all data" now, plus periodic auto-delete (monthly / quarterly / half-yearly / yearly / custom) = remove transactions older than the period; fold them into accounts' opening balances so balances stay right; save a backup first.
+- **Loans:** a separate Loans section (lent / borrowed, due date, part repayments, reminders), apart from split balances.
+- **Split v2:** contacts picker (people you split with first), who paid, equal / amount / shares, saved groups with settle-up, request via Messages with a QR code + a link to a static pay page on GitHub Pages (no domain, no Pi; details only in the URL), "Pay with…" UPI app picker, "Did it go through?".
+- Both apps read and write the same backup JSON (v4 + extra keys), so data moves between phones.
