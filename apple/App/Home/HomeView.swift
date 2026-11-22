@@ -123,6 +123,8 @@ struct AddButton: View {
       Button { router.add = AddRequest(type: .income) } label: { Label("Income", systemImage: "arrow.down.left") }
       Button { router.add = AddRequest(type: .transfer) } label: { Label("Transfer", systemImage: "arrow.left.arrow.right") }
       Button { router.add = AddRequest(type: .expense) } label: { Label("Expense", systemImage: "arrow.up.right") }
+      Divider()
+      Button { router.capture = true } label: { Label("From Screenshots", systemImage: "photo.on.rectangle") }
     } label: {
       Image(systemName: "plus").fontWeight(.semibold)
     } primaryAction: {

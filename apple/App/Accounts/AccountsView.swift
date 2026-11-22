@@ -7,6 +7,8 @@ struct AccountsView: View {
   @Query(filter: #Predicate<PaymentCard> { $0.archivedAt == nil }) private var cards: [PaymentCard]
   @AppStorage(PrefKey.hideAmounts, store: AppGroup.defaults) private var hidden = false
   @State private var adding: AccountType?
+  @State private var reordering = false
+  @Environment(\.modelContext) private var context
   @Namespace private var ns
 
   var body: some View {
@@ -68,11 +70,27 @@ struct AccountsView: View {
           Button { adding = .card } label: { Label("Credit card", systemImage: "creditcard.fill") }
           Button { adding = .cash } label: { Label("Cash", systemImage: "banknote.fill") }
           Button { adding = .wallet } label: { Label("Wallet (Paytm, Amazon Pay…)", systemImage: "wallet.bifold.fill") }
+          Divider()
+          Button { reordering = true } label: { Label("Reorder Accounts", systemImage: "arrow.up.arrow.down") }
         } label: { Image(systemName: "plus") }
         .accessibilityLabel("Add account")
       }
     }
     .sheet(item: $adding) { type in NavigationStack { AccountFormView(account: nil, initialType: type) } }
+    .sheet(isPresented: $reordering) {
+      let live = accounts.filter { $0.archivedAt == nil }
+      NavigationStack {
+        ReorderView(title: "Reorder Accounts", groups: AccountType.allCases.sorted { $0.order < $1.order }.compactMap { (type: AccountType) -> ReorderGroup? in
+          let items = live.filter { $0.type == type }.sorted { $0.sortOrder < $1.sortOrder }
+            .map { ReorderItem(id: $0.id, name: $0.name, icon: $0.icon, color: $0.color) }
+          return items.isEmpty ? nil : ReorderGroup(title: type.plural, items: items)
+        }) { groups in
+          let byId = Dictionary(uniqueKeysWithValues: accounts.map { ($0.id, $0) })
+          for ids in groups { for (i, id) in ids.enumerated() { byId[id]?.sortOrder = i; byId[id]?.updatedAt = .now } }
+          try? context.save()
+        }
+      }
+    }
   }
 }
 
@@ -293,6 +311,7 @@ struct AccountDetailView: View {
   @Query private var categories: [Category]
   @Query(filter: #Predicate<PaymentCard> { $0.archivedAt == nil }) private var allCards: [PaymentCard]
   @State private var editing = false
+  @State private var importing = false
   @State private var confirmDelete = false
   @State private var editingCard: PaymentCard?
   @State private var addingCard = false
@@ -334,6 +353,7 @@ struct AccountDetailView: View {
         Menu {
           Button { editing = true } label: { Label("Edit", systemImage: "pencil") }
           Button { router.add = AddRequest(type: .expense, accountId: account.id) } label: { Label("Add Transaction", systemImage: "plus") }
+          Button { importing = true } label: { Label("Import Statement", systemImage: "doc.text.viewfinder") }
           Button {
             account.archivedAt = account.archivedAt == nil ? .now : nil
             try? context.save()
@@ -343,6 +363,7 @@ struct AccountDetailView: View {
       }
     }
     .sheet(isPresented: $editing) { NavigationStack { AccountFormView(account: account) } }
+    .navigationDestination(isPresented: $importing) { ImportView(accountId: account.id) }
     .sheet(isPresented: $addingCard) { NavigationStack { CardFormView(card: nil, account: account) } }
     .sheet(item: $editingCard) { c in NavigationStack { CardFormView(card: c, account: account) } }
     .confirmationDialog(mine.isEmpty ? "Delete \(account.name)?" : "\(account.name) has transactions. Archive it instead?",

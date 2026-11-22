@@ -1,0 +1,73 @@
+shot expense | 42000 | bob |  | food | Swiggy |  | 2026-10-10T08:45:00.000Z | true | Couldn’t tell if this was a payment. Check the details.
+shot expense | 124500 | axis |  | groceries | Blinkit |  | 2026-10-09T08:45:00.000Z | true | 
+shot expense | 200000 | axis |  |  | Rahul Sharma |  | 2026-10-10T04:11:00.000Z | true | 
+shot income | 50000 | axis |  |  | Priya Mehta |  | 2026-10-08T13:32:00.000Z | true | 
+shot transfer | 836000 | axis | card |  |  | Card bill payment | 2026-10-05T05:50:00.000Z | true | 
+shot expense | 35000 | axis |  | food | Zomato |  | 2026-10-10T06:30:00.000Z | false | This payment may have failed or be pending.
+shot null
+shot expense | 9900 | axis |  |  |  |  | 2026-10-03T15:35:00.000Z | true | Couldn’t tell if this was a payment. Check the details.
+shot expense | 100000 | axis |  |  | Amma |  | 2026-10-07T09:00:00.000Z | true | 
+shot expense | 5000 | axis |  |  |  |  | 2025-12-28T04:30:00.000Z | true | 
+words 250 for lunch
+words 150 auto
+words 1500 groceries
+words 250000
+words 1000 rupees
+words a coffee
+words bread and butter
+words 2500
+amt 150000
+amt 150000
+amt 1800000
+amt 12000000
+amt 9950
+amt null
+split 250 lunch || 80 auto || 40 chai
+split 60 bread and butter
+split 1,500 groceries || 200 petrol
+voice 250 lunch, 80 auto and 40 chai
+  expense | 25000 | axis |  | food | Lunch |  | 2026-10-10T10:00:00.000Z | 250 lunch
+  expense | 8000 | axis |  | cab | Auto |  | 2026-10-10T10:00:00.000Z | 80 auto
+  expense | 4000 | axis |  | food | Chai |  | 2026-10-10T10:00:00.000Z | 40 chai
+  skipped 
+voice 250 lunch, 80 auto and 40 chai yesterday, paid 1.5k on zomato
+  expense | 25000 | axis |  | food | Lunch |  | 2026-10-09T10:00:00.000Z | 250 lunch
+  expense | 8000 | axis |  | cab | Auto |  | 2026-10-09T10:00:00.000Z | 80 auto
+  expense | 4000 | axis |  | food | Chai |  | 2026-10-09T10:00:00.000Z | 40 chai yesterday
+  expense | 150000 | axis |  | food | Zomato |  | 2026-10-09T10:00:00.000Z | paid 1.5k on zomato
+  skipped 
+voice 250 lunch today, 80 auto yesterday
+  expense | 25000 | axis |  | food | Lunch |  | 2026-10-10T10:00:00.000Z | 250 lunch today
+  expense | 8000 | axis |  | cab | Auto |  | 2026-10-09T10:00:00.000Z | 80 auto yesterday
+  skipped 
+voice 650 zomato dinner with team
+  expense | 65000 | axis |  | food | Zomato | Dinner with team | 2026-10-10T10:00:00.000Z | 650 zomato dinner with team
+  skipped 
+voice Yesterday I paid 420 on swiggy using my card, and two thousand to Rahul in cash
+  expense | 42000 | card |  | food | Swiggy |  | 2026-10-09T10:00:00.000Z | Yesterday I paid 420 on swiggy using my card
+  expense | 200000 | cash |  | rent | Rahul | And | 2026-10-09T10:00:00.000Z | and 2000 to Rahul in cash
+  skipped 
+voice got salary 90k from acme in axis
+  income | 9000000 | axis |  | salary | Acme | Salary | 2026-10-10T10:00:00.000Z | got salary 90k from acme in axis
+  skipped 
+voice moved 5000 from axis to baroda
+  transfer | 500000 | axis | bob |  |  |  | 2026-10-10T10:00:00.000Z | moved 5000 from axis to baroda
+  skipped 
+voice paid the credit card bill 8360
+  transfer | 836000 | axis | card |  |  |  | 2026-10-10T10:00:00.000Z | paid the credit card bill 8360
+  skipped 
+voice coffee with Priya, 180 coffee
+  expense | 18000 | axis |  | food | Coffee |  | 2026-10-10T10:00:00.000Z | 180 coffee
+  skipped coffee with Priya
+voice on monday 300 petrol from bob
+  expense | 30000 | bob |  |  | Petrol |  | 2026-10-05T06:30:00.000Z | on monday 300 petrol from bob
+  skipped 
+voice last night 1200 dinner at Truffles
+  expense | 120000 | axis |  | food | Truffles | Dinner | 2026-10-09T15:30:00.000Z | last night 1200 dinner at Truffles
+  skipped 
+voice 3 days ago 45 chai
+  expense | 300 | axis |  | food | Days ago 45 chai |  | 2026-10-10T10:00:00.000Z | 3 days ago 45 chai
+  skipped 
+voice on the 12th rent eighteen thousand to Rahul
+  expense | 1800000 | axis |  | rent | Rahul | Rent | 2026-09-12T06:30:00.000Z | on the 12th rent 18000 to Rahul
+  skipped 

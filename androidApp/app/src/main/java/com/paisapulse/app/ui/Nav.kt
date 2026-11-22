@@ -28,6 +28,9 @@ sealed interface Route {
   data class Friend(val id: String) : Route
   data object Backup : Route
   data object Converter : Route
+  data object Subscriptions : Route
+  data class Import(val accountId: String? = null) : Route
+  data class Capture(val mode: String) : Route
 }
 
 sealed interface Sheet {
@@ -39,6 +42,8 @@ sealed interface Sheet {
   data class GoalForm(val id: String?) : Sheet
   data class CardForm(val accountId: String, val id: String?) : Sheet
   data class AccountNew(val type: String) : Sheet
+  /** "accounts" or "categories:expense" / "categories:income" */
+  data class Reorder(val what: String) : Sheet
 }
 
 data class Toast(val text: String, val undo: (() -> Unit)? = null, val id: Long = System.nanoTime())
@@ -49,6 +54,8 @@ object Ui {
   val stacks = Tab.entries.associateWith { mutableStateListOf<Route>(Route.Root) }
   var sheet by mutableStateOf<Sheet?>(null)
   var toast by mutableStateOf<Toast?>(null)
+  /** Hidden while Activity is in select mode (its bulk bar takes the space), like iOS. */
+  var hideTabBar by mutableStateOf(false)
   private var toastJob: Job? = null
   private val scope = CoroutineScope(Dispatchers.Main)
 
@@ -68,6 +75,7 @@ object Ui {
     if (uri.scheme != "paisapulse") return
     when (uri.host) {
       "add" -> sheet = Sheet.Add(TxnType.of(uri.getQueryParameter("type")))
+      "capture" -> { tab = Tab.Home; stacks.getValue(Tab.Home).add(Route.Capture(uri.getQueryParameter("mode") ?: "screenshot")) }
       "tab" -> tab = when (uri.lastPathSegment) { "activity" -> Tab.Activity; "accounts" -> Tab.Accounts; "settings" -> Tab.Settings; "search" -> Tab.Search; else -> Tab.Home }
     }
   }

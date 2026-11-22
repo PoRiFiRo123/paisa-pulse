@@ -32,7 +32,7 @@ import dev.chrisbanes.haze.hazeSource
             }
           }, label = "nav") { (tab, s) -> Screen(tab, s.last()) }
         }
-        Box(Modifier.align(Alignment.BottomCenter)) { TabBar() }
+        if (!Ui.hideTabBar) Box(Modifier.align(Alignment.BottomCenter)) { TabBar() }
         ToastHost(Modifier.align(Alignment.BottomCenter))
         when (val sh = Ui.sheet) {
           is Sheet.Add -> QuickAddSheet(sh)
@@ -43,6 +43,7 @@ import dev.chrisbanes.haze.hazeSource
           is Sheet.GoalForm -> GoalForm(sh.id)
           is Sheet.CardForm -> CardFormSheet(sh.accountId, sh.id)
           is Sheet.AccountNew -> AccountForm(null, sh.type)
+          is Sheet.Reorder -> ReorderSheet(sh.what)
           null -> {}
         }
       }
@@ -67,6 +68,9 @@ import dev.chrisbanes.haze.hazeSource
     is Route.Friend -> FriendScreen(r.id)
     Route.Backup -> BackupScreen()
     Route.Converter -> ConverterScreen()
+    Route.Subscriptions -> SubscriptionsScreen()
+    is Route.Import -> ImportScreen(r.accountId)
+    is Route.Capture -> CaptureScreen(r.mode)
   }
 }
 

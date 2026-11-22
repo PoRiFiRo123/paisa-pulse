@@ -6,7 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,35 +32,47 @@ import kotlin.math.sqrt
   val db by Store.db.collectAsState()
   val l = remember(db) { Lookups(db) }
   var offset by remember { mutableIntStateOf(0) }
-  val range = Periods.month(offset, Prefs.monthStartDay)
+  var kind by remember { mutableStateOf(PeriodKind.Month) }
+  var customStart by remember { mutableStateOf(LocalDate.now().minusDays(29)) }
+  var customEnd by remember { mutableStateOf(LocalDate.now()) }
+  var picking by remember { mutableStateOf<Int?>(null) }
+  val custom = Range(minOf(customStart, customEnd).ms(), maxOf(customStart, customEnd).plusDays(1).ms())
+  fun period(o: Int) = kind.range(o, Prefs.monthStartDay, Prefs.weekStartDay, custom)
+  val range = period(offset)
   val s = Ledger.summary(db.transactions, range)
-  val p = Ledger.summary(db.transactions, Periods.month(offset - 1, Prefs.monthStartDay))
-  val months = (5 downTo 0).map { i -> Periods.month(offset - i, Prefs.monthStartDay).let { it.start to Ledger.summary(db.transactions, it).spent } }
+  val p = Ledger.summary(db.transactions, period(offset - 1))
+  val months = (5 downTo 0).map { i -> period(offset - i).let { Triple(kind.short(it), Ledger.summary(db.transactions, it).spent, i == 0) } }
   val cats = Ledger.byCategory(db.transactions, range, l.categories)
   val days = maxOf(1L, java.time.temporal.ChronoUnit.DAYS.between(range.start.toDate(), minOf(range.end, now()).toDate()))
   PScreen("Insights", back = true, actions = {
-    GlassIcon("chevron.left", "Previous month") { offset-- }
-    GlassIcon("chevron.right", "Next month", tint = if (offset < 0) C.accent else C.tertiary) { if (offset < 0) offset++ }
+    GlassIcon("chevron.left", "Previous ${kind.noun}") { offset-- }
+    GlassIcon("chevron.right", "Next ${kind.noun}", tint = if (offset < 0) C.accent else C.tertiary) { if (offset < 0) offset++ }
   }) {
+    item {
+      Segmented(PeriodKind.entries.map { it.label }, kind.ordinal, Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) { kind = PeriodKind.entries[it]; offset = 0 }
+    }
+    if (kind == PeriodKind.Custom) group {
+      PRow("From", value = shortDate.format(customStart), valueColor = C.accent, onClick = { picking = 0 })
+      Divider(); PRow("To", value = shortDate.format(customEnd), valueColor = C.accent, onClick = { picking = 1 })
+    }
     group {
       Column(Modifier.padding(20.dp)) {
-        Text("Spent in ${Periods.label(range, Prefs.monthStartDay)}", style = T.subhead, color = C.secondary)
+        Text("Spent in ${kind.label(range, Prefs.monthStartDay)}", style = T.subhead, color = C.secondary)
         Text(Money.format(s.spent), style = T.amount(36, FontWeight.Bold), color = C.label)
         Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(18.dp)) {
           Stat("Per day", Money.format(s.spent / days), C.label)
           if (p.spent > 0) { val ch = (s.spent - p.spent).toDouble() / p.spent
-            Stat("vs last month", "${if (ch >= 0) "up" else "down"} ${(kotlin.math.abs(ch) * 100).toInt()}%", if (ch > 0) C.expense else C.income) }
+            Stat("vs last ${kind.noun}", "${if (ch >= 0) "up" else "down"} ${(kotlin.math.abs(ch) * 100).toInt()}%", if (ch > 0) C.expense else C.income) }
           Stat("Kept", Money.format(maxOf(0, s.saved)), C.income)
         }
       }
     }
-    group("Last 6 months") {
+    group("Last 6 ${kind.noun}s") {
       val max = maxOf(1L, months.maxOf { it.second })
       val accent = C.accent; val label = C.secondary
       Column(Modifier.padding(16.dp)) {
         Row(Modifier.fillMaxWidth().height(160.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Bottom) {
-          months.forEach { (start, v) ->
-            val cur = start == range.start
+          months.forEach { (_, v, cur) ->
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
               Text(Money.compact(v), style = T.caption2, color = label, maxLines = 1)
               Box(Modifier.fillMaxWidth().fillMaxHeight((v.toFloat() / max).coerceAtLeast(0.02f) * 0.85f).clip(RoundedCornerShape(6.dp))
@@ -69,7 +81,7 @@ import kotlin.math.sqrt
           }
         }
         Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-          months.forEach { (start, _) -> Text(start.toDate().month.getDisplayName(TextStyle.SHORT, Locale.ENGLISH), style = T.caption2, color = label,
+          months.forEach { (name, _, _) -> Text(name, style = T.caption2, color = label, maxLines = 1,
             modifier = Modifier.weight(1f), textAlign = androidx.compose.ui.text.style.TextAlign.Center) }
         }
       }
@@ -98,6 +110,19 @@ import kotlin.math.sqrt
     val biggest = db.liveTxns.filter { it.kind == TxnType.Expense && it.occurredAt in range }.sortedByDescending { it.effectiveAmount }.take(5)
     if (biggest.isNotEmpty()) group("Biggest expenses") { biggest.forEachIndexed { i, t -> if (i > 0) Divider(64.dp); TxnRow(t, l, showTime = false) } }
   }
+  picking?.let { which ->
+    DayPickerDialog(if (which == 0) customStart else customEnd, onDismiss = { picking = null }) { d -> if (which == 0) customStart = d else customEnd = d; picking = null }
+  }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable fun DayPickerDialog(initial: LocalDate, onDismiss: () -> Unit, onPick: (LocalDate) -> Unit) {
+  val state = rememberDatePickerState(initialSelectedDateMillis = initial.atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli())
+  DatePickerDialog(onDismissRequest = onDismiss, confirmButton = {
+    TextButton({ state.selectedDateMillis?.let { onPick(java.time.Instant.ofEpochMilli(it).atZone(java.time.ZoneOffset.UTC).toLocalDate()) } ?: onDismiss() }) {
+      Text("Done", color = C.accent, style = T.headline)
+    }
+  }, dismissButton = { TextButton(onDismiss) { Text("Cancel", color = C.accent, style = T.body) } }) { DatePicker(state) }
 }
 
 @Composable fun CalendarScreen() {

@@ -56,6 +56,7 @@ import java.io.File
       PRow("Categories", leading = { Badge("square.grid.2x2.fill", "#FF9500") }, chevron = true, onClick = { Ui.push(Route.Categories) })
       Divider(56.dp); PRow("Budgets", leading = { Badge("gauge.with.dots.needle.33percent", "#5E5CE6") }, chevron = true, onClick = { Ui.push(Route.Budgets) })
       Divider(56.dp); PRow("Recurring", leading = { Badge("repeat", "#30B0C7") }, chevron = true, onClick = { Ui.push(Route.Recurring) })
+      Divider(56.dp); PRow("Subscriptions", leading = { Badge("creditcard.and.123", "#32ADE6") }, chevron = true, onClick = { Ui.push(Route.Subscriptions) })
       Divider(56.dp); PRow("Goals", leading = { Badge("target", "#1E9E5A") }, chevron = true, onClick = { Ui.push(Route.Goals) })
       Divider(56.dp); PRow("Splits", leading = { Badge("person.2.fill", "#007AFF") }, chevron = true, onClick = { Ui.push(Route.Splits) })
       Divider(56.dp); PickerRow("Month starts on", (1..28).map { it to ordinal(it) }, Prefs.monthStartDay, leading = { Badge("calendar", "#FF3B30") }) { Prefs.set("monthStartDay", it) }
@@ -72,12 +73,16 @@ import java.io.File
       Divider(56.dp); ToggleRow("Card bill reminders", Prefs.notifyBills, leading = { Badge("creditcard.fill", "#007AFF") }) { notif("notifyBills", it) }
       Divider(56.dp); ToggleRow("Sunday summary", Prefs.notifyWeekly, leading = { Badge("envelope.fill", "#5E5CE6") }) { notif("notifyWeekly", it) }
     }
-    group("Privacy") {
+    group("Privacy", footer = "Merchant logos load from Google's icon service: only the shop's website (like swiggy.com) is sent. Off, rows show a coloured letter.") {
       ToggleRow("Fingerprint / Face Lock", Prefs.appLock, leading = { Badge("faceid", "#34C759") }) { Prefs.set("appLock", it) }
       Divider(56.dp); ToggleRow("Hide amounts", Prefs.hideAmounts, leading = { Badge("eye.slash.fill", "#8E8E93") }) { Prefs.set("hideAmounts", it) }
+      Divider(56.dp); ToggleRow("Merchant logos", Prefs.merchantLogos, leading = { Badge("photo", "#FF9500") }) { Prefs.set("merchantLogos", it) }
     }
-    group("Data", footer = "Coming next on both phones: statement import, screenshot capture, currencies, loans and data clean-up.") {
-      PRow("Backup & Restore", leading = { Badge("externaldrive.fill", "#5E5CE6") }, chevron = true, onClick = { Ui.push(Route.Backup) })
+    group("Data") {
+      PRow("Import Statement", leading = { Badge("doc.text.viewfinder", "#007AFF") }, chevron = true, onClick = { Ui.push(Route.Import()) })
+      Divider(56.dp); PRow("Add from Screenshots", leading = { Badge("photo.on.rectangle", "#AF52DE") }, chevron = true, onClick = { Ui.push(Route.Capture("screenshot")) })
+      Divider(56.dp); PRow("Say It (voice)", leading = { Badge("mic.fill", "#FF2D55") }, chevron = true, onClick = { Ui.push(Route.Capture("voice")) })
+      Divider(56.dp); PRow("Backup & Restore", leading = { Badge("externaldrive.fill", "#5E5CE6") }, chevron = true, onClick = { Ui.push(Route.Backup) })
       Divider(56.dp); PRow("Export CSV", leading = { Badge("tablecells.fill", "#1E9E5A") }, onClick = {
         val dir = File(ctx.cacheDir, "share").apply { mkdirs() }
         val f = File(dir, "paisa-pulse-transactions.csv").apply { writeText(BackupOps.csv(Store.value)) }
