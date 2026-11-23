@@ -30,6 +30,8 @@ struct AccountView: View {
   @State private var phone = ""
   @State private var confirmDelete = false
   @State private var export: ExportFile?
+  @State private var changing = false
+  @State private var newPassword = ""
 
   var body: some View {
     Group {
@@ -77,6 +79,7 @@ struct AccountView: View {
             router.show("Saved")
           }
         }
+        Button("Change Password") { newPassword = ""; changing = true }
         if s.hasPhone {
           Button("Remove Phone Number", role: .destructive) { run(router, $busy) { try await cloud.updateProfile(username: nil, name: nil, upi: nil, phone: "") } }
         }
@@ -99,6 +102,15 @@ struct AccountView: View {
     .task { await cloud.syncNow() }
     .refreshable { await cloud.syncNow() }
     .sheet(item: $export) { ActivitySheet(items: [$0.url]) }
+    .alert("New password", isPresented: $changing) {
+      SecureField("At least 8 characters", text: $newPassword).textContentType(.newPassword)
+      Button("Change") {
+        let p = newPassword
+        guard p.count >= 8 else { router.show("Use at least 8 characters"); return }
+        run(router, $busy) { try await cloud.changePassword(p); router.show("Password changed") }
+      }
+      Button("Cancel", role: .cancel) {}
+    }
     .confirmationDialog("Delete your account?", isPresented: $confirmDelete, titleVisibility: .visible) {
       Button("Delete Account", role: .destructive) { run(router, $busy) { try await cloud.deleteAccount(context); router.show("Account deleted") } }
     } message: { Text("Your profile, invites and everything you shared are removed from the server for good. Your splits stay on this phone.") }
@@ -107,11 +119,13 @@ struct AccountView: View {
 
 private struct SignInView: View {
   @Environment(Router.self) private var router
+  @State private var creating = true
   @State private var email = ""
-  @State private var code = ""
-  @State private var sent = false
+  @State private var password = ""
+  @State private var again = ""
   @State private var busy = false
   private var valid: Bool { email.range(of: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", options: .regularExpression) != nil }
+  private var ready: Bool { valid && password.count >= 8 && (!creating || again == password) }
 
   var body: some View {
     Form {
@@ -120,26 +134,29 @@ private struct SignInView: View {
           Image(systemName: "person.2.fill").font(.system(size: 38)).foregroundStyle(.white)
             .frame(width: 84, height: 84).background(Color.accentColor, in: .rect(cornerRadius: 24))
           Text("Split with friends on Paisa Pulse").font(.title2.bold()).multilineTextAlignment(.center)
-          Text("Add friends, split bills and trips, and they see their share on their phone. No password: we email you a code.")
+          Text("Add friends, split bills and trips, and they see their share on their phone.")
             .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
+          Picker("", selection: $creating) { Text("Create Account").tag(true); Text("Sign In").tag(false) }
+            .pickerStyle(.segmented).padding(.top, 6)
         }
         .frame(maxWidth: .infinity).padding(.vertical, 8).listRowBackground(Color.clear)
       }
       Section {
         TextField("Email", text: $email).textContentType(.emailAddress).keyboardType(.emailAddress)
-          .textInputAutocapitalization(.never).autocorrectionDisabled().onChange(of: email) { sent = false }
-        if sent {
-          TextField("Code", text: $code).textContentType(.oneTimeCode).keyboardType(.numberPad)
-            .onChange(of: code) { _, v in code = String(v.filter(\.isNumber).prefix(10)) }
+          .textInputAutocapitalization(.never).autocorrectionDisabled()
+        SecureField("Password", text: $password).textContentType(creating ? .newPassword : .password)
+        if creating { SecureField("Password again", text: $again).textContentType(.newPassword) }
+        Button(busy ? "Please wait…" : creating ? "Create Account" : "Sign In") {
+          run(router, $busy) {
+            if creating { try await Cloud.shared.signUp(email, password: password) } else { try await Cloud.shared.signIn(email, password: password) }
+          }
         }
-        Button(busy ? "Please wait…" : sent ? "Sign In" : "Email Me a Code") {
-          if !sent { run(router, $busy) { try await Cloud.shared.sendCode(email); sent = true } }
-          else { run(router, $busy) { try await Cloud.shared.verify(email, code: code) } }
-        }
-        .disabled(busy || (!sent && !valid) || (sent && code.count < 6))
-        if sent { Button("Send Again") { run(router, $busy) { try await Cloud.shared.sendCode(email); router.show("Sent") } } }
+        .disabled(!ready || busy)
       } footer: {
-        Text(sent ? "Check your email (and spam) for a 6-digit code from Paisa Pulse." : "Only what you share goes to the server. Your own money stays on this phone.")
+        Text(creating && !password.isEmpty && password.count < 8 ? "At least 8 characters."
+             : creating && !again.isEmpty && again != password ? "The passwords don't match."
+             : creating ? "Keep your password safe: there's no email reset yet. Only what you share goes to the server; your own money stays on this phone."
+             : "Forgot it? There's no email reset yet; make a new account and add your friends again.")
       }
     }
   }

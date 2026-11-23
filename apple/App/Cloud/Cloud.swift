@@ -68,7 +68,9 @@ final class Cloud {
   private static func friendly(_ m: String) -> String {
     let l = m.lowercased()
     if l.contains("rate limit") || l.contains("security purposes") { return "Too many tries. Wait a minute and try again." }
-    if (l.contains("expired") && l.contains("token")) || l.contains("otp") { return "That code is wrong or has expired." }
+    if l.contains("invalid login") { return "Wrong email or password." }
+    if l.contains("already registered") || l.contains("already been registered") { return "That email already has an account. Sign in instead." }
+    if l.contains("password") && l.contains("characters") { return "Use a longer password (at least 8 characters)." }
     if l.contains("not signed in") { return "Please sign in again." }
     return m
   }
@@ -101,18 +103,25 @@ final class Cloud {
 
   // MARK: Sign in
 
-  func sendCode(_ email: String) async throws {
-    _ = try await http("POST", "/auth/v1/otp", ["email": email.trimmingCharacters(in: .whitespaces).lowercased(), "create_user": true], auth: false)
-  }
+  // Email + password, no emails sent (the CI setup turns email confirmation off).
 
-  func verify(_ email: String, code: String) async throws {
+  func signUp(_ email: String, password: String) async throws { try await signIn(path: "/auth/v1/signup", email, password) }
+  func signIn(_ email: String, password: String) async throws { try await signIn(path: "/auth/v1/token?grant_type=password", email, password) }
+
+  private func signIn(path: String, _ email: String, _ password: String) async throws {
     let e = email.trimmingCharacters(in: .whitespaces).lowercased()
-    let r = try await http("POST", "/auth/v1/verify", ["type": "email", "email": e, "token": code.filter(\.isNumber)], auth: false) as? [String: Any] ?? [:]
+    let r = try await http("POST", path, ["email": e, "password": password], auth: false) as? [String: Any] ?? [:]
+    guard r["access_token"] != nil else { throw Failure(message: "Account made, but sign-in needs email confirmation. Ask for the build to be run again, then sign in.") }
     let s = try Self.session(from: r, email: e)
     if s.userId != defaults.string(forKey: "cloud.user") { resetLocal() }
     defaults.set(s.userId, forKey: "cloud.user")
     save(session: s)
     await syncNow()
+  }
+
+  func changePassword(_ password: String) async throws {
+    try await ensureFresh()
+    _ = try await http("PUT", "/auth/v1/user", ["password": password], auth: true)
   }
 
   /// Signs out on this phone. Shared items stay in your splits.

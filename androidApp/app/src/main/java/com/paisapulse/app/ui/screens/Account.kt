@@ -64,6 +64,8 @@ private fun CoroutineScopeRun(scope: kotlinx.coroutines.CoroutineScope, busy: Mu
   var upi by remember(me?.upiId) { mutableStateOf(me?.upiId ?: "") }
   var phone by remember { mutableStateOf("") }
   var confirmDelete by remember { mutableStateOf(false) }
+  var changing by remember { mutableStateOf(false) }
+  var newPassword by remember { mutableStateOf("") }
   LaunchedEffect(Unit) { Cloud.syncNow() }
   PScreen("Account", back = true) {
     group {
@@ -94,6 +96,7 @@ private fun CoroutineScopeRun(scope: kotlinx.coroutines.CoroutineScope, busy: Mu
           Prefs.set("myName", name.trim()); Prefs.set("myUpiId", upi.trim()); phone = ""; Ui.show("Saved")
         }
       })
+      Divider(); PRow("Change Password", titleColor = C.accent, onClick = { changing = true })
       if (s.hasPhone) { Divider(); PRow("Remove Phone Number", titleColor = C.expense, onClick = { CoroutineScopeRun(scope, busy) { Cloud.updateProfile(null, null, null, "") } }) }
     }
     group(footer = "Only things you share go to the server: your profile, people you add, shared splits, groups and trips. Your accounts, balances and other transactions never leave this phone.") {
@@ -109,6 +112,12 @@ private fun CoroutineScopeRun(scope: kotlinx.coroutines.CoroutineScope, busy: Mu
       Divider(56.dp); PRow("Delete Account", titleColor = C.expense, leading = { Icon(Sym.of("trash"), null, tint = C.expense) }, onClick = { confirmDelete = true })
     }
   }
+  if (changing) AlertDialog({ changing = false; newPassword = "" }, containerColor = C.card, title = { Text("New password", style = T.headline, color = C.label) },
+    text = { Column { PasswordRow(newPassword, { newPassword = it }, "At least 8 characters") } },
+    confirmButton = { TextButton({
+      if (newPassword.length >= 8) { val p = newPassword; changing = false; newPassword = ""; CoroutineScopeRun(scope, busy) { Cloud.changePassword(p); Ui.show("Password changed") } }
+    }) { Text("Change", color = if (newPassword.length >= 8) C.accent else C.tertiary, style = T.headline) } },
+    dismissButton = { TextButton({ changing = false; newPassword = "" }) { Text("Cancel", color = C.accent) } })
   if (confirmDelete) AlertDialog({ confirmDelete = false }, containerColor = C.card, title = { Text("Delete your account?", style = T.headline, color = C.label) },
     text = { Text("Your profile, invites and everything you shared are removed from the server for good. Your splits stay on this phone.", style = T.body, color = C.secondary) },
     confirmButton = { TextButton({ confirmDelete = false; CoroutineScopeRun(scope, busy) { Cloud.deleteAccount(); Ui.show("Account deleted") } }) { Text("Delete", color = C.expense, style = T.headline) } },
@@ -118,10 +127,12 @@ private fun CoroutineScopeRun(scope: kotlinx.coroutines.CoroutineScope, busy: Mu
 @Composable private fun SignInScreen() {
   val scope = rememberCoroutineScope()
   val busy = remember { mutableStateOf(false) }
+  var creating by remember { mutableStateOf(true) }
   var email by remember { mutableStateOf("") }
-  var code by remember { mutableStateOf("") }
-  var sent by remember { mutableStateOf(false) }
+  var password by remember { mutableStateOf("") }
+  var again by remember { mutableStateOf("") }
   val valid = Regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$").matches(email.trim())
+  val ready = valid && password.length >= 8 && (!creating || again == password)
   PScreen("Account", back = true) {
     item {
       Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -129,21 +140,39 @@ private fun CoroutineScopeRun(scope: kotlinx.coroutines.CoroutineScope, busy: Mu
           Icon(Sym.of("person.2.fill"), null, tint = Color.White, modifier = Modifier.size(40.dp))
         }
         Text("Split with friends on Paisa Pulse", style = T.title2, color = C.label, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 16.dp))
-        Text("Add friends, split bills and trips, and they see their share on their phone. No password: we email you a code.",
+        Text("Add friends, split bills and trips, and they see their share on their phone.",
           style = T.subhead, color = C.secondary, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 6.dp))
       }
     }
-    group(footer = if (sent) "Check your email (and spam) for a 6-digit code from Paisa Pulse." else "Only what you share goes to the server. Your own money stays on this phone.") {
-      FieldRow(email, { email = it; sent = false }, "Email")
-      if (sent) { Divider(); FieldRow(code, { code = it.filter { c -> c.isDigit() }.take(10) }, "Code", number = true) }
+    item { Segmented(listOf("Create Account", "Sign In"), if (creating) 0 else 1, Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) { creating = it == 0 } }
+    group(footer = when {
+      creating && password.isNotEmpty() && password.length < 8 -> "At least 8 characters."
+      creating && again.isNotEmpty() && again != password -> "The passwords don't match."
+      creating -> "Keep your password safe: there's no email reset yet. Only what you share goes to the server; your own money stays on this phone."
+      else -> "Forgot it? There's no email reset yet; make a new account and add your friends again."
+    }) {
+      FieldRow(email, { email = it.trim() }, "Email")
+      Divider(); PasswordRow(password, { password = it }, "Password")
+      if (creating) { Divider(); PasswordRow(again, { again = it }, "Password again") }
       Divider()
-      PRow(when { busy.value -> "Please wait…"; !sent -> "Email Me a Code"; else -> "Sign In" }, titleColor = if ((!sent && valid) || (sent && code.length >= 6)) C.accent else C.tertiary, onClick = {
-        if (busy.value) return@PRow
-        if (!sent && valid) CoroutineScopeRun(scope, busy) { Cloud.sendCode(email); sent = true }
-        else if (sent && code.length >= 6) CoroutineScopeRun(scope, busy) { Cloud.verify(email, code) }
+      PRow(if (busy.value) "Please wait…" else if (creating) "Create Account" else "Sign In", titleColor = if (ready && !busy.value) C.accent else C.tertiary, onClick = {
+        if (ready && !busy.value) CoroutineScopeRun(scope, busy) { if (creating) Cloud.signUp(email, password) else Cloud.signIn(email, password) }
       })
-      if (sent) { Divider(); PRow("Send Again", titleColor = C.accent, onClick = { CoroutineScopeRun(scope, busy) { Cloud.sendCode(email); Ui.show("Sent") } }) }
     }
+  }
+}
+
+@Composable private fun PasswordRow(value: String, onChange: (String) -> Unit, placeholder: String) {
+  var show by remember { mutableStateOf(false) }
+  Row(verticalAlignment = Alignment.CenterVertically) {
+    androidx.compose.foundation.text.BasicTextField(value, onChange, singleLine = true, textStyle = T.body.copy(color = C.label),
+      cursorBrush = androidx.compose.ui.graphics.SolidColor(C.accent),
+      visualTransformation = if (show) androidx.compose.ui.text.input.VisualTransformation.None else androidx.compose.ui.text.input.PasswordVisualTransformation(),
+      keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Password),
+      modifier = Modifier.weight(1f).padding(16.dp),
+      decorationBox = { inner -> Box { if (value.isEmpty()) Text(placeholder, style = T.body, color = C.tertiary); inner() } })
+    Icon(Sym.of(if (show) "eye.slash" else "eye"), if (show) "Hide" else "Show", tint = C.secondary,
+      modifier = Modifier.padding(end = 16.dp).size(20.dp).clickable { show = !show })
   }
 }
 
