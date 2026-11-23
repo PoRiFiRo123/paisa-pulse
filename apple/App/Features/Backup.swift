@@ -64,7 +64,7 @@ struct BackupFile: Codable {
     var frequency: String; var interval: Int; var startAt, nextAt: Int64; var endAt, pausedAt: Int64?; var createdAt, updatedAt: Int64
   }
   struct BudgetDTO: Codable { var id: String; var categoryId: String?; var period: String?; var amount: Int; var createdAt, updatedAt: Int64 }
-  struct FriendDTO: Codable { var id, name: String; var upiId: String?; var createdAt: Int64; var phone: String? }
+  struct FriendDTO: Codable { var id, name: String; var upiId: String?; var createdAt: Int64; var phone: String?; var userId: String? }
   struct SplitDTO: Codable { var id, friendId: String; var txnId: String?; var amount: Int; var note: String?; var occurredAt, createdAt: Int64; var groupId: String? }
   struct GroupDTO: Codable { var id, name: String; var memberIds: [String]; var createdAt: Int64 }
   struct LoanDTO: Codable {
@@ -170,7 +170,7 @@ enum BackupCodec {
       savedFilters: filters.map { .init(id: $0.id, name: $0.name, filters: $0.filters, sortOrder: $0.sortOrder, createdAt: ms($0.createdAt), updatedAt: ms($0.updatedAt)) },
       importBatches: batches.map { .init(id: $0.id, accountId: $0.accountId, fileName: $0.fileName, template: $0.template, count: $0.count,
                                          createdAt: ms($0.createdAt), undoneAt: msOpt($0.undoneAt)) },
-      friends: friends.map { .init(id: $0.id, name: $0.name, upiId: $0.upiId, createdAt: ms($0.createdAt), phone: $0.phone) },
+      friends: friends.map { .init(id: $0.id, name: $0.name, upiId: $0.upiId, createdAt: ms($0.createdAt), phone: $0.phone, userId: $0.userId) },
       splitEntries: splits.map { .init(id: $0.id, friendId: $0.friendId, txnId: $0.txnId, amount: $0.amount, note: $0.note, occurredAt: ms($0.occurredAt), createdAt: ms($0.createdAt), groupId: $0.groupId) },
       goals: goals.map { .init(id: $0.id, name: $0.name, icon: $0.icon, color: $0.color, target: $0.target, saved: $0.saved, deadline: msOpt($0.deadline), archivedAt: msOpt($0.archivedAt), createdAt: ms($0.createdAt)) },
       txnSplitShares: txns.compactMap { t in t.splitShare.map { .init(id: t.id, share: $0) } },
@@ -263,7 +263,7 @@ enum BackupCodec {
     for b in file.budgets ?? [] {
       context.insert(Budget(id: b.id, categoryId: b.categoryId, period: b.period ?? "monthly", amount: b.amount, createdAt: date(b.createdAt), updatedAt: date(b.updatedAt)))
     }
-    for f in file.friends ?? [] { context.insert(Friend(id: f.id, name: f.name, upiId: f.upiId, phone: f.phone, createdAt: date(f.createdAt))) }
+    for f in file.friends ?? [] { context.insert(Friend(id: f.id, name: f.name, upiId: f.upiId, phone: f.phone, createdAt: date(f.createdAt), userId: f.userId)) }
     for s in file.splitEntries ?? [] {
       context.insert(SplitEntry(id: s.id, friendId: s.friendId, txnId: s.txnId, amount: s.amount, note: s.note, groupId: s.groupId,
                                 occurredAt: date(s.occurredAt), createdAt: date(s.createdAt)))

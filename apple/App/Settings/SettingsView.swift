@@ -22,6 +22,7 @@ struct SettingsView: View {
 
   var body: some View {
     Form {
+      Section { NavigationLink { AccountView() } label: { AccountRowLabel() } }
       if let a = updates.available {
         Section {
           Button { updates.install(openURL) } label: {

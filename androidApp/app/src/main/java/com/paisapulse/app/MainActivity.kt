@@ -51,7 +51,7 @@ class MainActivity : FragmentActivity() {
 
   override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); Ui.handle(intent.data); Ui.handleShare(intent) }
 
-  override fun onStart() { super.onStart(); Services.runMaintenance() }
+  override fun onStart() { super.onStart(); Services.runMaintenance(); com.paisapulse.app.cloud.Cloud.syncSoon() }
 
   override fun onStop() { super.onStop(); if (Prefs.appLock) locked.value = true }
 

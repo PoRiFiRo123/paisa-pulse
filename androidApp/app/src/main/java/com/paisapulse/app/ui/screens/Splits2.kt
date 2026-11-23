@@ -361,6 +361,9 @@ fun shareBitmap(ctx: Context, bmp: Bitmap, title: String, name: String = "upi-qr
       PRow("They Owe Me…", titleColor = C.accent, leading = { Icon2("arrow.down.left") }, onClick = { manual = 1 })
       Divider(56.dp); PRow("I Owe Them…", titleColor = C.accent, leading = { Icon2("arrow.up.right") }, onClick = { manual = -1 })
     }
+    group("Paisa Pulse", footer = if (f.userId != null) "Splits with ${f.name} show up on their phone, and theirs on yours." else "Linked friends see shared splits on their phone and confirm their share.") {
+      FriendAccountGroupContent(f)
+    }
     group(footer = "UPI ID lets you pay them from any UPI app; phone fills in the SMS when you send a request.") {
       FieldRow(upi, { upi = it }, "UPI ID, e.g. name@okaxis")
       Divider(); FieldRow(phone, { phone = it }, "Phone (for SMS)", number = true)

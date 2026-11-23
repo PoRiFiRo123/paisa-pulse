@@ -542,6 +542,7 @@ struct FriendDetailView: View {
         Button { manual = 1 } label: { Label("They Owe Me…", systemImage: "arrow.down.left.circle") }
         Button { manual = -1 } label: { Label("I Owe Them…", systemImage: "arrow.up.right.circle") }
       } footer: { Text("For money that isn't a split expense, like cash they handed you.") }
+      FriendAccountSection(friend: friend)
       Section {
         TextField("UPI ID, e.g. name@okaxis", text: Binding(get: { friend.upiId ?? "" }, set: { friend.upiId = $0.nilIfEmpty }))
           .textInputAutocapitalization(.never).keyboardType(.emailAddress).autocorrectionDisabled()

@@ -5,6 +5,13 @@ Newest first. Every push to `main` becomes a GitHub Release `build-<number>` wit
 
 ## [Unreleased]
 
+- Both: **Paisa Pulse accounts (optional).** Settings › Sign In: email a 6-digit code, pick a @username, add your name, UPI ID and (optionally) phone. Only shared things go to the server; your own accounts and transactions stay on the phone.
+- Both: **People.** Find friends by @username, email or phone, match your contacts (numbers are hashed on the phone first), or share your invite QR / link / code. Link any friend in your splits to their account from their page.
+- Both: **Shared splits.** Splitting with a linked friend sends it to their phone: they accept or decline their share, and it lands in their balance with you. "Friend paid", "they owe me" and settle-ups go across too (the other person confirms a settle-up). Groups and trips with linked friends are shared, so everyone sees the trip, its budget items and the group's spending.
+- Both: **Inbox** with what's waiting for you and what happened, plus notifications when the app checks in the background (Android every ~15 minutes; iPhone when iOS allows). Real push needs the paid Apple account, later.
+- Both: download your account data, and delete your account (removes everything you shared from the server).
+- CI: a `cloud` job sets up the Supabase database from `supabase/migrations` and gives both apps the project URL and public key. Needs the `SUPABASE_ACCESS_TOKEN` repository secret. The committed `.env` was removed.
+
 - Both: **Planning.** Plan trips, vacations, weekends, work trips, events, outings, rides or anything else. Each type comes with ready budget items (more for trips abroad), destinations set their currencies, track cash or forex you carry, add who's going (a split group with settle-up), see spent vs budget per item, per person and per currency, share a summary picture, archive or delete. While a trip is on, new expenses link to it and default to its currency. Choose per trip whether it counts in your monthly budgets. Home shows the trip that's on or coming up; also in Settings › Planning.
 - Both: **Payment method** on every transaction (UPI, debit/credit card, net banking, NEFT, IMPS, RTGS, cash, cheque, wallet, auto debit), guessed from the account and card, read from statement narrations, and UPI for screenshots. Insights shows "How you paid".
 - Both: **Foreign currencies everywhere.** The original amount shows on rows and the detail screen with its locked rate (fix it to match your statement). Each card has its own forex markup (percent, plus GST, editable); it's added when you pay in another currency. Insights has "Spent abroad".

@@ -8,6 +8,7 @@ struct PaisaPulseApp: App {
   let container: ModelContainer = {
     let c = Store.makeContainer()
     c.mainContext.undoManager = UndoManager() // shake to undo
+    Cloud.container = c
     return c
   }()
   @State private var router = Router()
@@ -37,6 +38,8 @@ struct PaisaPulseApp: App {
     .modelContainer(container)
   }
 }
+
+struct InviteCode: Identifiable { var code: String; var id: String { code } }
 
 enum AppTab: Hashable { case home, activity, accounts, settings, search }
 
@@ -69,6 +72,8 @@ struct ToastMessage: Identifiable, Equatable {
   var hideTabBar = false
   /// Toggled when the selected tab is tapped again.
   var popToRoot = false
+  /// paisapulse://invite?c=CODE (a friend's invite link or QR).
+  var invite: InviteCode?
 
   /// paisapulse://add?type=expense|income|transfer (widget, Control Center, Shortcuts).
   func handle(url: URL) {
@@ -78,6 +83,8 @@ struct ToastMessage: Identifiable, Equatable {
       add = AddRequest(type: TxnType(rawValue: type ?? "") ?? .expense)
     } else if url.host == "capture" {
       capture = true
+    } else if url.host == "invite" {
+      invite = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first(where: { $0.name == "c" })?.value.map { InviteCode(code: $0) }
     } else if url.host == "tab" {
       switch url.lastPathComponent {
       case "activity": tab = .activity
@@ -123,6 +130,11 @@ enum QuickActions {
 }
 
 final class AppDelegate: NSObject, UIApplicationDelegate {
+  func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
+    Cloud.registerBackground()
+    return true
+  }
+
   func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession,
                    options: UIScene.ConnectionOptions) -> UISceneConfiguration {
     if let item = options.shortcutItem { QuickActions.pending = URL(string: item.type) }

@@ -41,6 +41,7 @@ import java.io.File
   var upToDate by remember { mutableStateOf(false) }
   LaunchedEffect(Unit) { Updates.check() }
   PScreen("Settings") {
+    group { AccountRow() }
     Updates.available?.let { u ->
       group(footer = "Downloads the new APK. Open it to install over this one. Your data stays.") {
         PRow("Software Update", leading = { Badge("arrow.down.circle.fill", "#34C759") }, value = "Build ${u.build}", chevron = true,

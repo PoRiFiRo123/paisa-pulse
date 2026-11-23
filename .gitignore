@@ -51,3 +51,7 @@ yarn-error.*
 /androidApp/build
 /androidApp/app/build
 /androidApp/local.properties
+
+# Secrets: never commit (use GitHub Actions secrets)
+.env
+.env.*
