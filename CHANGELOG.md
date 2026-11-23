@@ -5,6 +5,10 @@ Newest first. Every push to `main` becomes a GitHub Release `build-<number>` wit
 
 ## [Unreleased]
 
+- Both phones: slide your finger across the tab bar to switch tabs again; a glass lens follows your finger.
+- iPhone: Activity's search field sits at the top, so it no longer collides with the tab bar.
+- New README with every feature, and the iPhone install guide now covers iloader over USB.
+
 - Both phones: **share a payment screenshot from any UPI app** (GPay, PhonePe, Paytm, BHIM…) to Paisa Pulse. It reads the amount, payee, date and account on the phone, you check them and tap Save. iPhone uses a share extension (the 3rd free-Apple-ID app slot); Android opens the review screen.
 - Screenshot reading understands more apps and layouts: Amazon Pay, WhatsApp, Navi, super.money, MobiKwik, Freecharge, "Today/Yesterday" dates, "ending 1234" accounts, ₹ misread as Z, and it skips balance, cashback and fee amounts. GPay's "Completed" no longer shows a "couldn't tell" warning.
 

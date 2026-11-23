@@ -5,6 +5,9 @@ import SwiftUI
 /// Tap + for an expense; long-press for income, transfer, templates and screenshots.
 struct FloatingTabBar: View {
   @Environment(Router.self) private var router
+  /// Where the finger is while sliding across the bar (nil when not touching).
+  @State private var dragX: CGFloat?
+  @State private var hover: AppTab?
   private let tabs: [(AppTab, String, String)] = [
     (.home, "Home", "house.fill"), (.activity, "Activity", "list.bullet.rectangle.fill"),
     (.accounts, "Accounts", "creditcard.fill"), (.settings, "Settings", "gearshape.fill"),
@@ -12,25 +15,54 @@ struct FloatingTabBar: View {
 
   var body: some View {
     HStack(spacing: 10) {
-      HStack(spacing: 0) {
-        ForEach(tabs, id: \.0) { tab, title, icon in
-          let selected = router.tab == tab
-          Button {
-            if router.tab == tab { router.popToRoot.toggle() } else { router.tab = tab }
-          } label: {
-            VStack(spacing: 2) {
-              Image(systemName: icon).font(.system(size: 20, weight: .semibold)).frame(height: 24)
-              Text(title).font(.system(size: 10, weight: .medium))
+      GeometryReader { geo in
+        let w = geo.size.width / CGFloat(tabs.count)
+        let index = tabs.firstIndex { $0.0 == router.tab } ?? 0
+        let lensX = dragX.map { min(max($0 - w / 2, 0), geo.size.width - w) } ?? CGFloat(index) * w
+        ZStack(alignment: .leading) {
+          // The lens: sits under the selected tab and follows your finger, like the iOS 26 tab bar.
+          lens(dragging: dragX != nil)
+            .frame(width: w, height: geo.size.height)
+            .scaleEffect(dragX != nil ? 1.12 : 1)
+            .offset(x: lensX)
+          HStack(spacing: 0) {
+            ForEach(tabs, id: \.0) { tab, title, icon in
+              let lit = (hover ?? router.tab) == tab
+              VStack(spacing: 2) {
+                Image(systemName: icon).font(.system(size: 20, weight: .semibold)).frame(height: 24)
+                Text(title).font(.system(size: 10, weight: .medium))
+              }
+              .foregroundStyle(lit ? Color.accentColor : Color.primary)
+              .scaleEffect(dragX != nil && lit ? 1.08 : 1)
+              .frame(width: w, height: geo.size.height)
+              .contentShape(Rectangle())
+              .accessibilityElement(children: .ignore)
+              .accessibilityLabel(title)
+              .accessibilityAddTraits(router.tab == tab ? [.isButton, .isSelected] : .isButton)
+              .accessibilityAction { router.tab = tab }
             }
-            .foregroundStyle(selected ? Color.accentColor : Color.primary)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background { if selected { Capsule().fill(Color.primary.opacity(0.08)) } }
-            .contentShape(Capsule())
           }
-          .buttonStyle(.plain)
-          .accessibilityLabel(title)
-          .accessibilityAddTraits(selected ? .isSelected : [])
         }
+        .contentShape(Capsule())
+        .gesture(
+          DragGesture(minimumDistance: 0)
+            .onChanged { v in
+              let i = min(max(Int(v.location.x / w), 0), tabs.count - 1)
+              // Only show the sliding lens once the finger actually moves; a tap just selects.
+              if abs(v.translation.width) > 6 || dragX != nil {
+                withAnimation(.interactiveSpring(response: 0.25, dampingFraction: 0.8)) { dragX = v.location.x }
+              }
+              if hover != tabs[i].0 { hover = tabs[i].0 }
+            }
+            .onEnded { v in
+              let i = min(max(Int(v.location.x / w), 0), tabs.count - 1)
+              let tab = tabs[i].0
+              withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                if tab == router.tab && dragX == nil { router.popToRoot.toggle() } else { router.tab = tab }
+                dragX = nil; hover = nil
+              }
+            }
+        )
       }
       .padding(4)
       .frame(height: 62)
@@ -39,8 +71,16 @@ struct FloatingTabBar: View {
     }
     .padding(.horizontal, 20)
     .padding(.bottom, 6)
+    .sensoryFeedback(.selection, trigger: hover)
     .sensoryFeedback(.selection, trigger: router.tab)
-    .animation(.spring(duration: 0.3), value: router.tab)
+  }
+
+  @ViewBuilder private func lens(dragging: Bool) -> some View {
+    if #available(iOS 26.0, *), dragging {
+      Capsule().fill(Color.primary.opacity(0.04)).glassEffect(.regular.interactive(), in: .capsule)
+    } else {
+      Capsule().fill(Color.primary.opacity(dragging ? 0.14 : 0.08))
+    }
   }
 }
 
