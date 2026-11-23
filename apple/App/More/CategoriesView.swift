@@ -148,6 +148,7 @@ struct CategoryFormView: View {
 
 struct BudgetsView: View {
   @Query private var budgets: [Budget]
+  @Query private var trips: [Trip]
   @Query(filter: #Predicate<Txn> { $0.deletedAt == nil }) private var txns: [Txn]
   @Query private var accounts: [Account]
   @Query(sort: \Category.sortOrder) private var categories: [Category]
@@ -159,7 +160,7 @@ struct BudgetsView: View {
 
   var body: some View {
     let lookups = Lookups(accounts: accounts, categories: categories)
-    let progress = Budgets.progress(budgets, txns: txns, categories: lookups.categories,
+    let progress = Budgets.progress(budgets, txns: TripMath.budgetTxns(txns, trips: trips), categories: lookups.categories,
                                     month: Periods.month(containing: .now, startDay: monthStartDay),
                                     week: Periods.week(containing: .now, firstWeekday: weekStartDay))
     List {

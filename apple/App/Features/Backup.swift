@@ -27,6 +27,9 @@ struct BackupFile: Codable {
   var loanPayments: [LoanPaymentDTO]?
   var templates: [TemplateDTO]?
   var valuations: [ValuationDTO]?
+  var trips: [TripDTO]?
+  var tripItems: [TripItemDTO]?
+  var tripWallets: [TripWalletDTO]?
 
   struct Empty: Codable {}
   struct AccountDTO: Codable {
@@ -43,7 +46,14 @@ struct BackupFile: Codable {
     var occurredAt: Int64; var source: String?; var importBatchId, externalId, currency: String?; var originalAmount: Int?
     var recurringId: String?; var deletedAt: Int64?; var createdAt, updatedAt: Int64; var cardId: String?
     var tags: [String]?
+    var paymentMethod, tripId, tripItemId, walletId: String?
   }
+  struct TripDTO: Codable {
+    var id, name, kind: String; var international: Bool?; var places: [TripPlace]?; var startAt, endAt: Int64?; var travellers: Int?
+    var groupId: String?; var budgetEnabled, countInBudgets: Bool?; var notes: String?; var archivedAt: Int64?; var createdAt, updatedAt: Int64
+  }
+  struct TripItemDTO: Codable { var id, tripId, label: String; var budget: Int?; var sortOrder: Int? }
+  struct TripWalletDTO: Codable { var id, tripId, label: String; var currency: String?; var amount: Int; var rate: Double?; var accountId: String?; var createdAt: Int64 }
   struct TemplateDTO: Codable {
     var id, name, type: String; var amount: Int; var accountId, toAccountId, categoryId, payee: String?; var sortOrder: Int?; var createdAt: Int64
   }
@@ -73,6 +83,7 @@ struct BackupFile: Codable {
   struct CardDTO: Codable {
     var id, accountId, kind, network, last4: String; var expiryMonth, expiryYear: Int?; var nameOnCard, label, color: String?
     var archivedAt: Int64?; var createdAt: Int64
+    var forexMarkupBps: Int?
   }
 }
 
@@ -98,6 +109,7 @@ enum BackupCodec {
     (PrefKey.monthStartDay, Int.self), (PrefKey.weekStartDay, Int.self), (PrefKey.hideAmounts, Bool.self),
     (PrefKey.merchantLogos, Bool.self), (PrefKey.myUpiId, String.self), (PrefKey.myName, String.self),
     (PrefKey.autoCleanup, String.self), (PrefKey.autoCleanupMonths, Int.self),
+    (PrefKey.baseCurrency, String.self), (PrefKey.converterCurrencies, String.self), (PrefKey.customAccent, String.self),
   ]
 
   @MainActor static func export(_ context: ModelContext, now: Date = .now) throws -> Data {
@@ -117,6 +129,9 @@ enum BackupCodec {
     let loanPayments = try context.fetch(FetchDescriptor<LoanPayment>())
     let templates = try context.fetch(FetchDescriptor<TxnTemplate>())
     let valuations = try context.fetch(FetchDescriptor<Valuation>())
+    let trips = try context.fetch(FetchDescriptor<Trip>())
+    let tripItems = try context.fetch(FetchDescriptor<TripItem>())
+    let tripWallets = try context.fetch(FetchDescriptor<TripWallet>())
     let d = AppGroup.defaults
     let settings: [BackupFile.SettingDTO] = prefKeys.compactMap { key, _ in
       guard let v = d.object(forKey: key),
@@ -141,7 +156,8 @@ enum BackupCodec {
               categoryId: $0.categoryId, payee: $0.payee, note: $0.note, occurredAt: ms($0.occurredAt), source: $0.source,
               importBatchId: $0.importBatchId, externalId: $0.externalId, currency: $0.currency, originalAmount: $0.originalAmount,
               recurringId: $0.recurringId, deletedAt: msOpt($0.deletedAt), createdAt: ms($0.createdAt), updatedAt: ms($0.updatedAt), cardId: $0.cardId,
-              tags: $0.tags.isEmpty ? nil : $0.tags)
+              tags: $0.tags.isEmpty ? nil : $0.tags, paymentMethod: $0.paymentMethod, tripId: $0.tripId, tripItemId: $0.tripItemId,
+              walletId: $0.walletId)
       },
       settings: settings,
       recurringRules: rules.map {
@@ -160,7 +176,7 @@ enum BackupCodec {
       txnSplitShares: txns.compactMap { t in t.splitShare.map { .init(id: t.id, share: $0) } },
       cards: cards.map { .init(id: $0.id, accountId: $0.accountId, kind: $0.kind, network: $0.network, last4: $0.last4, expiryMonth: $0.expiryMonth,
                                expiryYear: $0.expiryYear, nameOnCard: $0.nameOnCard, label: $0.label, color: $0.color,
-                               archivedAt: msOpt($0.archivedAt), createdAt: ms($0.createdAt)) },
+                               archivedAt: msOpt($0.archivedAt), createdAt: ms($0.createdAt), forexMarkupBps: $0.forexMarkupBps) },
       splitGroups: groups.map { .init(id: $0.id, name: $0.name, memberIds: $0.memberIds, createdAt: ms($0.createdAt)) },
       loans: loans.map { .init(id: $0.id, person: $0.person, friendId: $0.friendId, direction: $0.direction, amount: $0.amount,
                                startedAt: ms($0.startedAt), dueAt: msOpt($0.dueAt), note: $0.note, remind: $0.remind,
@@ -168,7 +184,14 @@ enum BackupCodec {
       loanPayments: loanPayments.map { .init(id: $0.id, loanId: $0.loanId, amount: $0.amount, occurredAt: ms($0.occurredAt), note: $0.note) },
       templates: templates.map { .init(id: $0.id, name: $0.name, type: $0.typeRaw, amount: $0.amount, accountId: $0.accountId, toAccountId: $0.toAccountId,
                                        categoryId: $0.categoryId, payee: $0.payee, sortOrder: $0.sortOrder, createdAt: ms($0.createdAt)) },
-      valuations: valuations.map { .init(id: $0.id, accountId: $0.accountId, value: $0.value, at: ms($0.at)) }
+      valuations: valuations.map { .init(id: $0.id, accountId: $0.accountId, value: $0.value, at: ms($0.at)) },
+      trips: trips.map { .init(id: $0.id, name: $0.name, kind: $0.kind, international: $0.international, places: $0.places, startAt: msOpt($0.startAt),
+                               endAt: msOpt($0.endAt), travellers: $0.travellers, groupId: $0.groupId, budgetEnabled: $0.budgetEnabled,
+                               countInBudgets: $0.countInBudgets, notes: $0.notes, archivedAt: msOpt($0.archivedAt),
+                               createdAt: ms($0.createdAt), updatedAt: ms($0.updatedAt)) },
+      tripItems: tripItems.map { .init(id: $0.id, tripId: $0.tripId, label: $0.label, budget: $0.budget, sortOrder: $0.sortOrder) },
+      tripWallets: tripWallets.map { .init(id: $0.id, tripId: $0.tripId, label: $0.label, currency: $0.currency, amount: $0.amount, rate: $0.rate,
+                                           accountId: $0.accountId, createdAt: ms($0.createdAt)) }
     )
     let enc = JSONEncoder()
     enc.outputFormatting = [.sortedKeys]
@@ -190,6 +213,7 @@ enum BackupCodec {
     try context.delete(model: SavedFilter.self); try context.delete(model: ImportBatch.self)
     try context.delete(model: SplitGroup.self); try context.delete(model: Loan.self); try context.delete(model: LoanPayment.self)
     try context.delete(model: TxnTemplate.self); try context.delete(model: Valuation.self)
+    try context.delete(model: Trip.self); try context.delete(model: TripItem.self); try context.delete(model: TripWallet.self)
     for a in file.accounts {
       context.insert(Account(id: a.id, name: a.name, type: AccountType(rawValue: a.type) ?? .bank, institution: a.institution,
                              last4: a.last4, openingBalance: a.openingBalance, creditLimit: a.creditLimit, statementDay: a.statementDay,
@@ -210,7 +234,19 @@ enum BackupCodec {
                          originalAmount: t.originalAmount, splitShare: shares[t.id], cardId: t.cardId, deletedAt: dateOpt(t.deletedAt),
                          createdAt: date(t.createdAt), updatedAt: date(t.updatedAt))
       txn.tags = t.tags ?? []
+      txn.paymentMethod = t.paymentMethod; txn.tripId = t.tripId; txn.tripItemId = t.tripItemId; txn.walletId = t.walletId
       context.insert(txn)
+    }
+    for x in file.trips ?? [] {
+      context.insert(Trip(id: x.id, name: x.name, kind: x.kind, international: x.international ?? false, places: x.places ?? [],
+                          startAt: dateOpt(x.startAt), endAt: dateOpt(x.endAt), travellers: x.travellers ?? 1, groupId: x.groupId,
+                          budgetEnabled: x.budgetEnabled ?? true, countInBudgets: x.countInBudgets ?? true, notes: x.notes,
+                          archivedAt: dateOpt(x.archivedAt), createdAt: date(x.createdAt), updatedAt: date(x.updatedAt)))
+    }
+    for x in file.tripItems ?? [] { context.insert(TripItem(id: x.id, tripId: x.tripId, label: x.label, budget: x.budget, sortOrder: x.sortOrder ?? 0)) }
+    for x in file.tripWallets ?? [] {
+      context.insert(TripWallet(id: x.id, tripId: x.tripId, label: x.label, currency: x.currency, amount: x.amount, rate: x.rate ?? 1,
+                                accountId: x.accountId, createdAt: date(x.createdAt)))
     }
     for x in file.templates ?? [] {
       context.insert(TxnTemplate(id: x.id, name: x.name, type: TxnType(rawValue: x.type) ?? .expense, amount: x.amount, accountId: x.accountId,
@@ -244,9 +280,11 @@ enum BackupCodec {
       context.insert(Goal(id: g.id, name: g.name, icon: g.icon, color: g.color, target: g.target, saved: g.saved, deadline: dateOpt(g.deadline), archivedAt: dateOpt(g.archivedAt), createdAt: date(g.createdAt)))
     }
     for c in file.cards ?? [] {
-      context.insert(PaymentCard(id: c.id, accountId: c.accountId, kind: c.kind, network: c.network, last4: c.last4, expiryMonth: c.expiryMonth,
-                                 expiryYear: c.expiryYear, nameOnCard: c.nameOnCard, label: c.label, color: c.color,
-                                 archivedAt: dateOpt(c.archivedAt), createdAt: date(c.createdAt)))
+      let card = PaymentCard(id: c.id, accountId: c.accountId, kind: c.kind, network: c.network, last4: c.last4, expiryMonth: c.expiryMonth,
+                             expiryYear: c.expiryYear, nameOnCard: c.nameOnCard, label: c.label, color: c.color,
+                             archivedAt: dateOpt(c.archivedAt), createdAt: date(c.createdAt))
+      card.forexMarkupBps = c.forexMarkupBps
+      context.insert(card)
     }
     for f in file.savedFilters ?? [] {
       context.insert(SavedFilter(id: f.id, name: f.name, filters: f.filters, sortOrder: f.sortOrder ?? 0, createdAt: date(f.createdAt), updatedAt: date(f.updatedAt)))

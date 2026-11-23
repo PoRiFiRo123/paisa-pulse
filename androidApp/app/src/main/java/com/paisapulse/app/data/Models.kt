@@ -58,6 +58,10 @@ enum class Frequency(val key: String, val noun: String) {
   val tags: List<String>? = null,
   /** Receipt photo file name in files/receipts (this phone only). */
   val receipt: String? = null,
+  /** How it was paid: PaymentMethod.id (upi, debit_card, neft…). */
+  val paymentMethod: String? = null,
+  /** Planning: the trip / event, its budget item, and the carried cash or forex it was paid from. */
+  val tripId: String? = null, val tripItemId: String? = null, val walletId: String? = null,
   /** Your share when split (stored in BackupFile.txnSplitShares, like the iPhone app). */
   @Transient val splitShare: Long? = null,
 ) {
@@ -111,6 +115,8 @@ enum class Frequency(val key: String, val noun: String) {
   val id: String = newId(), val accountId: String, val kind: String = "debit", val network: String = "other", val last4: String,
   val expiryMonth: Int? = null, val expiryYear: Int? = null, val nameOnCard: String? = null, val label: String? = null,
   val color: String? = null, val archivedAt: Long? = null, val createdAt: Long = now(),
+  /** Foreign-currency markup in basis points (413 = 4.13%); null = none. */
+  val forexMarkupBps: Int? = null,
 ) {
   val expiryText get() = if (expiryMonth != null && expiryYear != null) "%02d/%02d".format(expiryMonth, expiryYear % 100) else null
   val title get() = label ?: "${com.paisapulse.app.logic.CardNumber.networkName(network)} ••$last4"
@@ -135,6 +141,23 @@ enum class Frequency(val key: String, val noun: String) {
 
 /** An investment account's value on a date; balances use the latest one. */
 @Serializable data class Valuation(val id: String = newId(), val accountId: String, val value: Long, val at: Long = now())
+
+/** Planning: a trip or any planned event (wedding, outing…), with budget items and carried money. */
+@Serializable data class Trip(
+  val id: String = newId(), val name: String, val kind: String = "trip", val international: Boolean = false,
+  val places: List<TripPlace> = emptyList(), val startAt: Long? = null, val endAt: Long? = null, val travellers: Int = 1,
+  /** The split group for the people on this trip (Split v2). */ val groupId: String? = null,
+  val budgetEnabled: Boolean? = true, val countInBudgets: Boolean? = true, val notes: String? = null,
+  val archivedAt: Long? = null, val createdAt: Long = now(), val updatedAt: Long = now(),
+)
+@Serializable data class TripPlace(val name: String, val country: String? = null, val currency: String? = null)
+@Serializable data class TripItem(val id: String = newId(), val tripId: String, val label: String, val budget: Long? = null, val sortOrder: Int = 0)
+/** Cash or a forex card you carry on a trip. currency null = main currency; amount in that currency's minor units;
+ *  rate = main currency per 1 unit (what you paid for it). */
+@Serializable data class TripWallet(
+  val id: String = newId(), val tripId: String, val label: String, val currency: String? = null, val amount: Long,
+  val rate: Double = 1.0, val accountId: String? = null, val createdAt: Long = now(),
+)
 
 @Serializable data class Setting(val key: String, val value: String)
 @Serializable data class Share(val id: String, val share: Long)
@@ -161,6 +184,9 @@ enum class Frequency(val key: String, val noun: String) {
   val loanPayments: List<LoanPayment> = emptyList(),
   val templates: List<TxnTemplate> = emptyList(),
   val valuations: List<Valuation> = emptyList(),
+  val trips: List<Trip> = emptyList(),
+  val tripItems: List<TripItem> = emptyList(),
+  val tripWallets: List<TripWallet> = emptyList(),
 ) {
   val liveTxns get() = transactions.filter { it.deletedAt == null }
 }

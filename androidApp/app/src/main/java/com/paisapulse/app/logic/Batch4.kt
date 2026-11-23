@@ -124,7 +124,7 @@ object CardStatement {
 
 object HomeSections {
   val all = listOf(
-    Triple("hero", "This month", "indianrupeesign.circle.fill"), Triple("templates", "Quick add", "bolt.fill"),
+    Triple("hero", "This month", "indianrupeesign.circle.fill"), Triple("trips", "Planning", "airplane"), Triple("templates", "Quick add", "bolt.fill"),
     Triple("forecast", "Month-end forecast", "chart.line.uptrend.xyaxis"), Triple("cards", "Card bills", "creditcard.fill"),
     Triple("categories", "Where it went", "chart.pie.fill"), Triple("budgets", "Budgets", "gauge.with.dots.needle.67percent"),
     Triple("goals", "Goals", "target"), Triple("upcoming", "Next 7 days", "calendar"), Triple("recap", "Monthly recap", "sparkles"),

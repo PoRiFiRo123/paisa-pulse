@@ -102,6 +102,10 @@ struct InsightsView: View {
         Section { NavigationLink { RecapView(offset: offset == 0 ? -1 : offset) } label: { Label("Monthly Recap", systemImage: "sparkles") } }
       }
 
+      let inRange = txns.filter { range.contains($0.occurredAt) }
+      PaymentMethodSection(txns: inRange)
+      SpentAbroadSection(txns: inRange)
+
       let biggest = txns.filter { $0.type == .expense && range.contains($0.occurredAt) }.sorted { $0.effectiveAmount > $1.effectiveAmount }.prefix(5)
       if !biggest.isEmpty {
         Section("Biggest expenses") {

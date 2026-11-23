@@ -5,6 +5,14 @@ Newest first. Every push to `main` becomes a GitHub Release `build-<number>` wit
 
 ## [Unreleased]
 
+- Both: **Planning.** Plan trips, vacations, weekends, work trips, events, outings, rides or anything else. Each type comes with ready budget items (more for trips abroad), destinations set their currencies, track cash or forex you carry, add who's going (a split group with settle-up), see spent vs budget per item, per person and per currency, share a summary picture, archive or delete. While a trip is on, new expenses link to it and default to its currency. Choose per trip whether it counts in your monthly budgets. Home shows the trip that's on or coming up; also in Settings › Planning.
+- Both: **Payment method** on every transaction (UPI, debit/credit card, net banking, NEFT, IMPS, RTGS, cash, cheque, wallet, auto debit), guessed from the account and card, read from statement narrations, and UPI for screenshots. Insights shows "How you paid".
+- Both: **Foreign currencies everywhere.** The original amount shows on rows and the detail screen with its locked rate (fix it to match your statement). Each card has its own forex markup (percent, plus GST, editable); it's added when you pay in another currency. Insights has "Spent abroad".
+- Both: **Main currency** (Settings › See › Main Currency): ₹ by default, any currency possible; convert everything at today's rate or just change the symbol (a backup is saved first).
+- Both: the **converter** compares one amount across as many currencies as you like; tap a row to type in it.
+- Both: **bank picker** with 68 Indian banks and wallets (sets the name and colour).
+- Both: **accent colour** from presets or any colour (colour wheel on Android, system colour picker on iPhone); **app icon** picker shows real previews, with six new icons (Ocean, Rose, Forest, Gold, Sunset, Graphite).
+
 - iPhone: Insights and Monthly Recap no longer crash (the share picture was drawn while the screen was being built; it's now drawn when you tap Share).
 - iPhone share sheet: when no amount is found you can "Add It Myself" (date guessed from the picture), every card's amount is editable, and "What Paisa Pulse read" shows the text it saw.
 

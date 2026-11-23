@@ -136,7 +136,7 @@ enum CardStatement {
 /// The Home screen's sections, in your order; hidden ones are kept in `hidden`.
 enum HomeSections {
   static let all: [(key: String, label: String, icon: String)] = [
-    ("hero", "This month", "indianrupeesign.circle.fill"), ("templates", "Quick add", "bolt.fill"),
+    ("hero", "This month", "indianrupeesign.circle.fill"), ("trips", "Planning", "airplane"), ("templates", "Quick add", "bolt.fill"),
     ("forecast", "Month-end forecast", "chart.line.uptrend.xyaxis"), ("cards", "Card bills", "creditcard.fill"),
     ("categories", "Where it went", "chart.pie.fill"), ("budgets", "Budgets", "gauge.with.dots.needle.67percent"),
     ("goals", "Goals", "target"), ("upcoming", "Next 7 days", "calendar"), ("recap", "Monthly recap", "sparkles"),

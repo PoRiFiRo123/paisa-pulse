@@ -120,6 +120,8 @@ struct TxnRow: View {
         AmountText(amount: txn.amount, type: txn.type)
         if let share = txn.splitShare {
           Text("yours \(Money.format(share))").font(.caption2).foregroundStyle(.secondary)
+        } else if let c = txn.currency, let o = txn.originalAmount {
+          Text(Money.format(o, code: c)).font(.caption2).foregroundStyle(.secondary)
         }
       }
     }

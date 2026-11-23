@@ -93,7 +93,7 @@ enum Currency {
     ("SAR", "Saudi Riyal", "SAR"), ("CNY", "Chinese Yuan", "CN¥"), ("HKD", "Hong Kong Dollar", "HK$"), ("NZD", "NZ Dollar", "NZ$"),
     ("LKR", "Sri Lankan Rupee", "Rs"), ("NPR", "Nepalese Rupee", "Rs"), ("BDT", "Bangladeshi Taka", "৳"), ("IDR", "Indonesian Rupiah", "Rp"),
   ]
-  static func symbol(_ code: String) -> String { common.first { $0.code == code }?.symbol ?? code }
+  static func symbol(_ code: String) -> String { common.first { $0.code == code }?.symbol ?? World.symbol(code) }
 
   struct Rates: Codable { var at: Double; var inrPer: [String: Double] }
   private static let key = "fx.rates"

@@ -40,7 +40,9 @@ val swatches = listOf("#FF3B30", "#FF9500", "#FFB800", "#34C759", "#30B0C7", "#3
   "#5E5CE6", "#5856D6", "#AF52DE", "#FF2D55", "#A2845E", "#8E8E93", "#1E9E5A")
 
 fun palette(dark: Boolean, accentKey: String): Palette {
-  val a = accents.firstOrNull { it.first == accentKey } ?: accents[0]
+  // "custom": your own colour from the colour picker (Settings › Accent colour).
+  val a = if (accentKey == "custom") Triple("custom", "Custom", com.paisapulse.app.data.Prefs.customAccent to com.paisapulse.app.data.Prefs.customAccent)
+    else accents.firstOrNull { it.first == accentKey } ?: accents[0]
   return if (dark) Palette(true, Color.Black, hex("#1C1C1E"), Color.White, hex("#8E8E93"), hex("#5A5A5F"), hex("#38383A"),
     Color(0x3D767680), hex(a.third.second), hex("#FF6B6B"), hex("#30D158"), Color(0xB31C1C1E), Color(0x26FFFFFF))
   else Palette(false, hex("#F2F2F7"), Color.White, Color.Black, hex("#8A8A8E"), hex("#C4C4C7"), hex("#E3E3E8"),

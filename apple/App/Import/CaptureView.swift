@@ -79,6 +79,7 @@ struct CaptureView: View {
       guard let accountId = d.accountId else { continue }
       let t = Txn(type: d.type, amount: d.amount, accountId: accountId, toAccountId: d.toAccountId, categoryId: d.categoryId,
                   payee: d.payee, note: d.note, occurredAt: d.occurredAt, source: "screenshot")
+      if d.type != .transfer { t.paymentMethod = PaymentMethod.upi.rawValue }
       context.insert(t)
       added.append(t)
     }

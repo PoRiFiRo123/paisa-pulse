@@ -52,6 +52,30 @@
       android:icon="@mipmap/ic_launcher_mono" android:roundIcon="@mipmap/ic_launcher_mono" android:label="Paisa Pulse">
       <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
     </activity-alias>
+    <activity-alias android:name=".IconOcean" android:targetActivity=".MainActivity" android:exported="true" android:enabled="false"
+      android:icon="@mipmap/ic_launcher_ocean" android:roundIcon="@mipmap/ic_launcher_ocean" android:label="Paisa Pulse">
+      <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+    </activity-alias>
+    <activity-alias android:name=".IconRose" android:targetActivity=".MainActivity" android:exported="true" android:enabled="false"
+      android:icon="@mipmap/ic_launcher_rose" android:roundIcon="@mipmap/ic_launcher_rose" android:label="Paisa Pulse">
+      <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+    </activity-alias>
+    <activity-alias android:name=".IconForest" android:targetActivity=".MainActivity" android:exported="true" android:enabled="false"
+      android:icon="@mipmap/ic_launcher_forest" android:roundIcon="@mipmap/ic_launcher_forest" android:label="Paisa Pulse">
+      <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+    </activity-alias>
+    <activity-alias android:name=".IconGold" android:targetActivity=".MainActivity" android:exported="true" android:enabled="false"
+      android:icon="@mipmap/ic_launcher_gold" android:roundIcon="@mipmap/ic_launcher_gold" android:label="Paisa Pulse">
+      <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+    </activity-alias>
+    <activity-alias android:name=".IconSunset" android:targetActivity=".MainActivity" android:exported="true" android:enabled="false"
+      android:icon="@mipmap/ic_launcher_sunset" android:roundIcon="@mipmap/ic_launcher_sunset" android:label="Paisa Pulse">
+      <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+    </activity-alias>
+    <activity-alias android:name=".IconGraphite" android:targetActivity=".MainActivity" android:exported="true" android:enabled="false"
+      android:icon="@mipmap/ic_launcher_graphite" android:roundIcon="@mipmap/ic_launcher_graphite" android:label="Paisa Pulse">
+      <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+    </activity-alias>
     <receiver android:name=".widget.SpendingWidgetReceiver" android:exported="true" android:label="This Month">
       <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
       <meta-data android:name="android.appwidget.provider" android:resource="@xml/spending_widget" />

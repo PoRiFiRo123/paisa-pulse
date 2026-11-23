@@ -37,6 +37,7 @@ import java.util.Locale
   PScreen(title, leading = { GlassIcon("calendar", "Calendar") { Ui.push(Route.Calendar) } }) {
     HomeSections.order(Prefs.homeOrder).filter { it !in off }.forEach { key ->
       when (key) {
+        "trips" -> homeTripsSection(db)
         "hero" -> group { HeroCard(Ledger.summary(txns, month), db.budgets.firstOrNull { it.categoryId == null && it.period != "weekly" }?.amount) }
         "templates" -> {
           val templates = db.templates.sortedBy { it.sortOrder }
@@ -95,7 +96,7 @@ import java.util.Locale
           }
         }
         "budgets" -> {
-          val progress = Budgets.progress(db.budgets, txns, l.categories, month, Periods.week(LocalDate.now(), Prefs.weekStartDay))
+          val progress = Budgets.progress(db.budgets, TripMath.budgetTxns(txns, db.trips), l.categories, month, Periods.week(LocalDate.now(), Prefs.weekStartDay))
           if (progress.isNotEmpty()) group("Budgets", trailing = { Text("Edit", style = T.subhead, color = C.accent, modifier = Modifier.clickable { Ui.push(Route.Budgets) }) }) {
             progress.forEachIndexed { i, p -> if (i > 0) Divider(); BudgetRow(p, l) }
           }

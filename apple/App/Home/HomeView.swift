@@ -12,6 +12,9 @@ struct HomeView: View {
   @Query(sort: \Goal.createdAt) private var goals: [Goal]
   @Query(sort: \TxnTemplate.sortOrder) private var templates: [TxnTemplate]
   @Query private var valuations: [Valuation]
+  @Query(sort: \Trip.startAt) private var trips: [Trip]
+  @Query private var tripItems: [TripItem]
+  @Query private var tripWallets: [TripWallet]
   @AppStorage(PrefKey.monthStartDay, store: AppGroup.defaults) private var monthStartDay = 1
   @AppStorage(PrefKey.weekStartDay, store: AppGroup.defaults) private var weekStartDay = 2
   @AppStorage(PrefKey.hideAmounts, store: AppGroup.defaults) private var hidden = false
@@ -53,6 +56,8 @@ struct HomeView: View {
 
   @ViewBuilder private func section(_ key: String, lookups: Lookups, month: DateInterval) -> some View {
     switch key {
+    case "trips":
+      HomeTripsSection(trips: trips, items: tripItems, wallets: tripWallets, txns: txns, hidden: hidden)
     case "hero":
       let summary = Ledger.summary(txns, in: month)
       let overall = budgets.first { $0.categoryId == nil && $0.period == "monthly" }
@@ -139,7 +144,7 @@ struct HomeView: View {
         }
       }
     case "budgets":
-      let progress = Budgets.progress(budgets, txns: txns, categories: lookups.categories, month: month,
+      let progress = Budgets.progress(budgets, txns: TripMath.budgetTxns(txns, trips: trips), categories: lookups.categories, month: month,
                                       week: Periods.week(containing: .now, firstWeekday: weekStartDay))
       if !progress.isEmpty {
         Section {

@@ -34,6 +34,8 @@ enum Palette {
     ("teal", "Teal", "#30B0C7", "#40C8E0"),
   ]
   static func accent(_ key: String) -> Color {
+    // "custom": your own colour from the colour wheel (Settings › Accent colour).
+    if key == "custom", let hex = AppGroup.defaults.string(forKey: PrefKey.customAccent) { return Color(hex: hex) }
     let a = accents.first(where: { $0.key == key }) ?? accents[0]
     return Color.dynamic(light: a.light, dark: a.dark)
   }
