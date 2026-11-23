@@ -72,7 +72,8 @@ enum Notifier {
     let cats = Dictionary(((try? context.fetch(FetchDescriptor<Category>())) ?? []).map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
     let month = Periods.month(containing: .now, startDay: max(1, d.integer(forKey: PrefKey.monthStartDay)))
     let week = Periods.week(containing: .now, firstWeekday: d.object(forKey: PrefKey.weekStartDay) as? Int ?? 2)
-    for p in Budgets.progress(budgets, txns: txns, categories: cats, month: month, week: week) {
+    let trips = (try? context.fetch(FetchDescriptor<Trip>())) ?? []
+    for p in Budgets.progress(budgets, txns: TripMath.budgetTxns(txns, trips: trips), categories: cats, month: month, week: week) {
       let level = p.ratio >= 1 ? 100 : p.ratio >= 0.8 ? 80 : 0
       guard level > 0 else { continue }
       let start = p.budget.period == "weekly" ? week.start : month.start

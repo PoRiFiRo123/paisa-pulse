@@ -153,7 +153,7 @@ struct RecapView: View {
   @Query private var categories: [Category]
   @AppStorage(PrefKey.monthStartDay, store: AppGroup.defaults) private var monthStartDay = 1
   @Environment(\.displayScale) private var scale
-  @State private var shareImage: UIImage?
+  @State private var shareImage: ShareImage?
 
   var body: some View {
     let lookups = Lookups(accounts: accounts, categories: categories)
@@ -166,14 +166,14 @@ struct RecapView: View {
       // The picture is drawn when you tap Share, never while the screen is being built
       // (rendering inside body crashed the app on some iPhones).
       Button {
-        shareImage = render(card)
+        shareImage = render(card).map(ShareImage.init)
       } label: {
         Label("Share", systemImage: "square.and.arrow.up").frame(maxWidth: .infinity)
       }
       .buttonStyle(.borderedProminent).controlSize(.large).padding(.horizontal)
       Text("The picture shows totals only, no account names.").font(.caption).foregroundStyle(.secondary).padding(.top, 4)
     }
-    .sheet(item: Binding(get: { shareImage.map(ShareImage.init) }, set: { if $0 == nil { shareImage = nil } })) { item in
+    .sheet(item: $shareImage) { item in
       ActivitySheet(items: [item.image]).presentationDetents([.medium, .large])
     }
     .background(Color(.systemGroupedBackground))
@@ -193,7 +193,7 @@ struct RecapView: View {
   }
 }
 
-private struct ShareImage: Identifiable { let id = UUID(); let image: UIImage }
+struct ShareImage: Identifiable { let id = UUID(); let image: UIImage }
 
 /// The system share sheet for things SwiftUI's ShareLink can't take directly (a freshly drawn picture).
 struct ActivitySheet: UIViewControllerRepresentable {

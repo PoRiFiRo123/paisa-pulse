@@ -99,7 +99,7 @@ object Services {
     if (!Prefs.notifyBudgets) return
     val d = Store.value; val cats = d.categories.associateBy { it.id }
     val m = Periods.month(LocalDate.now(), Prefs.monthStartDay); val w = Periods.week(LocalDate.now(), Prefs.weekStartDay)
-    Budgets.progress(d.budgets, d.transactions, cats, m, w).forEach { p ->
+    Budgets.progress(d.budgets, com.paisapulse.app.logic.TripMath.budgetTxns(d.transactions, d.trips), cats, m, w).forEach { p ->
       val level = if (p.ratio >= 1) 100 else if (p.ratio >= 0.8) 80 else 0
       if (level == 0) return@forEach
       val start = if (p.budget.period == "weekly") w.start else m.start

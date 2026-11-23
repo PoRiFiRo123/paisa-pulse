@@ -258,6 +258,7 @@ object Search {
   val ctx = androidx.compose.ui.platform.LocalContext.current
   var savingTemplate by remember { mutableStateOf(false) }
   var viewing by remember { mutableStateOf(false) }
+  var fixing by remember { mutableStateOf<String?>(null) }
   val receipt = remember(t.receipt) { Receipts.bitmap(ctx, t.receipt) }
   val pickPhoto = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia()) { uri ->
     uri ?: return@rememberLauncherForActivityResult
@@ -275,6 +276,7 @@ object Search {
         CategoryBadge(icon, color, 64.dp)
         Text(l.title(t), style = T.title3, color = C.label, modifier = Modifier.padding(top = 10.dp))
         AmountText(t.amount, t.kind, T.amount(44, FontWeight.Bold))
+        if (t.currency != null && t.originalAmount != null) Text(Money.format(t.originalAmount, t.currency), style = T.headline, color = C.secondary)
         Text(java.time.Instant.ofEpochMilli(t.occurredAt).atZone(zone).format(java.time.format.DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy 'at' h:mm a", java.util.Locale.ENGLISH)),
           style = T.subhead, color = C.secondary)
       }
@@ -288,9 +290,43 @@ object Search {
         Divider(); PRow("Category", value = t.categoryId?.let { l.categories[it]?.name } ?: "Uncategorised")
         Divider(); PRow("Account", value = l.accounts[t.accountId]?.displayName ?: "—")
       }
+      PaymentMethod.of(t.paymentMethod)?.let { m ->
+        Divider(); PRow("Paid by", value = listOfNotNull(m.label, t.cardId?.let { c -> db.cards.firstOrNull { it.id == c } }?.let { it.label ?: "•••• ${it.last4}" }).joinToString(" · "))
+      }
+      t.tripId?.let { tid -> db.trips.firstOrNull { it.id == tid } }?.let { trip ->
+        Divider(); PRow("Trip", value = listOfNotNull(trip.name, t.tripItemId?.let { i -> db.tripItems.firstOrNull { it.id == i }?.label }).joinToString(" · "),
+          chevron = true, onClick = { Ui.push(Route.TripDetail(trip.id)) })
+      }
       t.note?.takeIf { it.isNotBlank() }?.let { Divider(); PRow("Note", value = it) }
       if (!t.tags.isNullOrEmpty()) { Divider(); PRow("Tags", value = t.tags.joinToString(" ") { "#$it" }, valueColor = C.accent) }
       if (t.source != null && t.source != "manual") { Divider(); PRow("Added by", value = t.source.replaceFirstChar { it.uppercase() }) }
+    }
+    val code = t.currency; val orig = t.originalAmount
+    if (code != null && orig != null && orig > 0) {
+      val card = t.cardId?.let { c -> db.cards.firstOrNull { it.id == c } }
+      val base = t.amount / (1 + (card?.forexMarkupBps ?: 0) / 10_000.0)
+      group("Foreign currency", footer = "The rate is locked to the day you spent. Fix it to match your card statement.") {
+        PRow("Spent in $code", value = Money.format(orig, code))
+        Divider(); PRow("Rate", value = "1 $code = ${Money.symbol}${"%.4f".format(base / orig)}")
+        card?.forexMarkupBps?.takeIf { it > 0 }?.let { bps ->
+          Divider(); PRow("Card markup", value = "${Money.format(t.amount - Math.round(base))} (${ForexMarkup.label(bps)})")
+        }
+        Divider(); PRow("Fix the Rate", titleColor = C.accent, onClick = { fixing = "%.4f".format(base / orig) })
+      }
+      fixing?.let { text ->
+        item {
+          AlertDialog({ fixing = null }, containerColor = C.card, title = { Text("${Money.symbol} per 1 $code", style = T.headline, color = C.label) },
+            text = { OutlinedTextField(text, { fixing = it }, singleLine = true, keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal)) },
+            confirmButton = { TextButton({
+              text.toDoubleOrNull()?.takeIf { it > 0 }?.let { r ->
+                val amt = maxOf(1L, ForexMarkup.apply(Fx.convert(orig, r), card?.forexMarkupBps))
+                Store.update { d -> d.copy(transactions = d.transactions.map { if (it.id == id) it.copy(amount = amt, updatedAt = now()) else it }) }
+              }
+              fixing = null
+            }) { Text("Save", color = C.accent) } },
+            dismissButton = { TextButton({ fixing = null }) { Text("Cancel", color = C.accent) } })
+        }
+      }
     }
     t.splitShare?.let { share ->
       group("Split") {

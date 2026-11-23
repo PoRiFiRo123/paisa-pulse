@@ -458,7 +458,24 @@ struct AccountFormView: View {
       Section {
         TextField("Name, e.g. Axis Salary", text: $name)
         Picker("Type", selection: $type) { ForEach(AccountType.allCases) { Text($0.label).tag($0) } }
-        TextField("Bank (optional)", text: $institution)
+        if type == .investment || type == .cash {
+          TextField(type == .investment ? "Platform, e.g. Groww (optional)" : "Note (optional)", text: $institution)
+        } else {
+          // Pick from the list of Indian banks / wallets; the account takes the bank's colour.
+          NavigationLink {
+            BankPickerView(wallets: type == .wallet, selection: $institution) { bank in
+              if account == nil { color = bank.color }
+              if name.trimmingCharacters(in: .whitespaces).isEmpty { name = bank.short }
+            }
+          } label: {
+            LabeledContent(type == .wallet ? "Wallet" : "Bank") {
+              HStack(spacing: 6) {
+                if let b = Banks.match(institution) { Circle().fill(Color(hex: b.color)).frame(width: 10, height: 10) }
+                Text(institution.isEmpty ? "Choose" : institution).foregroundStyle(institution.isEmpty ? .secondary : .primary)
+              }
+            }
+          }
+        }
         if type == .bank || type == .card {
           TextField("Last 4 digits (optional)", text: $last4).keyboardType(.numberPad)
         }

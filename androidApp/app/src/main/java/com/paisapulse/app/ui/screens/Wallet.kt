@@ -10,6 +10,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -202,6 +203,9 @@ val AccountType.order get() = when (this) { AccountType.Bank -> 0; AccountType.C
   var label by remember { mutableStateOf(card?.label ?: "") }
   var color by remember { mutableStateOf(card?.color ?: "") }
   var scanning by remember { mutableStateOf(false) }
+  var markupOn by remember { mutableStateOf(card?.forexMarkupBps != null) }
+  var markupGst by remember { mutableStateOf(true) }
+  var markupPercent by remember { mutableDoubleStateOf(card?.forexMarkupBps?.let { Math.round(it / 1.18 / 25.0) * 0.25 } ?: 3.5) }
   val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { bmp: Bitmap? ->
     bmp ?: return@rememberLauncherForActivityResult
     scanning = true
@@ -220,7 +224,8 @@ val AccountType.order get() = when (this) { AccountType.Bank -> 0; AccountType.C
   PSheet({ Ui.sheet = null }) {
     SheetHeader(if (card == null) (if (kind == "credit") "Card Details" else "Add Debit Card") else "Edit Card", valid, onCancel = { Ui.sheet = null }, onSave = {
       val c = (card ?: PaymentCard(accountId = accountId, last4 = last4)).copy(kind = kind, network = network, last4 = last4, expiryMonth = month.takeIf { it > 0 },
-        expiryYear = year.takeIf { it > 0 }, nameOnCard = name.ifBlank { null }?.uppercase(), label = label.ifBlank { null }, color = color.ifBlank { null })
+        expiryYear = year.takeIf { it > 0 }, nameOnCard = name.ifBlank { null }?.uppercase(), label = label.ifBlank { null }, color = color.ifBlank { null },
+        forexMarkupBps = if (markupOn) ForexMarkup.bps(markupPercent, markupGst) else null)
       Store.update { d -> d.copy(cards = if (card == null) d.cards + c else d.cards.map { if (it.id == c.id) c else it },
         accounts = if (account.kind == AccountType.Card && account.last4 == null) d.accounts.map { if (it.id == account.id) it.copy(last4 = last4) else it } else d.accounts) }
       Ui.sheet = null
@@ -238,6 +243,21 @@ val AccountType.order get() = when (this) { AccountType.Bank -> 0; AccountType.C
         Divider(); PickerRow("Expiry year", listOf(0 to "Not set") + (y0..y0 + 12).map { it to "$it" }, year) { year = it }
         Divider(); FieldRow(name, { name = it }, "Name on card (optional)")
         Divider(); FieldRow(label, { label = it }, "Nickname (optional), e.g. MyZone Debit")
+      }
+      group("Spending abroad", footer = "Most Indian cards add 2–3.5% plus GST on foreign spends. It's added automatically when you pay in another currency with this card. Check your card's fee page and edit it any time.") {
+        ToggleRow("Foreign currency markup", markupOn) { markupOn = it }
+        if (markupOn) {
+          Divider()
+          PRow("Markup", trailing = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+              Text("−", style = T.title3, color = C.accent, modifier = Modifier.clickable { markupPercent = maxOf(0.0, markupPercent - 0.25) }.padding(horizontal = 12.dp))
+              Text("%.2f%%".format(markupPercent), style = T.headline, color = C.label)
+              Text("+", style = T.title3, color = C.accent, modifier = Modifier.clickable { markupPercent = minOf(10.0, markupPercent + 0.25) }.padding(horizontal = 12.dp))
+            }
+          })
+          Divider(); ToggleRow("Plus 18% GST on the markup", markupGst) { markupGst = it }
+          Divider(); PRow("You pay extra", value = ForexMarkup.label(ForexMarkup.bps(markupPercent, markupGst)))
+        }
       }
       group("Colour") { ColorRow(color) { color = it }; if (color.isNotEmpty()) { Divider(); PRow("Use the account's colour", titleColor = C.accent, onClick = { color = "" }) } }
       if (card != null) group { PRow("Remove Card", titleColor = C.expense, onClick = {

@@ -13,13 +13,14 @@ struct PaisaPulseApp: App {
   @State private var router = Router()
   @AppStorage(PrefKey.theme, store: AppGroup.defaults) private var theme = "system"
   @AppStorage(PrefKey.accent, store: AppGroup.defaults) private var accent = "indigo"
+  @AppStorage(PrefKey.customAccent, store: AppGroup.defaults) private var customAccent = "#5E5CE6"
   @Environment(\.scenePhase) private var phase
 
   var body: some Scene {
     WindowGroup {
       RootView()
         .environment(router)
-        .tint(Palette.accent(accent))
+        .tint(accent == "custom" ? Color(hex: customAccent) : Palette.accent(accent))
         .preferredColorScheme(theme == "light" ? .light : theme == "dark" ? .dark : nil)
         .onOpenURL { router.handle(url: $0) }
         .onReceive(NotificationCenter.default.publisher(for: QuickActions.notification)) { n in
@@ -46,6 +47,7 @@ struct AddRequest: Identifiable {
   var editing: Txn? = nil
   var date: Date? = nil
   var accountId: String? = nil
+  var tripId: String? = nil
 }
 
 struct ToastMessage: Identifiable, Equatable {

@@ -40,6 +40,10 @@ No sign-up. No servers. No ads. Your money data never leaves your phone.
 | **Statement import** | PDF (password-protected too), CSV and Excel statements from Axis, Bank of Baroda, HDFC, ICICI, SBI and cards. Spots duplicates and card bill payments, and every import can be undone. |
 | **Shortcuts and widgets** | Home and Lock Screen widgets, Action Button / Control Center "Add Expense", Siri Shortcuts, app icon quick actions, Android Quick Settings tile. |
 
+### 💱 Payment methods and currencies
+- **Payment method** on every transaction (UPI, cards, net banking, NEFT/IMPS/RTGS, cash, cheque, wallet), guessed for you.
+- **Any main currency** (₹ by default), a multi-currency converter, original amounts with locked, fixable rates.
+
 ### 📊 Knowing where it went
 - **Home** that you arrange yourself: spending hero, month-end forecast, card bills due, budgets, goals, upcoming payments, recent activity.
 - **Insights** by week, month, quarter, year or custom range, a **calendar** heatmap, and a **monthly recap** you can share as a picture.
@@ -47,6 +51,12 @@ No sign-up. No servers. No ads. Your money data never leaves your phone.
 - **Subscriptions** found automatically from repeating payments, with renewal dates and yearly cost.
 - **Tags** like `#goa-trip` that total spending across categories.
 - **Net worth over time**, including investments (Groww, mutual funds, PF) that you value now and then.
+
+### ✈️ Planning trips and events
+- **Trips, vacations, weekends, work trips, events, outings, rides**: each type comes with ready budget items, more for trips abroad.
+- **Destinations set currencies**: spend in baht, dirhams or euros; the ₹ cost is worked out with your card's forex markup.
+- **Cash and forex cards you carry**, with what's left; **who's going** becomes a split group with settle-up.
+- **Spent vs budget** per item, per person and per currency; share a summary picture; keep trips out of monthly budgets if you like.
 
 ### 💳 Accounts and cards
 - A **Wallet-style accounts screen**: bank accounts, credit cards, cash, wallets and investments as a stack of cards.

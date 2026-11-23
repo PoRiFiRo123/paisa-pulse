@@ -145,11 +145,13 @@ enum ImportPlan {
       let transfer = r.type == .transfer && r.otherAccountId != nil
       let intoThis = !r.row.out
       let type: TxnType = transfer ? .transfer : r.type == .transfer ? (intoThis ? .income : .expense) : r.type
-      context.insert(Txn(type: type, amount: r.row.amount,
+      let t = Txn(type: type, amount: r.row.amount,
                          accountId: transfer && intoThis ? r.otherAccountId! : accountId,
                          toAccountId: transfer ? (intoThis ? accountId : r.otherAccountId) : nil,
                          categoryId: transfer ? nil : r.categoryId, payee: r.payee, note: r.note, occurredAt: r.row.date,
-                         source: "import", importBatchId: batch.id, externalId: r.key, createdAt: now, updatedAt: now))
+                         source: "import", importBatchId: batch.id, externalId: r.key, createdAt: now, updatedAt: now)
+      t.paymentMethod = PaymentMethod.fromText(r.row.description)?.rawValue
+      context.insert(t)
     }
     try? context.save()
     return batch

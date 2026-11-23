@@ -410,3 +410,85 @@ final class ScreenshotAppsTests: XCTestCase {
     XCTAssertFalse(d.include); XCTAssertEqual(d.payee, "Zepto")
   }
 }
+
+/// Payment method, currencies and trips (same cases as Android V2Test).
+final class V2Tests: XCTestCase {
+  private var cal: Calendar { var c = Calendar(identifier: .gregorian); c.timeZone = TimeZone(identifier: "Asia/Kolkata")!; return c }
+  private func d(_ mo: Int, _ day: Int, _ h: Int = 12) -> Date { cal.date(from: DateComponents(year: 2026, month: mo, day: day, hour: h))! }
+  override func tearDown() { AppGroup.defaults.removeObject(forKey: PrefKey.baseCurrency) }
+
+  func testPaymentMethodFromText() {
+    XCTAssertEqual(PaymentMethod.fromText("UPI/DR/123456/SWIGGY/YESB"), .upi)
+    XCTAssertEqual(PaymentMethod.fromText("NEFT-HDFC0001234-ACME PVT LTD"), .neft)
+    XCTAssertEqual(PaymentMethod.fromText("MMT/IMPS/123/Rohan"), .imps)
+    XCTAssertEqual(PaymentMethod.fromText("NACH-DR- BAJAJ FIN"), .autoDebit)
+    XCTAssertEqual(PaymentMethod.fromText("POS 1234 DMART"), .debitCard)
+    XCTAssertEqual(PaymentMethod.fromText("RTGS/UTIBR52026/ABC"), .rtgs)
+    XCTAssertNil(PaymentMethod.fromText("Salary"))
+    XCTAssertEqual(PaymentMethod.guess(accountType: .bank, cardKind: "credit"), .creditCard)
+    XCTAssertEqual(PaymentMethod.guess(accountType: .cash, cardKind: nil), .cash)
+  }
+
+  func testFxAndMarkup() {
+    let inrPer = ["USD": 85.0, "EUR": 92.0]
+    XCTAssertEqual(Fx.rate(from: "USD", to: "INR", inrPer: inrPer)!, 85, accuracy: 1e-9)
+    XCTAssertEqual(Fx.rate(from: "USD", to: "EUR", inrPer: inrPer)!, 85.0 / 92.0, accuracy: 1e-9)
+    XCTAssertNil(Fx.rate(from: "XYZ", to: "INR", inrPer: inrPer))
+    XCTAssertEqual(Fx.convert(5_000, rate: 85), 425_000)
+    XCTAssertEqual(ForexMarkup.bps(percent: 3.5, withGst: true), 413)
+    XCTAssertEqual(ForexMarkup.apply(425_000, bps: 413), 442_553)
+    XCTAssertEqual(ForexMarkup.apply(425_000, bps: nil), 425_000)
+  }
+
+  func testMoneyInOtherCurrencies() {
+    XCTAssertEqual(Money.format(12_345_600), "₹1,23,456")
+    AppGroup.defaults.set("USD", forKey: PrefKey.baseCurrency)
+    XCTAssertEqual(Money.format(12_345_650), "$123,456.50")
+    XCTAssertEqual(Money.compact(120_000_000), "$1.2M")
+    XCTAssertEqual(Money.format(100_000, code: "AED"), "AED 1,000")
+    XCTAssertEqual(Money.format(9_000, code: "EUR"), "€90")
+  }
+
+  func testBanks() {
+    XCTAssertEqual(Banks.match("Axis Bank")?.id, "axis")
+    XCTAssertEqual(Banks.match("bank of baroda")?.id, "bob")
+    XCTAssertEqual(Banks.match("State Bank of India")?.id, "sbi")
+    XCTAssertEqual(Banks.match("Indian Overseas Bank")?.id, "iob")
+    XCTAssertNil(Banks.match("My Local Bank"))
+    XCTAssertEqual(World.symbol("USD"), "$")
+  }
+
+  func testTripSummary() {
+    let trip = Trip(id: "goa", name: "Goa", startAt: d(12, 20), endAt: d(12, 24), travellers: 4)
+    let items = [TripItem(id: "food", tripId: "goa", label: "Food", budget: 1_000_000, sortOrder: 0),
+                 TripItem(id: "stay", tripId: "goa", label: "Stay", budget: 2_000_000, sortOrder: 1)]
+    let wallets = [TripWallet(id: "cash", tripId: "goa", label: "Cash", amount: 500_000)]
+    let t1 = Txn(type: .expense, amount: 400_000, accountId: "a"); t1.tripId = "goa"; t1.tripItemId = "food"; t1.splitShare = 100_000
+    let t2 = Txn(type: .expense, amount: 2_400_000, accountId: "a"); t2.tripId = "goa"; t2.tripItemId = "stay"
+    let t3 = Txn(type: .expense, amount: 60_000, accountId: "c"); t3.tripId = "goa"; t3.tripItemId = "food"; t3.walletId = "cash"
+    let t4 = Txn(type: .expense, amount: 99_900, accountId: "a"); t4.tripId = "other"
+    let s = TripMath.summary(trip, items: items, wallets: wallets, txns: [t1, t2, t3, t4], now: d(12, 22), calendar: cal)
+    XCTAssertEqual(s.status, .ongoing); XCTAssertEqual(s.day, 3); XCTAssertEqual(s.days, 5)
+    XCTAssertEqual(s.items[0].spent, 160_000); XCTAssertEqual(s.items[0].remaining, 840_000)
+    XCTAssertEqual(s.spent, 2_560_000); XCTAssertEqual(s.groupCost, 2_860_000); XCTAssertEqual(s.perPerson, 715_000)
+    XCTAssertEqual(s.budget, 3_000_000); XCTAssertEqual(s.wallets[0].left, 440_000)
+    XCTAssertEqual(TripMath.status(trip, now: d(12, 10), calendar: cal), .upcoming)
+    XCTAssertEqual(TripMath.summary(trip, items: items, wallets: wallets, txns: [], now: d(12, 10), calendar: cal).daysToGo, 10)
+    XCTAssertEqual(TripMath.status(trip, now: d(12, 25), calendar: cal), .completed)
+    XCTAssertEqual(TripMath.ongoing([trip], now: d(12, 21), calendar: cal)?.id, "goa")
+  }
+
+  func testForeignWalletAndBudgets() {
+    let trip = Trip(id: "bkk", name: "Bangkok", international: true, startAt: d(12, 1), endAt: d(12, 5), countInBudgets: false)
+    let w = TripWallet(id: "thb", tripId: "bkk", label: "Baht cash", currency: "THB", amount: 1_000_000, rate: 2.5)
+    let t1 = Txn(type: .expense, amount: 250_000, accountId: "a", currency: "THB", originalAmount: 100_000); t1.tripId = "bkk"; t1.walletId = "thb"
+    let t2 = Txn(type: .expense, amount: 50_000, accountId: "a"); t2.tripId = "bkk"; t2.walletId = "thb"
+    let t3 = Txn(type: .expense, amount: 10_000, accountId: "a")
+    let s = TripMath.summary(trip, items: [], wallets: [w], txns: [t1, t2, t3], now: d(12, 3), calendar: cal)
+    XCTAssertEqual(s.wallets[0].left, 880_000)
+    XCTAssertEqual(s.byCurrency, ["THB": 100_000])
+    XCTAssertEqual(TripMath.budgetTxns([t1, t2, t3], trips: [trip]).map(\.amount), [10_000])
+    XCTAssertEqual(TripKinds.items("trip", international: true),
+                   ["Flights & tickets", "Stay", "Food", "Local travel", "Activities", "Shopping", "Travel insurance", "Visa & documents", "SIM & roaming", "Forex fees", "Miscellaneous"])
+  }
+}

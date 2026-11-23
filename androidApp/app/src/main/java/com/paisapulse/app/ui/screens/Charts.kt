@@ -114,6 +114,9 @@ import kotlin.math.sqrt
         }
       }
     }
+    val inRange = db.liveTxns.filter { it.occurredAt in range }
+    paymentMethodSection(inRange)
+    spentAbroadSection(inRange)
     val biggest = db.liveTxns.filter { it.kind == TxnType.Expense && it.occurredAt in range }.sortedByDescending { it.effectiveAmount }.take(5)
     if (biggest.isNotEmpty()) group("Biggest expenses") { biggest.forEachIndexed { i, t -> if (i > 0) Divider(64.dp); TxnRow(t, l, showTime = false) } }
   }

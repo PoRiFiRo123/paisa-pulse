@@ -17,6 +17,10 @@ struct CardFormView: View {
   @State private var label = ""
   @State private var color = ""
   @State private var scanning = false
+  /// Forex markup: off, or a percent with/without 18% GST on top.
+  @State private var markupOn = false
+  @State private var markupPercent = 3.5
+  @State private var markupGst = true
 
   private var kind: String { account.type == .card ? "credit" : "debit" }
   private var valid: Bool { last4.count == 4 && last4.allSatisfy(\.isNumber) }
@@ -51,6 +55,18 @@ struct CardFormView: View {
         TextField("Name on card (optional)", text: $name).textInputAutocapitalization(.characters)
         TextField("Nickname (optional), e.g. MyZone Debit", text: $label)
       }
+      Section {
+        Toggle("Foreign currency markup", isOn: $markupOn)
+        if markupOn {
+          Stepper(value: $markupPercent, in: 0...10, step: 0.25) {
+            LabeledContent("Markup", value: String(format: "%.2f%%", markupPercent))
+          }
+          Toggle("Plus 18% GST on the markup", isOn: $markupGst)
+          LabeledContent("You pay extra", value: ForexMarkup.label(ForexMarkup.bps(percent: markupPercent, withGst: markupGst)))
+        }
+      } header: { Text("Spending abroad") } footer: {
+        Text("Most Indian cards add 2–3.5% plus GST on foreign spends. It's added automatically when you pay in another currency with this card. Check your card's fee page and edit it any time.")
+      }
       Section("Colour") {
         ColorRow(selection: $color)
         if !color.isEmpty { Button("Use the account's colour") { color = "" } }
@@ -80,6 +96,13 @@ struct CardFormView: View {
       guard let c = card else { return }
       network = c.network; last4 = c.last4; month = c.expiryMonth ?? 0; year = c.expiryYear ?? 0
       name = c.nameOnCard ?? ""; label = c.label ?? ""; color = c.color ?? ""
+      if let bps = c.forexMarkupBps, bps > 0 {
+        markupOn = true
+        // Shown as "3.5% + GST" when it divides evenly, else the plain percent.
+        let base = Double(bps) / 118
+        if abs(base * 1.18 * 100 - Double(bps) * 100 / 100) < 0.5, (base * 4).rounded() == base * 4 { markupPercent = base; markupGst = true }
+        else { markupPercent = Double(bps) / 100; markupGst = false }
+      }
     }
   }
 
@@ -88,6 +111,7 @@ struct CardFormView: View {
     c.network = network; c.last4 = last4; c.kind = kind
     c.expiryMonth = month > 0 ? month : nil; c.expiryYear = year > 0 ? year : nil
     c.nameOnCard = name.isEmpty ? nil : name.uppercased(); c.label = label.isEmpty ? nil : label; c.color = color.isEmpty ? nil : color
+    c.forexMarkupBps = markupOn ? ForexMarkup.bps(percent: markupPercent, withGst: markupGst) : nil
     if card == nil { context.insert(c) }
     if account.type == .card, account.last4 == nil { account.last4 = last4 }
     try? context.save()

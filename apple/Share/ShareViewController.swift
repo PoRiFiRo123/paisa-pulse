@@ -174,8 +174,10 @@ struct ShareView: View {
   private func save() {
     for d in model.drafts where d.include && d.amount > 0 {
       guard let accountId = d.accountId else { continue }
-      context.insert(Txn(type: d.type, amount: d.amount, accountId: accountId, toAccountId: d.toAccountId, categoryId: d.categoryId,
-                         payee: d.payee, note: d.note, occurredAt: d.occurredAt, source: "screenshot"))
+      let t = Txn(type: d.type, amount: d.amount, accountId: accountId, toAccountId: d.toAccountId, categoryId: d.categoryId,
+                  payee: d.payee, note: d.note, occurredAt: d.occurredAt, source: "screenshot")
+      if d.type != .transfer { t.paymentMethod = PaymentMethod.upi.rawValue }
+      context.insert(t)
     }
     try? context.save()
     WidgetCenter.shared.reloadAllTimelines()

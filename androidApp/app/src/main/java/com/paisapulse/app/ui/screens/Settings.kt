@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -52,9 +53,14 @@ import java.io.File
     group("Appearance") {
       PickerRow("Theme", listOf("system" to "System", "light" to "Light", "dark" to "Dark"), Prefs.theme, leading = { Badge("circle.lefthalf.filled", "#5856D6") }) { Prefs.set("theme", it) }
       Divider(56.dp)
-      ColorPickerRow("Accent colour", accents.map { Triple(it.first, it.second, it.third.first) }, Prefs.accent, leading = { Badge("paintpalette.fill", "#FF2D55") }) { Prefs.set("accent", it) }
+      PRow("Accent colour", leading = { Badge("paintpalette.fill", "#FF2D55") }, chevron = true, onClick = { Ui.push(Route.Accent) }) {
+        Box(Modifier.size(18.dp).background(C.accent, androidx.compose.foundation.shape.CircleShape))
+      }
       Divider(56.dp)
-      ColorPickerRow("App icon", AppIcons.all, AppIcons.current(ctx), leading = { Badge("square.grid.2x2.fill", "#007AFF") }) { AppIcons.set(ctx, it) }
+      PRow("App icon", leading = { Badge("square.grid.2x2.fill", "#007AFF") }, chevron = true, onClick = { Ui.push(Route.AppIcon) }) {
+        androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(AppIcons.preview(AppIcons.current(ctx))), null,
+          modifier = Modifier.size(28.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(7.dp)))
+      }
     }
     group("Money") {
       PRow("Categories", leading = { Badge("square.grid.2x2.fill", "#FF9500") }, chevron = true, onClick = { Ui.push(Route.Categories) })
@@ -69,12 +75,15 @@ import java.io.File
       Divider(56.dp); PickerRow("Week starts on", listOf(1 to "Sunday", 2 to "Monday"), Prefs.weekStartDay, leading = { Badge("calendar.day.timeline.left", "#FF9500") }) { Prefs.set("weekStartDay", it) }
     }
     group("See") {
+      PRow("Planning", leading = { Badge("airplane", "#2563EB") }, chevron = true, onClick = { Ui.push(Route.Planning) })
+      Divider(56.dp)
       PRow("Insights", leading = { Badge("chart.bar.xaxis", "#AF52DE") }, chevron = true, onClick = { Ui.push(Route.Insights) })
       Divider(56.dp); PRow("Calendar", leading = { Badge("calendar", "#FF2D55") }, chevron = true, onClick = { Ui.push(Route.Calendar) })
       Divider(56.dp); PRow("Net Worth", leading = { Badge("chart.line.uptrend.xyaxis", "#34C759") }, chevron = true, onClick = { Ui.push(Route.NetWorth) })
       Divider(56.dp); PRow("Monthly Recap", leading = { Badge("sparkles", "#5E5CE6") }, chevron = true, onClick = { Ui.push(Route.Recap(-1)) })
       Divider(56.dp); PRow("Tags", leading = { Badge("number", "#8E8E93") }, chevron = true, onClick = { Ui.push(Route.Tags) })
-      Divider(56.dp); PRow("Currency Converter", leading = { Badge("indianrupeesign.circle", "#30B0C7") }, chevron = true, onClick = { Ui.push(Route.Converter) })
+      Divider(56.dp); PRow("Currency Converter", leading = { Badge("dollarsign.arrow.circlepath", "#30B0C7") }, chevron = true, onClick = { Ui.push(Route.Converter) })
+      Divider(56.dp); PRow("Main Currency", leading = { Badge("banknote.fill", "#34C759") }, value = Prefs.baseCurrency, chevron = true, onClick = { Ui.push(Route.MainCurrency) })
     }
     group("Notifications", footer = "Budget alerts at 80% and 100%. Bill reminders 3 days before a card's due day.") {
       ToggleRow("Budget alerts", Prefs.notifyBudgets, leading = { Badge("bell.badge.fill", "#FF9500") }) { notif("notifyBudgets", it) }
@@ -231,7 +240,17 @@ fun ordinal(n: Int) = n.toString() + if (n % 100 in 11..13) "th" else when (n % 
 /** Alternate launcher icons via activity-aliases (same set as the iPhone app). */
 object AppIcons {
   val all = listOf(Triple("Default", "Default", "#5E5CE6"), Triple("Midnight", "Midnight", "#1C1C3A"), Triple("Saffron", "Saffron", "#FF9933"),
-    Triple("Mint", "Mint", "#34C7A0"), Triple("Mono", "Mono", "#8E8E93"))
+    Triple("Mint", "Mint", "#34C7A0"), Triple("Mono", "Mono", "#8E8E93"), Triple("Ocean", "Ocean", "#1D4ED8"), Triple("Rose", "Rose", "#BE185D"),
+    Triple("Forest", "Forest", "#166534"), Triple("Gold", "Gold", "#B45309"), Triple("Sunset", "Sunset", "#DB2777"), Triple("Graphite", "Graphite", "#111827"))
+  /** Preview picture of an icon (drawable-nodpi/icon_preview_*.png). */
+  fun preview(key: String): Int = when (key) {
+    "Midnight" -> com.paisapulse.app.R.drawable.icon_preview_midnight; "Saffron" -> com.paisapulse.app.R.drawable.icon_preview_saffron
+    "Mint" -> com.paisapulse.app.R.drawable.icon_preview_mint; "Mono" -> com.paisapulse.app.R.drawable.icon_preview_mono
+    "Ocean" -> com.paisapulse.app.R.drawable.icon_preview_ocean; "Rose" -> com.paisapulse.app.R.drawable.icon_preview_rose
+    "Forest" -> com.paisapulse.app.R.drawable.icon_preview_forest; "Gold" -> com.paisapulse.app.R.drawable.icon_preview_gold
+    "Sunset" -> com.paisapulse.app.R.drawable.icon_preview_sunset; "Graphite" -> com.paisapulse.app.R.drawable.icon_preview_graphite
+    else -> com.paisapulse.app.R.drawable.icon_preview_default
+  }
   fun current(ctx: android.content.Context): String = all.firstOrNull { (k, _, _) ->
     ctx.packageManager.getComponentEnabledSetting(android.content.ComponentName(ctx, "com.paisapulse.app.Icon$k")) == android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED
   }?.first ?: "Default"
@@ -242,34 +261,6 @@ object AppIcons {
         android.content.pm.PackageManager.DONT_KILL_APP)
     }
     Ui.show("Icon changes in a few seconds")
-  }
-}
-
-@Composable fun ConverterScreen() {
-  val ctx = LocalContext.current
-  val scope = rememberCoroutineScope()
-  var code by remember { mutableStateOf("USD") }
-  var amount by remember { mutableStateOf("100") }
-  var rates by remember { mutableStateOf(com.paisapulse.app.logic.Currency.cached(ctx)) }
-  var loading by remember { mutableStateOf(false) }
-  LaunchedEffect(Unit) { if (rates == null || System.currentTimeMillis() - (rates?.at ?: 0) > com.paisapulse.app.logic.Currency.MAX_AGE) rates = com.paisapulse.app.logic.Currency.rates(ctx) }
-  val rate = rates?.inrPer?.get(code)
-  val v = amount.replace(",", "").toDoubleOrNull() ?: 0.0
-  val sym = com.paisapulse.app.logic.Currency.symbol(code)
-  PScreen("Converter", back = true) {
-    group {
-      PickerRow("Currency", com.paisapulse.app.logic.Currency.common.filter { it.code != "INR" }.map { it.code to "${it.code} · ${it.name}" }, code) { code = it }
-      Divider(); FieldRow(amount, { amount = it }, "Amount", number = true)
-    }
-    if (rate != null) group("In rupees") {
-      PRow("$sym $amount =", value = Money.format(Math.round(v * rate * 100)), valueColor = C.label)
-      Divider(); PRow("₹$amount =", value = "$sym ${"%.2f".format(v / rate)}")
-      Divider(); PRow("1 $code", value = "₹${"%.4f".format(rate)}")
-    }
-    group(footer = rates?.let { "Mid-market rates from open.er-api.com, updated ${shortDate.format(java.time.Instant.ofEpochMilli(it.at).atZone(java.time.ZoneId.systemDefault()).toLocalDate())}. Banks and forex cards add a markup." }
-      ?: "Rates need an internet connection the first time. Only currency codes are requested.") {
-      PRow(if (loading) "Refreshing…" else "Refresh Rates", titleColor = C.accent, onClick = { scope.launch { loading = true; rates = com.paisapulse.app.logic.Currency.rates(ctx, true); loading = false } })
-    }
   }
 }
 

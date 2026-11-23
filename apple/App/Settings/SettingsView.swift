@@ -34,17 +34,21 @@ struct SettingsView: View {
         Picker(selection: $theme) {
           Text("System").tag("system"); Text("Light").tag("light"); Text("Dark").tag("dark")
         } label: { row("Theme", "circle.lefthalf.filled", "#5856D6") }
-        Picker(selection: $accent) {
-          ForEach(Palette.accents, id: \.key) { a in
-            // Menus repaint SF Symbols in the tint colour, so draw each colour as an image.
-            Label { Text(a.name) } icon: { Image(uiImage: Swatch.image(a.light)).renderingMode(.original) }.tag(a.key)
+        NavigationLink { AppearanceColorsView() } label: {
+          HStack {
+            row("Accent colour", "paintpalette.fill", "#FF2D55")
+            Spacer()
+            Circle().fill(Color.accentColor).frame(width: 18, height: 18)
           }
-        } label: { row("Accent colour", "paintpalette.fill", "#FF2D55") }
-        Picker(selection: Binding(get: { AppIcons.current }, set: { AppIcons.set($0) })) {
-          ForEach(AppIcons.all, id: \.key) { i in
-            Label { Text(i.name) } icon: { Image(uiImage: Swatch.image(i.swatch)).renderingMode(.original) }.tag(i.key)
+        }
+        NavigationLink { AppIconPickerView() } label: {
+          HStack {
+            row("App icon", "app.badge.fill", "#007AFF")
+            Spacer()
+            Image(AppIcons.preview(AppIcons.current)).resizable().frame(width: 28, height: 28)
+              .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
           }
-        } label: { row("App icon", "app.badge.fill", "#007AFF") }
+        }
       }
 
       Section("Money") {
@@ -69,12 +73,16 @@ struct SettingsView: View {
       }
 
       Section("See") {
+        NavigationLink { PlanningView() } label: { row("Planning", "airplane", "#2563EB") }
         NavigationLink { InsightsView() } label: { row("Insights", "chart.bar.xaxis", "#AF52DE") }
         NavigationLink { CalendarView() } label: { row("Calendar", "calendar", "#FF2D55") }
         NavigationLink { NetWorthView() } label: { row("Net Worth", "chart.line.uptrend.xyaxis", "#34C759") }
         NavigationLink { RecapView(offset: -1) } label: { row("Monthly Recap", "sparkles", "#5E5CE6") }
         NavigationLink { TagsView() } label: { row("Tags", "number", "#FF9500") }
         NavigationLink { ConverterView() } label: { row("Currency Converter", "dollarsign.arrow.circlepath", "#30B0C7") }
+        NavigationLink { MainCurrencyView() } label: {
+          row("Main Currency", "banknote.fill", "#34C759", value: Money.base)
+        }
       }
 
       Section {
@@ -160,8 +168,12 @@ enum Swatch {
 enum AppIcons {
   static let all: [(key: String, name: String, swatch: String)] = [
     ("", "Default", "#5E5CE6"), ("AppIcon-Midnight", "Midnight", "#1C1C3A"), ("AppIcon-Saffron", "Saffron", "#FF9933"),
-    ("AppIcon-Mint", "Mint", "#34C7A0"), ("AppIcon-Mono", "Mono", "#8E8E93"),
+    ("AppIcon-Mint", "Mint", "#34C7A0"), ("AppIcon-Mono", "Mono", "#8E8E93"), ("AppIcon-Ocean", "Ocean", "#1D4ED8"),
+    ("AppIcon-Rose", "Rose", "#BE185D"), ("AppIcon-Forest", "Forest", "#166534"), ("AppIcon-Gold", "Gold", "#B45309"),
+    ("AppIcon-Sunset", "Sunset", "#DB2777"), ("AppIcon-Graphite", "Graphite", "#111827"),
   ]
+  /// The preview picture in the asset catalog for an icon key.
+  static func preview(_ key: String) -> String { "IconPreview-" + (all.first { $0.key == key }?.name ?? "Default") }
   static var current: String { UIApplication.shared.alternateIconName ?? "" }
   static func set(_ key: String) {
     guard UIApplication.shared.supportsAlternateIcons else { return }
@@ -169,36 +181,3 @@ enum AppIcons {
   }
 }
 
-/// Currency converter: any amount to and from rupees, using cached rates (works offline after the first load).
-struct ConverterView: View {
-  @State private var code = "USD"
-  @State private var amount = "100"
-  @State private var rates: Currency.Rates? = Currency.cached
-  @State private var loading = false
-
-  var body: some View {
-    let rate = rates?.inrPer[code]
-    let value = Double(amount.replacingOccurrences(of: ",", with: "")) ?? 0
-    Form {
-      Section {
-        Picker("Currency", selection: $code) { ForEach(Currency.common.filter { $0.code != "INR" }, id: \.code) { Text("\($0.code) · \($0.name)").tag($0.code) } }
-        TextField("Amount", text: $amount).keyboardType(.decimalPad).font(.title2.weight(.semibold))
-      }
-      if let rate {
-        Section("In rupees") {
-          LabeledContent("\(Currency.symbol(code)) \(amount) =") { Text(Money.format(Int((value * rate * 100).rounded()))).font(.title3.weight(.bold)) }
-          LabeledContent("₹\(amount) =") { Text(String(format: "%@ %.2f", Currency.symbol(code), value / rate)) }
-          LabeledContent("1 \(code)", value: String(format: "₹%.4f", rate))
-        }
-      }
-      Section {
-        Button(loading ? "Refreshing…" : "Refresh Rates") { Task { loading = true; rates = await Currency.rates(force: true); loading = false } }.disabled(loading)
-      } footer: {
-        Text(rates.map { "Mid-market rates from open.er-api.com, updated \(Date(timeIntervalSince1970: $0.at).formatted(.relative(presentation: .named))). Banks and forex cards add a markup." }
-             ?? "Rates need an internet connection the first time. Only currency codes are requested.")
-      }
-    }
-    .navigationTitle("Converter")
-    .task { if rates == nil || Date.now.timeIntervalSince1970 - (rates?.at ?? 0) > Currency.maxAge { rates = await Currency.rates() } }
-  }
-}

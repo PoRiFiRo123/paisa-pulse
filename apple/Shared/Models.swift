@@ -156,6 +156,12 @@ enum Frequency: String, Codable, CaseIterable, Identifiable {
   var tags: [String] = []
   /// File name of a receipt photo in Documents/receipts (kept on this phone, not in backups).
   var receipt: String?
+  /// How it was paid: PaymentMethod.rawValue (upi, debit_card, neft…).
+  var paymentMethod: String?
+  /// Planning: the trip / event, its budget item, and the carried cash or forex it was paid from.
+  var tripId: String?
+  var tripItemId: String?
+  var walletId: String?
   var deletedAt: Date?
   var createdAt: Date
   var updatedAt: Date
@@ -307,6 +313,8 @@ enum Frequency: String, Codable, CaseIterable, Identifiable {
   var color: String?
   var archivedAt: Date?
   var createdAt: Date
+  /// Foreign-currency markup in basis points (413 = 4.13%); nil = none.
+  var forexMarkupBps: Int?
 
   init(id: String = UUID().uuidString.lowercased(), accountId: String, kind: String = "debit", network: String = "other",
        last4: String, expiryMonth: Int? = nil, expiryYear: Int? = nil, nameOnCard: String? = nil, label: String? = nil,
@@ -435,5 +443,84 @@ enum Frequency: String, Codable, CaseIterable, Identifiable {
 
   init(id: String = UUID().uuidString.lowercased(), accountId: String, value: Int, at: Date = .now) {
     self.id = id; self.accountId = accountId; self.value = value; self.at = at
+  }
+}
+
+// MARK: - Planning
+
+/// A trip or any planned event (wedding, outing…), with budget items and carried money.
+@Model final class Trip {
+  @Attribute(.unique) var id: String
+  var name: String
+  var kind: String
+  var international: Bool
+  /// [TripPlace] as JSON (destinations; each can set a currency).
+  var placesJSON: String
+  var startAt: Date?
+  var endAt: Date?
+  var travellers: Int
+  /// The split group for the people on this trip (Split v2).
+  var groupId: String?
+  var budgetEnabled: Bool
+  var countInBudgets: Bool
+  var notes: String?
+  var archivedAt: Date?
+  var createdAt: Date
+  var updatedAt: Date
+
+  init(id: String = UUID().uuidString.lowercased(), name: String, kind: String = "trip", international: Bool = false, places: [TripPlace] = [],
+       startAt: Date? = nil, endAt: Date? = nil, travellers: Int = 1, groupId: String? = nil, budgetEnabled: Bool = true,
+       countInBudgets: Bool = true, notes: String? = nil, archivedAt: Date? = nil, createdAt: Date = .now, updatedAt: Date = .now) {
+    self.id = id; self.name = name; self.kind = kind; self.international = international
+    self.placesJSON = TripPlace.encode(places); self.startAt = startAt; self.endAt = endAt; self.travellers = travellers
+    self.groupId = groupId; self.budgetEnabled = budgetEnabled; self.countInBudgets = countInBudgets; self.notes = notes
+    self.archivedAt = archivedAt; self.createdAt = createdAt; self.updatedAt = updatedAt
+  }
+
+  var places: [TripPlace] {
+    get { TripPlace.decode(placesJSON) }
+    set { placesJSON = TripPlace.encode(newValue) }
+  }
+  /// Destination currencies, first one first (main currency excluded).
+  var currencies: [String] {
+    var seen = Set<String>()
+    return places.compactMap { $0.currency }.filter { $0 != Money.base && seen.insert($0).inserted }
+  }
+}
+
+struct TripPlace: Codable, Hashable {
+  var name: String
+  var country: String?
+  var currency: String?
+  static func decode(_ s: String) -> [TripPlace] { (try? JSONDecoder().decode([TripPlace].self, from: Data(s.utf8))) ?? [] }
+  static func encode(_ p: [TripPlace]) -> String { (try? String(data: JSONEncoder().encode(p), encoding: .utf8)) ?? "[]" }
+}
+
+@Model final class TripItem {
+  @Attribute(.unique) var id: String
+  var tripId: String
+  var label: String
+  var budget: Int?
+  var sortOrder: Int
+  init(id: String = UUID().uuidString.lowercased(), tripId: String, label: String, budget: Int? = nil, sortOrder: Int = 0) {
+    self.id = id; self.tripId = tripId; self.label = label; self.budget = budget; self.sortOrder = sortOrder
+  }
+}
+
+/// Cash or a forex card you carry on a trip. currency nil = main currency; amount in that currency's minor units;
+/// rate = main currency per 1 unit (what you paid for it).
+@Model final class TripWallet {
+  @Attribute(.unique) var id: String
+  var tripId: String
+  var label: String
+  var currency: String?
+  var amount: Int
+  var rate: Double
+  var accountId: String?
+  var createdAt: Date
+  init(id: String = UUID().uuidString.lowercased(), tripId: String, label: String, currency: String? = nil, amount: Int,
+       rate: Double = 1, accountId: String? = nil, createdAt: Date = .now) {
+    self.id = id; self.tripId = tripId; self.label = label; self.currency = currency; self.amount = amount
+    self.rate = rate; self.accountId = accountId; self.createdAt = createdAt
   }
 }

@@ -132,7 +132,7 @@ object ImportPlan {
         toAccountId = if (transfer) (if (intoThis) accountId else r.otherAccountId) else null,
         categoryId = if (transfer) null else r.categoryId,
         payee = r.payee, note = r.note, occurredAt = r.row.date, source = "import", importBatchId = batch.id, externalId = r.key,
-        createdAt = now, updatedAt = now,
+        createdAt = now, updatedAt = now, paymentMethod = PaymentMethod.fromText(r.row.description)?.id,
       )
     }
     return batch to txns

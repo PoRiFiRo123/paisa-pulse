@@ -91,7 +91,8 @@ import kotlin.coroutines.resume
   fun commit() {
     val add = drafts.filter { it.include && it.accountId != null }.map { d ->
       Txn(type = d.type, amount = d.amount, accountId = d.accountId!!, toAccountId = if (d.type == "transfer") d.toAccountId else null,
-        categoryId = if (d.type == "transfer") null else d.categoryId, payee = d.payee, note = d.note, occurredAt = d.occurredAt, source = if (voice) "voice" else "screenshot")
+        categoryId = if (d.type == "transfer") null else d.categoryId, payee = d.payee, note = d.note, occurredAt = d.occurredAt, source = if (voice) "voice" else "screenshot",
+        paymentMethod = if (voice || d.type == "transfer") null else "upi")
     }
     val ids = add.map { it.id }.toSet()
     Store.update { it.copy(transactions = it.transactions + add) }

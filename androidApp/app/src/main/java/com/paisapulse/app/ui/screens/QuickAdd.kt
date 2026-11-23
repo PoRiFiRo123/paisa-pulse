@@ -62,19 +62,42 @@ import kotlinx.coroutines.launch
   var cardId by remember { mutableStateOf(editing?.cardId) }
   var tagText by remember { mutableStateOf(Tags.text(editing?.tags)) }
   var payeePicked by remember { mutableStateOf(editing != null) }
-  var currency by remember { mutableStateOf(editing?.currency ?: "INR") }
-  var rate by remember { mutableStateOf(editing?.let { e -> e.originalAmount?.takeIf { e.currency != null && e.currency != "INR" }?.let { e.amount.toDouble() / it } }) }
+  val base = Money.base
+  var currency by remember { mutableStateOf(editing?.currency ?: base) }
+  var rate by remember { mutableStateOf(editing?.let { e -> e.originalAmount?.takeIf { e.currency != null && e.currency != base }?.let { e.amount.toDouble() / it } }) }
   var curMenu by remember { mutableStateOf(false) }
+  var allCurrencies by remember { mutableStateOf(false) }
+  var method by remember { mutableStateOf(editing?.paymentMethod) }
+  var methodTouched by remember { mutableStateOf(editing?.paymentMethod != null) }
+  val trips = db.trips.filter { it.archivedAt == null }.sortedByDescending { it.startAt ?: it.createdAt }
+  var tripId by remember { mutableStateOf(editing?.tripId ?: req.tripId ?: if (editing == null && req.type != TxnType.Transfer) TripMath.ongoing(trips)?.id else null) }
+  var tripItemId by remember { mutableStateOf(editing?.tripItemId) }
+  var walletId by remember { mutableStateOf(editing?.walletId) }
   var rateDialog by remember { mutableStateOf(false) }
   var rateText by remember { mutableStateOf("") }
   val ctx = androidx.compose.ui.platform.LocalContext.current
   val scope = rememberCoroutineScope()
-  LaunchedEffect(Unit) { editing?.originalAmount?.takeIf { editing.currency != null && editing.currency != "INR" }?.let { o -> expr = if (o % 100 == 0L) (o / 100).toString() else "%.2f".format(o / 100.0) } }
+  LaunchedEffect(Unit) { editing?.originalAmount?.takeIf { editing.currency != null && editing.currency != base }?.let { o -> expr = if (o % 100 == 0L) (o / 100).toString() else "%.2f".format(o / 100.0) } }
   val entered = KeypadMath.evaluate(expr)?.let { Money.paise(it) }
-  val amount = if (currency == "INR") entered else rate?.let { r -> entered?.let { Currency.toPaise(it, r) } }
+  val card = cardId?.let { id -> db.cards.firstOrNull { it.id == id } }
+  // Converted to the main currency, then the card's forex markup on top.
+  val converted = if (currency == base) entered else rate?.let { r -> entered?.let { Fx.convert(it, r) } }
+  val amount = if (currency == base) converted else converted?.let { ForexMarkup.apply(it, card?.forexMarkupBps) }
   fun pickCurrency(code: String) {
     currency = code; rate = null
-    if (code != "INR") scope.launch { val r = Currency.rates(ctx)?.inrPer?.get(code); if (r != null) rate = r else { rateText = ""; rateDialog = true } }
+    if (code == base) return
+    // A trip wallet in this currency: use what you paid for it, so the trip's numbers match your forex card.
+    db.tripWallets.firstOrNull { it.tripId == tripId && it.currency == code }?.let { rate = it.rate; return }
+    scope.launch { val r = Currency.rates(ctx)?.inrPer?.let { Fx.rate(code, base, it) }; if (r != null) rate = r else { rateText = ""; rateDialog = true } }
+  }
+  // Payment method follows the account and card until you pick one.
+  LaunchedEffect(accountId, cardId) {
+    if (!methodTouched) method = PaymentMethod.guess(accounts.firstOrNull { it.id == accountId }?.type, card?.kind)?.id
+  }
+  // On a trip abroad right now: start in the destination's currency.
+  LaunchedEffect(Unit) {
+    if (editing == null) trips.firstOrNull { it.id == tripId }?.takeIf { it.international }?.places?.mapNotNull { it.currency }?.firstOrNull { it != base }
+      ?.let { if (currency == base) pickCurrency(it) }
   }
   val kindCats = db.categories.filter { it.archivedAt == null && it.parentId == null && it.kind == (if (type == TxnType.Income) "income" else "expense") }.sortedBy { it.sortOrder }
 
@@ -98,7 +121,9 @@ import kotlinx.coroutines.launch
     val txn = (editing ?: Txn(amount = amt, accountId = acc)).copy(type = type.key, amount = amt, accountId = acc,
       toAccountId = if (type == TxnType.Transfer) toAccountId else null, categoryId = if (type == TxnType.Transfer) null else categoryId,
       payee = name, occurredAt = at, updatedAt = now(), splitShare = if (splitting && split.payer == null) result.myShare else null, tags = Tags.parse(tagText).ifEmpty { null }, cardId = if (type == TxnType.Income) null else cardId,
-      currency = currency.takeIf { it != "INR" }, originalAmount = if (currency == "INR") null else entered)
+      currency = currency.takeIf { it != base }, originalAmount = if (currency == base) null else entered, paymentMethod = method,
+      tripId = if (type == TxnType.Transfer) null else tripId, tripItemId = if (type == TxnType.Transfer) null else tripItemId,
+      walletId = if (type == TxnType.Expense) walletId else null)
     Store.update { d ->
       val txns = if (editing != null) d.transactions.map { if (it.id == txn.id) txn else it } else d.transactions + txn
       val entries = d.splitEntries.filterNot { it.txnId == txn.id } + owed.map { (f, v) -> SplitEntry(friendId = f, txnId = txn.id, amount = v, note = name, groupId = split.groupId, occurredAt = at) }
@@ -122,16 +147,28 @@ import kotlinx.coroutines.launch
       Column(Modifier.fillMaxWidth().padding(vertical = 14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Row(verticalAlignment = Alignment.Bottom) {
           Box {
-            Text(Currency.symbol(currency), style = T.amount(if (currency == "INR") 30 else 22), color = C.secondary,
+            Text(World.symbol(currency), style = T.amount(if (currency == base) 30 else 22), color = C.secondary,
               modifier = Modifier.padding(bottom = 8.dp, end = 4.dp).clickable { curMenu = true })
-            DropdownMenu(curMenu, { curMenu = false }, modifier = Modifier.background(C.card).heightIn(max = 400.dp)) {
-              Currency.common.forEach { c -> DropdownMenuItem({ Text("${c.code} · ${c.name}", style = T.body) }, { curMenu = false; pickCurrency(c.code) }) }
+            DropdownMenu(curMenu, { curMenu = false }, modifier = Modifier.background(C.card).heightIn(max = 420.dp)) {
+              DropdownMenuItem({ Text("$base · ${World.currencyName(base)}", style = T.body) }, { curMenu = false; pickCurrency(base) }, leadingIcon = { Icon(Sym.of("house"), null) })
+              val tripCodes = trips.firstOrNull { it.id == tripId }?.places?.mapNotNull { it.currency }?.filter { it != base }?.distinct().orEmpty()
+              if (tripCodes.isNotEmpty()) {
+                HorizontalDivider(color = C.separator)
+                tripCodes.forEach { c -> DropdownMenuItem({ Text("$c · ${World.currencyName(c)}", style = T.body) }, { curMenu = false; pickCurrency(c) }, leadingIcon = { Icon(Sym.of("airplane"), null) }) }
+              }
+              HorizontalDivider(color = C.separator)
+              Currency.common.filter { it.code != base && it.code !in tripCodes }.forEach { c -> DropdownMenuItem({ Text("${c.code} · ${c.name}", style = T.body) }, { curMenu = false; pickCurrency(c.code) }) }
+              DropdownMenuItem({ Text("All Currencies…", style = T.body, color = C.accent) }, { curMenu = false; allCurrencies = true }, leadingIcon = { Icon(Sym.of("globe"), null, tint = C.accent) })
             }
           }
           AnimatedContent(expr, label = "amt") { e -> Text(e, style = T.amount(56, FontWeight.Bold), color = type.color(C), maxLines = 1) }
         }
-        if (currency != "INR") Text(amount?.let { "≈ ${Money.format(it)} · 1 $currency = ₹${"%.2f".format(rate ?: 0.0)}" } ?: "Tap to set the rate for $currency",
-          style = T.subhead, color = C.accent, modifier = Modifier.clickable { rateText = rate?.let { "%.4f".format(it) } ?: ""; rateDialog = true })
+        if (currency != base) {
+          Text(amount?.let { "≈ ${Money.format(it)} · 1 $currency = ${Money.symbol}${"%.2f".format(rate ?: 0.0)}" } ?: "Tap to set the rate for $currency",
+            style = T.subhead, color = C.accent, modifier = Modifier.clickable { rateText = rate?.let { "%.4f".format(it) } ?: ""; rateDialog = true })
+          val bps = card?.forexMarkupBps
+          if (converted != null && bps != null && bps > 0) Text("incl. ${Money.format(ForexMarkup.fee(converted, bps))} card markup (${ForexMarkup.label(bps)})", style = T.caption, color = C.secondary)
+        }
         else if (KeypadMath.isExpression(expr) && amount != null) Text("= ${Money.format(amount)}", style = T.subhead, color = C.secondary)
       }
       val templates = if (editing == null) db.templates.sortedBy { it.sortOrder } else emptyList()
@@ -184,6 +221,19 @@ import kotlinx.coroutines.launch
           val accountCards = db.cards.filter { it.accountId == accountId && it.archivedAt == null }
           if (type != TxnType.Income && accountCards.isNotEmpty()) { Divider(); PickerRow("Paid with", listOf("" to "Account") + accountCards.map { it.id to it.title }, cardId ?: "") { cardId = it.ifEmpty { null } } }
           Divider()
+          // Payment method chips.
+          Row(Modifier.horizontalScroll(rememberScrollState()).padding(10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            PaymentMethod.entries.forEach { m ->
+              val on = method == m.id
+              Row(Modifier.clip(CircleShape).background(if (on) C.accent else C.fill).clickable { method = if (on) null else m.id; methodTouched = true }
+                .padding(horizontal = 12.dp, vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Sym.of(m.icon), null, tint = if (on) Color.White else C.label, modifier = Modifier.size(15.dp))
+                Spacer(Modifier.width(6.dp))
+                Text(m.label, style = T.subhead, color = if (on) Color.White else C.label, maxLines = 1)
+              }
+            }
+          }
+          Divider()
           PRow("Date", onClick = { pickDate = true }) {
             Text(shortDate.format(at.toDate()) + " " + at.toDate().year + ", " + at.time(), style = T.body, color = C.label,
               modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(C.fill).padding(horizontal = 10.dp, vertical = 5.dp))
@@ -192,6 +242,18 @@ import kotlinx.coroutines.launch
           Row(Modifier.padding(start = 16.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(Sym.of("number"), null, tint = C.secondary, modifier = Modifier.size(18.dp))
             FieldRow(tagText, { tagText = it }, "Tags (goa trip, work)", modifier = Modifier.weight(1f))
+          }
+          if (type != TxnType.Transfer && trips.isNotEmpty()) {
+            Divider()
+            PickerRow("Trip", listOf("" to "None") + trips.map { it.id to it.name }, tripId ?: "") { tripId = it.ifEmpty { null }; tripItemId = null; walletId = null }
+            tripId?.let { tid ->
+              val items = db.tripItems.filter { it.tripId == tid }.sortedBy { it.sortOrder }
+              if (items.isNotEmpty()) { Divider(); PickerRow("For", listOf("" to "Not set") + items.map { it.id to it.label }, tripItemId ?: "") { tripItemId = it.ifEmpty { null } } }
+              val wallets = db.tripWallets.filter { it.tripId == tid }
+              if (type == TxnType.Expense && wallets.isNotEmpty()) {
+                Divider(); PickerRow("Paid from", listOf("" to "Account") + wallets.map { it.id to "${it.label} · ${it.currency ?: base}" }, walletId ?: "") { walletId = it.ifEmpty { null } }
+              }
+            }
           }
           if (type == TxnType.Expense) {
             Divider()
@@ -228,7 +290,8 @@ import kotlinx.coroutines.launch
         at = d.atTime(t).atZone(zone).toInstant().toEpochMilli()
       }; pickDate = false }) { Text("OK") } }) { DatePicker(st) }
   }
-  if (rateDialog) AlertDialog({ rateDialog = false }, containerColor = C.card, title = { Text("Rupees per 1 $currency") },
+  if (allCurrencies) CurrencyPickerDialog("Currency", onDismiss = { allCurrencies = false }) { pickCurrency(it); allCurrencies = false }
+  if (rateDialog) AlertDialog({ rateDialog = false }, containerColor = C.card, title = { Text("${Money.symbol} per 1 $currency") },
     text = { Column { Text("Use the rate on your card statement or forex card for an exact match.", style = T.footnote, color = C.secondary)
       OutlinedTextField(rateText, { rateText = it }, singleLine = true, placeholder = { Text("e.g. 83.25") }) } },
     confirmButton = { TextButton({ rateText.toDoubleOrNull()?.takeIf { it > 0 }?.let { rate = it }; rateDialog = false }) { Text("Use") } },

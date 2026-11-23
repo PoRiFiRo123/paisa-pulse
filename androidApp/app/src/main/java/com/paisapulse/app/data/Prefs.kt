@@ -30,6 +30,11 @@ object Prefs {
   var lastCleanupAt by mutableStateOf(0L); private set
   var homeOrder by mutableStateOf(""); private set
   var homeHidden by mutableStateOf(""); private set
+  /** Main currency code (all stored amounts are in it). */
+  var baseCurrency by mutableStateOf("INR"); private set
+  var converterCurrencies by mutableStateOf("USD,EUR,GBP,AED"); private set
+  /** Hex colour used when accent == "custom". */
+  var customAccent by mutableStateOf("#5E5CE6"); private set
 
   fun init(ctx: Context) {
     sp = ctx.getSharedPreferences("paisa", Context.MODE_PRIVATE)
@@ -43,6 +48,8 @@ object Prefs {
     myUpiId = sp.getString("myUpiId", "")!!; myName = sp.getString("myName", "")!!
     autoCleanup = sp.getString("autoCleanup", "off")!!; autoCleanupMonths = sp.getInt("autoCleanupMonths", 24); lastCleanupAt = sp.getLong("lastCleanupAt", 0L)
     homeOrder = sp.getString("homeOrder", "")!!; homeHidden = sp.getString("homeHidden", "")!!
+    baseCurrency = sp.getString("baseCurrency", "INR")!!; com.paisapulse.app.logic.Money.base = baseCurrency
+    converterCurrencies = sp.getString("converterCurrencies", "USD,EUR,GBP,AED")!!; customAccent = sp.getString("customAccent", "#5E5CE6")!!
   }
 
   fun set(key: String, v: Any) {
@@ -60,6 +67,8 @@ object Prefs {
       "myUpiId" -> myUpiId = v as String; "myName" -> myName = v as String
       "autoCleanup" -> autoCleanup = v as String; "autoCleanupMonths" -> autoCleanupMonths = v as Int; "lastCleanupAt" -> lastCleanupAt = v as Long
       "homeOrder" -> homeOrder = v as String; "homeHidden" -> homeHidden = v as String
+      "baseCurrency" -> { baseCurrency = v as String; com.paisapulse.app.logic.Money.base = v }
+      "converterCurrencies" -> converterCurrencies = v as String; "customAccent" -> customAccent = v as String
     }
   }
 
@@ -69,14 +78,15 @@ object Prefs {
     Setting("monthStartDay", monthStartDay.toString()), Setting("weekStartDay", weekStartDay.toString()),
     Setting("hideAmounts", hideAmounts.toString()), Setting("merchantLogos", merchantLogos.toString()),
     Setting("myUpiId", "\"$myUpiId\""), Setting("myName", "\"$myName\""), Setting("autoCleanup", "\"$autoCleanup\""),
-    Setting("autoCleanupMonths", autoCleanupMonths.toString()),
+    Setting("autoCleanupMonths", autoCleanupMonths.toString()), Setting("baseCurrency", "\"$baseCurrency\""),
+    Setting("converterCurrencies", "\"$converterCurrencies\""), Setting("customAccent", "\"$customAccent\""),
   )
 
   fun applySettings(list: List<Setting>) {
     for (s in list) {
       val v = s.value.trim().removeSurrounding("\"")
       when (s.key) {
-        "theme", "accent", "myUpiId", "myName", "autoCleanup" -> set(s.key, v)
+        "theme", "accent", "myUpiId", "myName", "autoCleanup", "baseCurrency", "converterCurrencies", "customAccent" -> set(s.key, v)
         "autoCleanupMonths" -> v.toIntOrNull()?.let { set(s.key, it) }
         "monthStartDay", "weekStartDay" -> v.toIntOrNull()?.let { set(s.key, it) }
         "hideAmounts", "merchantLogos" -> v.toBooleanStrictOrNull()?.let { set(s.key, it) }

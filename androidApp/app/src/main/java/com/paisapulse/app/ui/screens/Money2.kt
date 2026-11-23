@@ -140,7 +140,7 @@ import java.time.temporal.ChronoUnit
 @Composable fun BudgetsScreen() {
   val db by Store.db.collectAsState()
   val l = remember(db) { Lookups(db) }
-  val p = Budgets.progress(db.budgets, db.transactions, l.categories, Periods.month(LocalDate.now(), Prefs.monthStartDay), Periods.week(LocalDate.now(), Prefs.weekStartDay))
+  val p = Budgets.progress(db.budgets, TripMath.budgetTxns(db.transactions, db.trips), l.categories, Periods.month(LocalDate.now(), Prefs.monthStartDay), Periods.week(LocalDate.now(), Prefs.weekStartDay))
   PScreen("Budgets", back = true, actions = { GlassIcon("plus", "Add budget") { Ui.sheet = Sheet.BudgetForm(null) } }) {
     if (p.isEmpty()) item { EmptyHint("No budgets", "gauge.with.dots.needle.33percent", "Set a monthly limit for everything or for one category. You'll get a nudge at 80%.") }
     else group(footer = "Tap a budget to change or delete it.") { p.forEachIndexed { i, x -> if (i > 0) Divider(); BudgetRow(x, l) } }

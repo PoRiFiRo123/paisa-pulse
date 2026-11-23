@@ -26,6 +26,11 @@ struct TransactionDetailView: View {
   @Query private var categories: [Category]
   @Query private var friends: [Friend]
   @Query private var splitEntries: [SplitEntry]
+  @Query private var trips: [Trip]
+  @Query private var tripItems: [TripItem]
+  @Query private var cards: [PaymentCard]
+  @State private var editingRate = false
+  @State private var rateText = ""
   @State private var repeatSheet = false
   @State private var photo: PhotosPickerItem?
   @State private var showingReceipt = false
@@ -42,6 +47,9 @@ struct TransactionDetailView: View {
           CategoryBadge(icon: badge.icon, color: badge.color, size: 64)
           Text(lookups.title(txn)).font(.title3.weight(.semibold)).multilineTextAlignment(.center)
           AmountText(amount: txn.amount, type: txn.type, font: .system(size: 44, weight: .bold))
+          if let c = txn.currency, let o = txn.originalAmount {
+            Text(Money.format(o, code: c)).font(.title3.weight(.semibold)).fontDesign(.rounded).foregroundStyle(.secondary)
+          }
           Text(txn.occurredAt.formatted(date: .complete, time: .shortened)).font(.subheadline).foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity).padding(.vertical, 12)
@@ -57,6 +65,16 @@ struct TransactionDetailView: View {
           LabeledContent("Category", value: txn.categoryId.flatMap { lookups.categories[$0]?.name } ?? "Uncategorised")
           LabeledContent("Account", value: lookups.accounts[txn.accountId]?.displayName ?? "—")
         }
+        if let m = PaymentMethod(rawValue: txn.paymentMethod ?? "") {
+          LabeledContent("Paid by") { Label(m.label, systemImage: m.icon) }
+        }
+        if let tid = txn.tripId, let trip = trips.first(where: { $0.id == tid }) {
+          NavigationLink { TripDetailView(trip: trip) } label: {
+            LabeledContent("Trip") {
+              Text([trip.name, txn.tripItemId.flatMap { id in tripItems.first { $0.id == id }?.label }].compactMap { $0 }.joined(separator: " · "))
+            }
+          }
+        }
         if let note = txn.note, !note.isEmpty { LabeledContent("Note", value: note) }
         if !txn.tags.isEmpty {
           LabeledContent("Tags") {
@@ -64,6 +82,32 @@ struct TransactionDetailView: View {
           }
         }
         if txn.source != "manual" { LabeledContent("Added by", value: txn.source.capitalized) }
+      }
+
+      if let c = txn.currency, let o = txn.originalAmount, o > 0 {
+        Section {
+          LabeledContent("Spent in \(c)", value: Money.format(o, code: c))
+          let card = txn.cardId.flatMap { id in cards.first { $0.id == id } }
+          let base = Double(txn.amount) / (1 + Double(card?.forexMarkupBps ?? 0) / 10_000)
+          LabeledContent("Rate", value: "1 \(c) = \(Money.symbol)\(String(format: "%.4f", base / Double(o)))")
+          if let bps = card?.forexMarkupBps, bps > 0 {
+            LabeledContent("Card markup", value: "\(Money.format(txn.amount - Int(base.rounded()))) (\(ForexMarkup.label(bps)))")
+          }
+          Button("Fix the Rate") { rateText = String(format: "%.4f", base / Double(o)); editingRate = true }
+        } header: { Text("Foreign currency") } footer: {
+          Text("The rate is locked to the day you spent. Fix it to match your card statement.")
+        }
+        .alert("\(Money.symbol) per 1 \(c)", isPresented: $editingRate) {
+          TextField("Rate", text: $rateText).keyboardType(.decimalPad)
+          Button("Save") {
+            if let r = Double(rateText), r > 0 {
+              let card = txn.cardId.flatMap { id in cards.first { $0.id == id } }
+              txn.amount = max(1, ForexMarkup.apply(Fx.convert(o, rate: r), bps: card?.forexMarkupBps)); txn.updatedAt = .now
+              try? context.save(); WidgetRefresh.now()
+            }
+          }
+          Button("Cancel", role: .cancel) {}
+        }
       }
 
       if let share = txn.splitShare {

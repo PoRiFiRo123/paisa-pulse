@@ -41,6 +41,11 @@ private fun rupees(p: Long?) = p?.let { if (it % 100 == 0L) (it / 100).toString(
   var dd by remember { mutableIntStateOf(a?.dueDay ?: 0) }
   var color by remember { mutableStateOf(a?.color ?: swatches[db.accounts.size % swatches.size]) }
   var exclude by remember { mutableStateOf(a?.excludeFromTotals == true) }
+  var pickingBank by remember { mutableStateOf(false) }
+  if (pickingBank) BankPickerDialog(type == AccountType.Wallet, inst, { pickingBank = false }) { picked, bank ->
+    pickingBank = false; inst = picked
+    bank?.let { color = it.color; if (name.isBlank()) name = it.short }
+  }
   FormSheet(if (a == null) "New Account" else "Edit Account", name.isNotBlank(), onSave = {
     val p = Money.parse(opening) ?: 0
     val signed = if (type == AccountType.Card) -p else if (overdrawn) -p else p
@@ -56,7 +61,10 @@ private fun rupees(p: Long?) = p?.let { if (it % 100 == 0L) (it / 100).toString(
     group {
       FieldRow(name, { name = it }, "Name, e.g. Axis Salary")
       Divider(); PickerRow("Type", AccountType.entries.map { it to it.label }, type) { type = it }
-      Divider(); FieldRow(inst, { inst = it }, "Bank (optional)")
+      if (type == AccountType.Bank || type == AccountType.Card || type == AccountType.Wallet) {
+        Divider(); PRow(if (type == AccountType.Wallet) "Wallet" else "Bank", value = inst.ifBlank { "Choose" }, valueColor = if (inst.isBlank()) C.secondary else C.label,
+          leading = Banks.match(inst)?.let { b -> @Composable { CategoryBadge("building.columns.fill", b.color, 26.dp) } }, chevron = true, onClick = { pickingBank = true })
+      } else { Divider(); FieldRow(inst, { inst = it }, "Institution (optional)") }
       if (type == AccountType.Bank || type == AccountType.Card) { Divider(); FieldRow(last4, { last4 = it }, "Last 4 digits (optional)", number = true) }
     }
     group(footer = if (a == null) "Your balance today. Transactions you add change it from here." else "Balance before your first transaction.") {

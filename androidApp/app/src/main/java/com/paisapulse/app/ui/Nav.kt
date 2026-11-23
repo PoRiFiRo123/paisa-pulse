@@ -28,6 +28,12 @@ sealed interface Route {
   data class Friend(val id: String, val groupId: String? = null) : Route
   data object Backup : Route
   data object Converter : Route
+  data object MainCurrency : Route
+  data object Accent : Route
+  data object AppIcon : Route
+  data object Planning : Route
+  data object ArchivedTrips : Route
+  data class TripDetail(val id: String) : Route
   data object Subscriptions : Route
   data class Import(val accountId: String? = null) : Route
   data class Capture(val mode: String) : Route
@@ -42,7 +48,7 @@ sealed interface Route {
 }
 
 sealed interface Sheet {
-  data class Add(val type: TxnType = TxnType.Expense, val editId: String? = null, val date: Long? = null, val accountId: String? = null) : Sheet
+  data class Add(val type: TxnType = TxnType.Expense, val editId: String? = null, val date: Long? = null, val accountId: String? = null, val tripId: String? = null) : Sheet
   data class AccountForm(val id: String?) : Sheet
   data class CategoryForm(val id: String?, val income: Boolean) : Sheet
   data class BudgetForm(val id: String?) : Sheet
@@ -57,6 +63,8 @@ sealed interface Sheet {
   /** Ask people who owe you (Messages, QR, link). amounts: friend id → paise. */
   data class Request(val note: String?, val amounts: Map<String, Long>) : Sheet
   data object HomeLayout : Sheet
+  data class TripForm(val kind: String = "trip", val editId: String? = null) : Sheet
+  data class Wallet(val tripId: String) : Sheet
 }
 
 data class Toast(val text: String, val undo: (() -> Unit)? = null, val id: Long = System.nanoTime())

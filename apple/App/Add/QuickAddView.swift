@@ -32,6 +32,15 @@ struct QuickAddView: View {
   @State private var tagText: String
   @Query(filter: #Predicate<Txn> { $0.deletedAt == nil }) private var history: [Txn]
   @Query(sort: \TxnTemplate.sortOrder) private var templates: [TxnTemplate]
+  @Query(filter: #Predicate<Trip> { $0.archivedAt == nil }, sort: \Trip.createdAt, order: .reverse) private var trips: [Trip]
+  @Query(sort: \TripItem.sortOrder) private var tripItems: [TripItem]
+  @Query private var tripWallets: [TripWallet]
+  @State private var method: String?
+  @State private var methodTouched: Bool
+  @State private var tripId: String?
+  @State private var tripItemId: String?
+  @State private var walletId: String?
+  @State private var pickingCurrency = false
 
   init(request: AddRequest) {
     self.request = request
@@ -45,9 +54,14 @@ struct QuickAddView: View {
     _toAccountId = State(initialValue: e?.toAccountId)
     _date = State(initialValue: e?.occurredAt ?? request.date ?? .now)
     _cardId = State(initialValue: e?.cardId)
-    _currency = State(initialValue: e?.currency ?? "INR")
+    _currency = State(initialValue: e?.currency ?? Money.base)
     _tagText = State(initialValue: Tags.text(e?.tags ?? []))
-    if let e, let orig = e.originalAmount, e.currency != nil, e.currency != "INR" {
+    _method = State(initialValue: e?.paymentMethod)
+    _methodTouched = State(initialValue: e?.paymentMethod != nil)
+    _tripId = State(initialValue: e?.tripId ?? request.tripId)
+    _tripItemId = State(initialValue: e?.tripItemId)
+    _walletId = State(initialValue: e?.walletId)
+    if let e, let orig = e.originalAmount, e.currency != nil, e.currency != Money.base {
       _expr = State(initialValue: orig % 100 == 0 ? String(orig / 100) : String(format: "%.2f", Double(orig) / 100))
       _rate = State(initialValue: Double(e.amount) / Double(orig))
     }
@@ -62,12 +76,19 @@ struct QuickAddView: View {
     guard let d = KeypadMath.evaluate(expr) else { return nil }
     return Money.paise(from: d)
   }
-  /// Always INR paise (converted when a foreign currency is picked).
-  private var amountPaise: Int? {
+  private var base: String { Money.base }
+  private var selectedCard: PaymentCard? { cardId.flatMap { id in cards.first { $0.id == id } } }
+  /// Converted to the main currency before any card markup.
+  private var convertedMinor: Int? {
     guard let m = enteredMinor else { return nil }
-    if currency == "INR" { return m }
+    if currency == base { return m }
     guard let rate else { return nil }
-    return Currency.toPaise(m, rate: rate)
+    return Fx.convert(m, rate: rate)
+  }
+  /// Always in the main currency: converted when a foreign currency is picked, plus the card's forex markup.
+  private var amountPaise: Int? {
+    guard let c = convertedMinor else { return nil }
+    return currency == base ? c : ForexMarkup.apply(c, bps: selectedCard?.forexMarkupBps)
   }
 
   @FocusState private var typing: Bool
@@ -120,7 +141,8 @@ struct QuickAddView: View {
       .sheet(isPresented: $pickingCategory) {
         CategoryPicker(kind: type == .income ? .income : .expense, selection: $categoryId)
       }
-      .alert("Rupees per 1 \(currency)", isPresented: $editingRate) {
+      .sheet(isPresented: $pickingCurrency) { CurrencyPickerSheet(title: "Currency") { pickCurrency($0) } }
+      .alert("\(Money.symbol) per 1 \(currency)", isPresented: $editingRate) {
         TextField("e.g. 83.25", text: $rateText).keyboardType(.decimalPad)
         Button("Use") { if let r = Double(rateText), r > 0 { rate = r } }
         Button("Cancel", role: .cancel) {}
@@ -129,6 +151,9 @@ struct QuickAddView: View {
         Button("OK", role: .cancel) {}
       } message: { Text(error ?? "") }
       .onAppear(perform: defaults)
+      .onChange(of: accountId) { _, _ in guessMethod() }
+      .onChange(of: cardId) { _, _ in guessMethod() }
+      .onChange(of: tripId) { _, _ in tripItemId = nil; walletId = nil }
       .onChange(of: type) { _, _ in
         if let c = categoryId, categories.first(where: { $0.id == c })?.kind != (type == .income ? .income : .expense) { categoryId = nil }
       }
@@ -142,11 +167,19 @@ struct QuickAddView: View {
     VStack(spacing: 2) {
       HStack(alignment: .firstTextBaseline, spacing: 4) {
         Menu {
-          ForEach(Currency.common, id: \.code) { c in
-            Button { pickCurrency(c.code) } label: { Text("\(c.code) · \(c.name)") }
+          Button { pickCurrency(base) } label: { Label("\(base) · \(World.currencyName(base))", systemImage: "house") }
+          let tripCodes = tripId.flatMap { id in trips.first { $0.id == id } }?.currencies ?? []
+          if !tripCodes.isEmpty {
+            Section("This trip") { ForEach(tripCodes, id: \.self) { c in Button("\(c) · \(World.currencyName(c))") { pickCurrency(c) } } }
           }
+          Section {
+            ForEach(Currency.common.filter { $0.code != base && !tripCodes.contains($0.code) }, id: \.code) { c in
+              Button { pickCurrency(c.code) } label: { Text("\(c.code) · \(c.name)") }
+            }
+          }
+          Button { pickingCurrency = true } label: { Label("All Currencies…", systemImage: "globe") }
         } label: {
-          Text(Currency.symbol(currency)).font(.system(size: currency == "INR" ? 30 : 22, weight: .semibold, design: .rounded)).foregroundStyle(.secondary)
+          Text(World.symbol(currency)).font(.system(size: currency == base ? 30 : 22, weight: .semibold, design: .rounded)).foregroundStyle(.secondary)
         }
         .accessibilityLabel("Currency \(currency)")
         Text(expr)
@@ -156,12 +189,15 @@ struct QuickAddView: View {
           .contentTransition(.numericText())
           .animation(.snappy, value: expr)
       }
-      if currency != "INR" {
+      if currency != base {
         Button {
           rateText = rate.map { String(format: "%.4f", $0) } ?? ""; editingRate = true
         } label: {
-          Text(amountPaise.map { "≈ \(Money.format($0)) · 1 \(currency) = ₹\(String(format: "%.2f", rate ?? 0))" } ?? "Tap to set the rate for \(currency)")
+          Text(amountPaise.map { "≈ \(Money.format($0)) · 1 \(currency) = \(Money.symbol)\(String(format: "%.2f", rate ?? 0))" } ?? "Tap to set the rate for \(currency)")
             .font(.subheadline)
+        }
+        if let c = convertedMinor, let card = selectedCard, let bps = card.forexMarkupBps, bps > 0 {
+          Text("incl. \(Money.format(ForexMarkup.fee(c, bps: bps))) card markup (\(ForexMarkup.label(bps)))").font(.caption).foregroundStyle(.secondary)
         }
       } else if KeypadMath.isExpression(expr), let p = amountPaise {
         Text("= \(Money.format(p))").font(.subheadline).foregroundStyle(.secondary)
@@ -255,10 +291,51 @@ struct QuickAddView: View {
             ForEach(accountCards) { Text($0.title).tag(String?.some($0.id)) }
           }
         }
+        ScrollView(.horizontal, showsIndicators: false) {
+          HStack(spacing: 8) {
+            ForEach(PaymentMethod.allCases) { m in
+              let on = method == m.rawValue
+              Button {
+                method = on ? nil : m.rawValue; methodTouched = true
+              } label: {
+                Label(m.label, systemImage: m.icon).font(.subheadline).lineLimit(1)
+                  .padding(.vertical, 7).padding(.horizontal, 12)
+                  .foregroundStyle(on ? .white : .primary)
+                  .background(on ? Color.accentColor : Color(.tertiarySystemFill), in: Capsule())
+              }
+              .buttonStyle(.plain)
+              .accessibilityAddTraits(on ? .isSelected : [])
+            }
+          }
+        }
+        .listRowInsets(EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12))
+        .accessibilityLabel("Payment method")
         DatePicker("Date", selection: $date, in: ...Date.now.addingTimeInterval(86_400 * 366))
         HStack {
           Image(systemName: "number").foregroundStyle(.secondary)
           TextField("Tags (goa trip, work)", text: $tagText).textInputAutocapitalization(.never).autocorrectionDisabled()
+        }
+        if type != .transfer, !trips.isEmpty {
+          Picker(selection: $tripId) {
+            Text("None").tag(String?.none)
+            ForEach(trips) { t in Label(t.name, systemImage: TripKinds.of(t.kind).icon).tag(String?.some(t.id)) }
+          } label: { Label("Trip", systemImage: "airplane").foregroundStyle(.primary) }
+          if let tid = tripId {
+            let items = tripItems.filter { $0.tripId == tid }
+            if !items.isEmpty {
+              Picker("For", selection: $tripItemId) {
+                Text("Not set").tag(String?.none)
+                ForEach(items) { Text($0.label).tag(String?.some($0.id)) }
+              }
+            }
+            let wallets = tripWallets.filter { $0.tripId == tid }
+            if type == .expense, !wallets.isEmpty {
+              Picker("Paid from", selection: $walletId) {
+                Text("Account").tag(String?.none)
+                ForEach(wallets) { w in Text("\(w.label) · \(w.currency ?? base)").tag(String?.some(w.id)) }
+              }
+            }
+          }
         }
         if type == .expense {
           NavigationLink {
@@ -299,8 +376,17 @@ struct QuickAddView: View {
   private func pickCurrency(_ code: String) {
     currency = code
     rate = nil
-    guard code != "INR" else { return }
-    Task { if let r = await Currency.rates(), let v = r.inrPer[code] { rate = v } else { rateText = ""; editingRate = true } }
+    guard code != base else { return }
+    // A trip wallet in this currency: use what you paid for it, so the trip's numbers match your forex card.
+    if let w = tripWallets.first(where: { $0.tripId == tripId && $0.currency == code }) { rate = w.rate; return }
+    Task { if let r = await Currency.rates(), let v = Fx.rate(from: code, to: base, inrPer: r.inrPer) { rate = v } else { rateText = ""; editingRate = true } }
+  }
+
+  /// Payment method from the account and card, until you pick one yourself.
+  private func guessMethod() {
+    guard !methodTouched else { return }
+    let acc = accounts.first { $0.id == accountId }
+    method = PaymentMethod.guess(accountType: acc?.type, cardKind: selectedCard?.kind)?.rawValue
   }
 
   private func apply(_ t: TxnTemplate) {
@@ -313,6 +399,12 @@ struct QuickAddView: View {
   private func defaults() {
     if accountId == nil || !accounts.contains(where: { $0.id == accountId }) {
       accountId = accounts.first(where: { $0.id == lastAccountId })?.id ?? accounts.first?.id
+    }
+    guessMethod()
+    // On a trip right now: link new expenses to it, in the destination's currency when it's abroad.
+    if request.editing == nil {
+      if tripId == nil, type != .transfer, let t = TripMath.ongoing(trips) { tripId = t.id }
+      if let t = tripId.flatMap({ id in trips.first { $0.id == id } }), t.international, currency == base, let c = t.currencies.first { pickCurrency(c) }
     }
     if let t = request.editing {
       let old = ((try? context.fetch(FetchDescriptor<SplitEntry>())) ?? []).filter { $0.txnId == t.id }
@@ -361,8 +453,12 @@ struct QuickAddView: View {
     }
     txn.cardId = type == .income ? nil : cardId
     txn.tags = Tags.parse(tagText)
-    txn.currency = currency == "INR" ? nil : currency
-    txn.originalAmount = currency == "INR" ? nil : enteredMinor
+    txn.currency = currency == base ? nil : currency
+    txn.originalAmount = currency == base ? nil : enteredMinor
+    txn.paymentMethod = method
+    txn.tripId = type == .transfer ? nil : tripId
+    txn.tripItemId = type == .transfer ? nil : tripItemId
+    txn.walletId = type == .expense ? walletId : nil
     // Splits: recreate this expense's shares.
     let old = ((try? context.fetch(FetchDescriptor<SplitEntry>())) ?? []).filter { $0.txnId == txn.id }
     old.forEach { context.delete($0) }

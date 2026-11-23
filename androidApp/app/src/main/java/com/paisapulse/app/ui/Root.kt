@@ -60,6 +60,8 @@ import dev.chrisbanes.haze.hazeSource
           is Sheet.LoanForm -> LoanFormSheet(sh.id)
           is Sheet.Request -> RequestSheet(sh.note, sh.amounts)
           Sheet.HomeLayout -> HomeLayoutSheet()
+          is Sheet.TripForm -> TripFormSheet(sh.kind, sh.editId)
+          is Sheet.Wallet -> WalletSheet(sh.tripId)
           null -> {}
         }
       }
@@ -84,6 +86,12 @@ import dev.chrisbanes.haze.hazeSource
     is Route.Friend -> FriendScreen(r.id, r.groupId)
     Route.Backup -> BackupScreen()
     Route.Converter -> ConverterScreen()
+    Route.MainCurrency -> MainCurrencyScreen()
+    Route.Accent -> AccentScreen()
+    Route.AppIcon -> AppIconScreen()
+    Route.Planning -> PlanningScreen()
+    Route.ArchivedTrips -> ArchivedTripsScreen()
+    is Route.TripDetail -> TripDetailScreen(r.id)
     Route.Subscriptions -> SubscriptionsScreen()
     is Route.Import -> ImportScreen(r.accountId)
     is Route.Capture -> CaptureScreen(r.mode)

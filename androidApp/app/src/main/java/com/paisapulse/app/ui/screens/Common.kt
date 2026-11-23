@@ -101,6 +101,7 @@ fun dayLabel(d: LocalDate) = when (d) { LocalDate.now() -> "Today"; LocalDate.no
     Column(horizontalAlignment = Alignment.End) {
       AmountText(t.amount, t.kind)
       t.splitShare?.let { Text("yours ${Money.format(it)}", style = T.caption2, color = C.secondary) }
+        ?: run { val c = t.currency; val o = t.originalAmount; if (c != null && o != null) Text(Money.format(o, c), style = T.caption2, color = C.secondary) }
     }
     if (selected == null) Icon(Sym.of("chevron.right"), null, tint = C.tertiary, modifier = Modifier.padding(start = 6.dp).size(13.dp))
   }

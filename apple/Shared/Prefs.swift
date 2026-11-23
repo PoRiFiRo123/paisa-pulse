@@ -23,4 +23,7 @@ enum PrefKey {
   static let lastCleanupAt = "lastCleanupAt"
   static let homeOrder = "homeOrder"        // comma-separated HomeSections keys
   static let homeHidden = "homeHidden"
+  static let baseCurrency = "baseCurrency"  // main currency code, default INR
+  static let converterCurrencies = "converterCurrencies" // comma-separated codes on the converter
+  static let customAccent = "customAccent"  // hex, used when accent == "custom"
 }
