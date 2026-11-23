@@ -1,3 +1,4 @@
+import AppIntents
 import SwiftData
 import SwiftUI
 
@@ -12,6 +13,7 @@ struct PaisaPulseApp: App {
   @State private var router = Router()
   @AppStorage(PrefKey.theme, store: AppGroup.defaults) private var theme = "system"
   @AppStorage(PrefKey.accent, store: AppGroup.defaults) private var accent = "indigo"
+  @Environment(\.scenePhase) private var phase
 
   var body: some Scene {
     WindowGroup {
@@ -21,12 +23,14 @@ struct PaisaPulseApp: App {
         .preferredColorScheme(theme == "light" ? .light : theme == "dark" ? .dark : nil)
         .onOpenURL { router.handle(url: $0) }
         .onReceive(NotificationCenter.default.publisher(for: QuickActions.notification)) { n in
-          if let url = n.object as? URL { router.handle(url: url) }
+          if let url = n.object as? URL { _ = PendingRoute.take(); router.handle(url: url) }
         }
+        .onChange(of: phase) { _, p in if p == .active, let url = PendingRoute.take() { router.handle(url: url) } }
         .task {
           KeyboardDismiss.shared.install()
           QuickActions.install()
           if let url = QuickActions.pending { QuickActions.pending = nil; router.handle(url: url) }
+          if let url = PendingRoute.take() { router.handle(url: url) }
         }
     }
     .modelContainer(container)
@@ -126,5 +130,15 @@ final class QuickActionSceneDelegate: NSObject, UIWindowSceneDelegate {
   func windowScene(_ windowScene: UIWindowScene, performActionFor shortcutItem: UIApplicationShortcutItem, completionHandler: @escaping (Bool) -> Void) {
     QuickActions.fire(shortcutItem.type)
     completionHandler(true)
+  }
+}
+
+/// Shows "Add Expense" and "Add Income" in Shortcuts, Spotlight and the Action Button list without setup.
+struct PaisaShortcuts: AppShortcutsProvider {
+  static var appShortcuts: [AppShortcut] {
+    AppShortcut(intent: OpenAddExpenseIntent(), phrases: ["Add an expense in \(.applicationName)", "Log spending in \(.applicationName)"],
+                shortTitle: "Add Expense", systemImageName: "minus.circle")
+    AppShortcut(intent: OpenAddIncomeIntent(), phrases: ["Add income in \(.applicationName)"],
+                shortTitle: "Add Income", systemImageName: "plus.circle")
   }
 }
