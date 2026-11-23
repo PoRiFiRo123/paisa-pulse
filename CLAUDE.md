@@ -178,3 +178,8 @@ The user chose to rewrite iOS in SwiftUI; Android stays on this Expo app. Code i
 - **Encrypted backup format** (both apps): `{"paisaEncrypted":1,"kdf":"pbkdf2-sha256","iterations":200000,"salt","iv"(12 bytes),"data"(ciphertext+16-byte GCM tag)}`, all base64. Password in the Keychain (iOS) / Android Keystore-wrapped prefs `paisa_secure` (`BackupPassword`). Auto backups are encrypted when a password is set. iOS test `testAndroidEncryptedBackupOpens` decrypts a file made by the Kotlin code.
 - Screens: iOS `More/Batch4Views.swift`, Android `ui/screens/Batch4.kt` (Templates, Tags, TagDetail, Recap with share, Home layout, investment Value section, ForecastCard).
 - Android Quick Settings tile `widget/AddExpenseTile.kt` opens `paisapulse://add?type=expense`.
+
+### Add button (Nov 2026, both apps)
+- The round + sits beside the floating tab bar (replacing the separate Search button; search is Activity's search field). Tap = expense, long-press = menu (Income, Transfer, Expense, top 3 templates, From Screenshots, Android also Say It). No + in top bars.
+- iOS no longer uses the system tab bar: `Core/FloatingTabBar.swift` (`FloatingTabBar`, `AddCircleButton`, `TemplateAdd`) over a ZStack of live `NavigationStack`s in `MainTabs`; `router.hideTabBar` (Activity select mode), `router.popToRoot` (tap the current tab). Android: `TabBar` in `ui/Components.kt` + `AddButton(big = true)` in `ui/screens/Common.kt`.
+- iOS App Intents (`Shared/Intents.swift`) must not open `paisapulse://` themselves ("launch is prohibited"): they call `PendingRoute.open`, which the app handles. `PaisaShortcuts` (AppShortcutsProvider) lists Add Expense / Add Income.

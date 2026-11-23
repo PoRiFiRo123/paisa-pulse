@@ -129,7 +129,6 @@ object Search {
             if (!isDefault) DropdownMenuItem({ Text("Clear Filters", style = T.body, color = C.expense) }, { type = null; accountId = null; categoryId = null; filters = false })
           }
         }
-        AddButton()
       }
     }) {
       if (!selecting) item { SearchField(q, { q = it }, "Payee, note, category, amount") }

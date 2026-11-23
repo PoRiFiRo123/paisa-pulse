@@ -41,7 +41,6 @@ struct HomeView: View {
         NavigationLink { CalendarView() } label: { Image(systemName: "calendar") }
           .accessibilityLabel("Calendar")
       }
-      ToolbarItem(placement: .topBarTrailing) { AddButton() }
     }
     .sheet(isPresented: $editingLayout) { NavigationStack { HomeLayoutView() } }
   }
@@ -207,17 +206,8 @@ struct HomeView: View {
     }
   }
 
-  /// A template adds straight away, with Undo.
-  private func quickAdd(_ t: TxnTemplate) {
-    guard let accountId = t.accountId.flatMap({ id in accounts.first { $0.id == id && $0.archivedAt == nil }?.id })
-      ?? accounts.first(where: { $0.id == lastAccountId })?.id ?? accounts.first?.id else { return }
-    let txn = Txn(type: t.type, amount: t.amount, accountId: accountId, toAccountId: t.toAccountId, categoryId: t.categoryId,
-                  payee: t.payee ?? t.name, source: "template")
-    context.insert(txn)
-    try? context.save()
-    WidgetRefresh.now()
-    router.show("Added \(t.name) · \(Money.format(t.amount))") { txn.deletedAt = .now; try? context.save(); WidgetRefresh.now() }
-  }
+  private func quickAdd(_ t: TxnTemplate) { TemplateAdd.run(t, context: context, router: router) }
+
 }
 
 /// The + in the toolbar: tap for an expense, long-press for income or a transfer.
