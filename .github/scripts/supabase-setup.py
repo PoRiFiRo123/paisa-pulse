@@ -19,6 +19,10 @@ TOKEN = os.environ.get("SUPABASE_ACCESS_TOKEN", "").strip()
 OUT = os.environ.get("GITHUB_OUTPUT")
 
 
+class SetupError(Exception):
+    pass
+
+
 def output(url="", key=""):
     if OUT:
         with open(OUT, "a") as f:
@@ -34,7 +38,7 @@ def call(method, path, body=None):
             text = r.read().decode()
             return json.loads(text) if text else None
     except urllib.error.HTTPError as e:
-        sys.exit(f"Supabase API {method} {path} failed: HTTP {e.code} {e.read().decode()[:600]}")
+        raise SetupError(f"Supabase API {method} {path} failed: HTTP {e.code} {e.read().decode()[:600]}")
 
 
 def main():
@@ -85,4 +89,13 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # A setup problem shouldn't stop the app builds: they build without accounts and the run shows a warning.
+    try:
+        main()
+    except (SetupError, SystemExit, OSError) as e:
+        msg = str(e)
+        if "401" in msg:
+            msg += " -- the SUPABASE_ACCESS_TOKEN secret is wrong or revoked: make a new personal access token " \
+                   "(Supabase > Account > Access Tokens, starts with sbp_) and save it as the secret."
+        print(f"::warning title=Accounts not set up::{msg}")
+        output()
