@@ -34,7 +34,7 @@ object Search {
     verticalAlignment = Alignment.CenterVertically) {
     Icon(Sym.of("magnifyingglass"), null, tint = C.secondary, modifier = Modifier.size(20.dp))
     Spacer(Modifier.width(8.dp))
-    FieldRow(q, onChange, hint, modifier = Modifier.padding(0.dp))
+    FieldRow(q, onChange, hint, padding = PaddingValues(0.dp))
   }
 }
 

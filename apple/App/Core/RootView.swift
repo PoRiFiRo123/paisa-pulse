@@ -50,10 +50,11 @@ struct MainTabs: View {
     }
     .overlay(alignment: .bottom) {
       if !router.hideTabBar {
-        FloatingTabBar().transition(.move(edge: .bottom).combined(with: .opacity))
+        FloatingTabBar()
+          .ignoresSafeArea(.keyboard, edges: .bottom)
+          .transition(.move(edge: .bottom).combined(with: .opacity))
       }
     }
-    .ignoresSafeArea(.keyboard, edges: .bottom)
     .animation(.spring(duration: 0.3), value: router.hideTabBar)
     .sheet(item: $router.add) { request in
       QuickAddView(request: request)
@@ -65,7 +66,9 @@ struct MainTabs: View {
   @ViewBuilder private func tab<V: View>(_ t: AppTab, @ViewBuilder _ content: () -> V) -> some View {
     let on = router.tab == t
     TabStack(tab: t, content: content())
-      .safeAreaInset(edge: .bottom, spacing: 0) { Color.clear.frame(height: router.hideTabBar ? 0 : 74) }
+      // Room for the floating bar at the end of every list, on pushed screens too.
+      .contentMargins(.bottom, router.hideTabBar ? 0 : 84, for: .scrollContent)
+      .contentMargins(.bottom, router.hideTabBar ? 0 : 76, for: .scrollIndicators)
       .opacity(on ? 1 : 0)
       .allowsHitTesting(on)
       .accessibilityHidden(!on)

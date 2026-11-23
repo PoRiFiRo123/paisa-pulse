@@ -67,11 +67,11 @@ object Forecast {
     }
     val since = now - 90L * 86_400_000
     val everyday = txns.filter { it.deletedAt == null && it.kind == TxnType.Expense && it.recurringId == null && it.occurredAt in since..now }.sumOf { it.effectiveAmount }
-    val daily = everyday / 90
+    val daily = Math.round(everyday / 90.0 / 100.0) * 100
     val today = Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
     val end = Instant.ofEpochMilli(month.end).atZone(zone).toLocalDate()
     val daysLeft = maxOf(0, java.time.temporal.ChronoUnit.DAYS.between(today, end).toInt())
-    return Result(current, incoming, outgoing, daily, daysLeft, current + incoming - outgoing - daily * daysLeft)
+    return Result(current, incoming, outgoing, daily, daysLeft, Math.round((current + incoming - outgoing - daily * daysLeft) / 100.0) * 100)
   }
 }
 

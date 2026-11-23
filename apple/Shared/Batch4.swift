@@ -69,10 +69,10 @@ enum Forecast {
     let since = calendar.date(byAdding: .day, value: -90, to: now)!
     let everyday = txns.filter { $0.deletedAt == nil && $0.type == .expense && $0.recurringId == nil && $0.occurredAt >= since && $0.occurredAt <= now }
       .reduce(0) { $0 + $1.effectiveAmount }
-    let daily = everyday / 90
+    let daily = Int((Double(everyday) / 90 / 100).rounded()) * 100
     let daysLeft = max(0, calendar.dateComponents([.day], from: calendar.startOfDay(for: now), to: month.end).day ?? 0)
     return Result(now: current, incoming: incoming, outgoing: outgoing, dailySpend: daily, daysLeft: daysLeft,
-                  projected: current + incoming - outgoing - daily * daysLeft)
+                  projected: Int((Double(current + incoming - outgoing - daily * daysLeft) / 100).rounded()) * 100)
   }
 }
 
