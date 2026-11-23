@@ -5,6 +5,10 @@ Newest first. Every push to `main` becomes a GitHub Release `build-<number>` wit
 
 ## [Unreleased]
 
+- iPhone: the end of every list (pushed screens too) clears the floating tab bar again; forms no longer hide under the keyboard.
+- Both: the month-end forecast shows whole rupees; card bills read "Due in 9 days" on both phones.
+- Android: Activity's search text is no longer cut off; lists end above the navigation bar on 3-button phones.
+
 - Both phones: slide your finger across the tab bar to switch tabs again; a glass lens follows your finger.
 - iPhone: Activity's search field sits at the top, so it no longer collides with the tab bar.
 - New README with every feature, and the iPhone install guide now covers iloader over USB.

@@ -103,7 +103,7 @@ fun PScreen(
   val list = rememberLazyListState()
   val collapsed by remember { derivedStateOf { !large || list.firstVisibleItemIndex > 0 || list.firstVisibleItemScrollOffset > 60 } }
   Box(Modifier.fillMaxSize().background(C.background)) {
-    LazyColumn(state = list, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(top = 100.dp, bottom = bottomInset)) {
+    LazyColumn(state = list, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(top = 100.dp, bottom = bottomInset + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding())) {
       if (large) item { Text(title, style = T.largeTitle, color = C.label, modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 8.dp)) }
       content()
     }
@@ -294,14 +294,15 @@ fun PRow(
 }
 
 /** Text field styled like an iOS form row. */
-@Composable fun FieldRow(value: String, onChange: (String) -> Unit, placeholder: String, number: Boolean = false, modifier: Modifier = Modifier) {
+@Composable fun FieldRow(value: String, onChange: (String) -> Unit, placeholder: String, number: Boolean = false, modifier: Modifier = Modifier,
+  padding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 15.dp)) {
   val focus = androidx.compose.ui.platform.LocalFocusManager.current
   androidx.compose.foundation.text.BasicTextField(value, onChange, singleLine = true,
     textStyle = T.body.copy(color = C.label), cursorBrush = androidx.compose.ui.graphics.SolidColor(C.accent),
     keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = if (number) androidx.compose.ui.text.input.KeyboardType.Decimal else androidx.compose.ui.text.input.KeyboardType.Text,
       capitalization = androidx.compose.ui.text.input.KeyboardCapitalization.Words, imeAction = androidx.compose.ui.text.input.ImeAction.Done),
     keyboardActions = androidx.compose.foundation.text.KeyboardActions(onDone = { focus.clearFocus() }),
-    modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 15.dp),
+    modifier = modifier.fillMaxWidth().padding(padding),
     decorationBox = { inner -> Box { if (value.isEmpty()) Text(placeholder, style = T.body, color = C.tertiary); inner() } })
 }
 

@@ -20,6 +20,12 @@ struct HomeView: View {
   @AppStorage(PrefKey.lastAccountId, store: AppGroup.defaults) private var lastAccountId = ""
   @State private var editingLayout = false
 
+
+  /// "Due today", "Due tomorrow", "Due in 9 days" (same wording as Android).
+  static func dueText(_ d: Date) -> String {
+    let days = Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: .now), to: Calendar.current.startOfDay(for: d)).day ?? 0
+    return days <= 0 ? "Due today" : days == 1 ? "Due tomorrow" : "Due in \(days) days"
+  }
   var body: some View {
     let lookups = Lookups(accounts: accounts, categories: categories)
     let month = Periods.month(containing: .now, startDay: monthStartDay)
@@ -97,7 +103,7 @@ struct HomeView: View {
                 CategoryBadge(icon: a.icon, color: a.color, size: 32)
                 VStack(alignment: .leading, spacing: 2) {
                   Text(a.name).foregroundStyle(.primary)
-                  Text("Due \(d.formatted(.relative(presentation: .named)))").font(.footnote)
+                  Text(Self.dueText(d)).font(.footnote)
                     .foregroundStyle(d < Date.now.addingTimeInterval(3 * 86_400) ? Color.expense : .secondary)
                 }
                 Spacer()
