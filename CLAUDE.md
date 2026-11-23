@@ -181,7 +181,7 @@ The user chose to rewrite iOS in SwiftUI; Android stays on this Expo app. Code i
 
 ### Add button (Nov 2026, both apps)
 - The round + sits beside the floating tab bar (replacing the separate Search button; search is Activity's search field). Tap = expense, long-press = menu (Income, Transfer, Expense, top 3 templates, From Screenshots, Android also Say It). No + in top bars.
-- iOS no longer uses the system tab bar: `Core/FloatingTabBar.swift` (`FloatingTabBar`, `AddCircleButton`, `TemplateAdd`) over a ZStack of live `NavigationStack`s in `MainTabs`; `router.hideTabBar` (Activity select mode), `router.popToRoot` (tap the current tab). Android: `TabBar` in `ui/Components.kt` + `AddButton(big = true)` in `ui/screens/Common.kt`.
+- iOS uses the **native system TabView** again (user, 24 Nov 2026: the custom bar didn't look like real Liquid Glass): `MainTabs` in `Core/RootView.swift`; the + is the search-role `Tab` (iOS draws it as the separate round glass button), whose selection opens Quick Add and keeps the current tab. No long-press menu on iOS: Quick Add has the templates row and a "From Screenshots" toolbar button. `router.hideTabBar` → `.toolbar(.hidden, for: .tabBar)`; `TemplateAdd` lives in `Core/TemplateAdd.swift`. Don't replace native components with custom look-alikes on iOS. Android: `TabBar` in `ui/Components.kt` + `AddButton(big = true)` in `ui/screens/Common.kt`.
 - iOS App Intents (`Shared/Intents.swift`) must not open `paisapulse://` themselves ("launch is prohibited"): they call `PendingRoute.open`, which the app handles. `PaisaShortcuts` (AppShortcutsProvider) lists Add Expense / Add Income.
 
 ### Share a screenshot (Nov 2026, both apps)
