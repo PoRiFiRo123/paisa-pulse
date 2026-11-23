@@ -1,4 +1,5 @@
 import Foundation
+import Vision
 
 // Screenshot capture, the same rules as Android Capture.kt (checked against the RN app's output).
 
@@ -138,6 +139,8 @@ enum ScreenshotParser {
   }
 
   private static let idLine = Rx("\\b(utr|upi ref|ref(erence)?\\s*(no|number|id)?|transaction id|txn id|order id|google transaction|upi transaction|rrn)\\b")
+  /// Lines with other amounts: balances, rewards, fees and limits (Paytm, PhonePe, bank apps).
+  private static let otherAmount = Rx("\\b(balance|bal\\b|cashback|reward|coins?|scratch|won|offer|fee|charges?|limit|points?|save|saved|discount)\\b")
 
   private static func paise(_ s: String) -> Int? {
     guard let d = Decimal(string: s.replacingOccurrences(of: ",", with: "")) else { return nil }
@@ -149,9 +152,11 @@ enum ScreenshotParser {
 
   static func findPaidAmount(_ lines: [String]) -> Int? {
     let money = Rx("(?:₹|rs\\.?|inr|amount\\s*(?:paid|sent|received)?\\s*:?\\s*₹?)\\s*([\\d,]+(?:\\.\\d{1,2})?)\\b")
-    for line in lines where !idLine.test(line) {
+    for line in lines where !idLine.test(line) && !otherAmount.test(line) {
       if let m = money.first(line), let p = paise(m[1]) { return p }
     }
+    // OCR often reads the ₹ sign as Z, %, ? or 2 on a line of its own amount ("Z349", "% 1,245.00").
+    for line in lines { if let m = Rx("^[z%?]\\s?(\\d[\\d,]*(?:\\.\\d{1,2})?)$").first(line), let p = paise(m[1]) { return p } }
     for line in lines {
       guard let m = Rx("^([\\d,]{1,9}(?:\\.\\d{2})?)$").first(line) else { continue }
       if !Rx("^\\d{10,}$").test(m[1].replacingOccurrences(of: ",", with: "")), let p = paise(m[1]) { return p }
@@ -168,6 +173,12 @@ enum ScreenshotParser {
       month = months[b[1].lowercased()]; day = Int(b[2]); year = Int(b[3])
     } else if let c = Rx("\\b(\\d{1,2})[/.-](\\d{1,2})[/.-](\\d{2,4})\\b").first(text) {
       day = Int(c[1]); month = Int(c[2]); let y = Int(c[3]) ?? 0; year = y < 100 ? 2000 + y : y
+    }
+    // "Today, 10:15 AM" / "Yesterday 9:02 pm" (Paytm, PhonePe, Navi, bank apps).
+    if day == nil, let r = Rx("\\b(today|yesterday)\\b").first(text),
+       let base = calendar.date(byAdding: .day, value: r[1].lowercased() == "yesterday" ? -1 : 0, to: now) {
+      let c = calendar.dateComponents([.year, .month, .day], from: base)
+      day = c.day; month = c.month; year = c.year
     }
     guard let d = day, let m = month else { return nil }
     var hours = 12, minutes = 0
@@ -189,21 +200,21 @@ enum ScreenshotParser {
   }
 
   private static let received = Rx("\\b(received from|money received|you received|credited to your|received)\\b")
-  private static let sent = Rx("\\b(paid to|paid successfully|payment successful|money sent|sent to|debited from|you paid|transaction successful)\\b")
-  private static let failed = Rx("\\b(failed|declined|unsuccessful|pending|processing)\\b")
-  private static let payeeLabel = Rx("^(paid to|paid successfully to|money sent to|sent to|received from|to|from|beneficiary( name)?|payee( name)?|merchant( name)?|paying)\\s*:?$")
-  private static let notAName = Rx("(@|\\d{6,}|successful|completed|transaction|upi|banking name|share|split|pay again|view|details|debited|credited|xx|\\*\\*|•)")
+  private static let sent = Rx("\\b(paid to|paid successfully|payment successful|payment success|money sent|sent to|debited from|you paid|transaction successful|completed|payment of|payment to|sent successfully|transfer successful|transferred|paid|debited|payment done|payment complete|success)\\b")
+  private static let failed = Rx("\\b(failed|declined|unsuccessful|pending|processing|reversed|cancelled|canceled|in progress|awaiting|will be refunded)\\b")
+  private static let payeeLabel = Rx("^(paid to|paid successfully to|money sent to|sent to|sent money to|payment to|transferred to|received from|payment from|money received from|sender( name)?|to|from|beneficiary( name)?|payee( name)?|merchant( name)?|recipient( name)?|receiver( name)?|to account|paying)\\s*:?$")
+  private static let notAName = Rx("(@|\\d{6,}|successful|completed|transaction|upi|banking name|share|split|pay again|view|details|debited|credited|xx|\\*\\*|•|powered by|phonepe|google pay|\\bgpay\\b|paytm|\\bbhim\\b|whatsapp|mobikwik|freecharge|super\\.money|receipt|download|help|support)")
   private static let letter = Rx("[a-z]")
 
   private static func payeeFrom(_ lines: [String], received: Bool) -> (name: String?, upi: String?) {
     let upi = lines.lazy.compactMap { Rx("\\b[\\w.-]{2,}@[a-z]{2,}\\b").first($0)?[0] }.first
-    let want = received ? Rx("^(received from|from|money received from)\\b") : Rx("^(paid to|paid successfully to|money sent to|sent to|to|beneficiary|payee|merchant|paying)\\b")
+    let want = received ? Rx("^(received from|from|money received from|payment from|sender)\\b") : Rx("^(paid to|paid successfully to|money sent to|sent to|sent money to|payment to|transferred to|to|beneficiary|payee|merchant|recipient|receiver|paying)\\b")
     for (i, line) in lines.enumerated() {
       if payeeLabel.test(line) && want.test(line) {
         if let next = lines.dropFirst(i + 1).prefix(2).first(where: { !notAName.test($0) && letter.test($0) && !$0.hasPrefix("₹") }) { return (next, upi) }
         continue
       }
-      let inline = (received ? Rx("^(?:received from|from)\\s*:?\\s+(.+)$") : Rx("^(?:paid to|paid successfully to|money sent to|sent to|to|beneficiary name|payee name)\\s*:?\\s+(.+)$")).first(line)
+      let inline = (received ? Rx("^(?:received from|money received from|payment from|from|sender name)\\s*:?\\s+(.+)$") : Rx("^(?:paid to|paid successfully to|money sent to|sent to|sent money to|payment to|transferred to|paying|to|beneficiary name|payee name|recipient name|merchant name)\\s*:?\\s+(.+)$")).first(line)
       if let inline, !notAName.test(inline[1]), letter.test(inline[1]) {
         return (Rx("\\s*\\(.*\\)\\s*$").replace(inline[1], with: ""), upi)
       }
@@ -214,13 +225,14 @@ enum ScreenshotParser {
   private static func accountFrom(_ lines: [String], _ ctx: CaptureContext) -> CaptureAccount? {
     let own = lines.filter { Rx("(debited|credited|from|account|a/c|bank|xx|\\*{2,}|•{2,})").test($0) }
     for line in own {
-      if let l4 = Rx("(?:x{2,}|\\*{2,}|•{2,}|\\.{2,}|a/c\\s*(?:no\\.?)?\\s*)\\s*(\\d{4})\\b").first(line)?[1], let hit = ctx.accounts.first(where: { $0.last4 == l4 }) { return hit }
+      if let l4 = Rx("(?:x{2,}|\\*{2,}|•{2,}|\\.{2,}|a/c\\s*(?:no\\.?)?\\s*|ending\\s*(?:in|with)?\\s*)\\s*(\\d{4})\\b").first(line)?[1], let hit = ctx.accounts.first(where: { $0.last4 == l4 }) { return hit }
     }
     for line in own { if let hit = CaptureDrafts.findAccount(line, ctx.accounts) { return hit.account } }
     return nil
   }
 
-  /// One payment screenshot (GPay, PhonePe, Paytm, BHIM, CRED, bank apps) → a draft, or nil with no amount.
+  /// One payment screenshot → a draft, or nil with no amount. Tested with GPay, PhonePe, Paytm, BHIM, CRED, Amazon Pay,
+  /// WhatsApp, Navi, super.money, MobiKwik, Freecharge, Fi/Jupiter-style and bank apps (Axis, BoB, SBI YONO, HDFC, ICICI).
   static func parse(_ texts: [String], ctx: CaptureContext, key: String = "shot") -> CaptureDraft? {
     let lines = toLines(texts)
     guard let amount = findPaidAmount(lines) else { return nil }
@@ -250,5 +262,19 @@ enum ScreenshotParser {
                         payee: type == .transfer ? nil : payee, note: type == .transfer ? "Card bill payment" : nil,
                         occurredAt: findReceiptDate(lines, now: ctx.now) ?? ctx.now, source: lines.prefix(12).joined(separator: " · "),
                         include: !isFailed, warning: warning)
+  }
+}
+
+/// On-device text recognition (Vision) for payment screenshots: the app's capture screen and the share extension.
+enum ScreenText {
+  static func read(_ image: CGImage) async -> [String] {
+    await Task.detached(priority: .userInitiated) {
+      let request = VNRecognizeTextRequest()
+      request.recognitionLevel = .accurate
+      request.usesLanguageCorrection = false
+      request.recognitionLanguages = ["en-IN", "en-US"]
+      try? VNImageRequestHandler(cgImage: image).perform([request])
+      return (request.results ?? []).compactMap { $0.topCandidates(1).first?.string }
+    }.value
   }
 }

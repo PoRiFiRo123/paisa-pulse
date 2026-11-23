@@ -5,6 +5,9 @@ Newest first. Every push to `main` becomes a GitHub Release `build-<number>` wit
 
 ## [Unreleased]
 
+- Both phones: **share a payment screenshot from any UPI app** (GPay, PhonePe, Paytm, BHIM…) to Paisa Pulse. It reads the amount, payee, date and account on the phone, you check them and tap Save. iPhone uses a share extension (the 3rd free-Apple-ID app slot); Android opens the review screen.
+- Screenshot reading understands more apps and layouts: Amazon Pay, WhatsApp, Navi, super.money, MobiKwik, Freecharge, "Today/Yesterday" dates, "ending 1234" accounts, ₹ misread as Z, and it skips balance, cashback and fee amounts. GPay's "Completed" no longer shows a "couldn't tell" warning.
+
 - Both phones: the **+ moved to a round button beside the tab bar**, where your thumb is, on every tab. Tap for an expense; long-press for income, transfer, your top templates and screenshots (and voice on Android). Search lives at the top of Activity (the separate Search button is gone). Tapping the current tab again goes back to its first screen (iPhone).
 - iPhone: the "Add Expense" Shortcuts / Action Button action no longer fails with "URL scheme paisapulse is unsupported"; there's also "Add Income".
 

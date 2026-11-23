@@ -3,7 +3,7 @@ name: Build Android + iOS
 # Every push to main builds:
 #   - PaisaPulse.apk : Android, release build, signed with the same key every time so a new APK
 #                      installs over the old one and keeps your data.
-#   - PaisaPulse.ipa : iOS, the native SwiftUI app in apple/, built for a FREE Apple ID (app + widget). Ad-hoc signed with its entitlements; install it with SideStore,
+#   - PaisaPulse.ipa : iOS, the native SwiftUI app in apple/, built for a FREE Apple ID (app + widget + share extension). Ad-hoc signed with its entitlements; install it with SideStore,
 #                      AltStore or Sideloadly, which re-sign it with your Apple ID.
 # ...and publishes both as a GitHub Release "build-<run number>" that the in-app update check reads.
 # Pushes to claude/** branches build and test the same way but publish no release (artifacts only).
@@ -81,7 +81,7 @@ jobs:
           script: bash .github/scripts/android-screenshots.sh
 
   ios:
-    # Native SwiftUI app in apple/ (XcodeGen project). Free Apple ID friendly: app + widget only.
+    # Native SwiftUI app in apple/ (XcodeGen project). Free Apple ID: app + widget + share extension (3 slots).
     runs-on: macos-26
     timeout-minutes: 75
     defaults:

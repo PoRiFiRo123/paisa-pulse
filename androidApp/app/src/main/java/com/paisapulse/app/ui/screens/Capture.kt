@@ -46,8 +46,8 @@ import kotlin.coroutines.resume
   fun context() = CaptureDrafts.context(Store.value, Prefs.lastAccountId.ifEmpty { null })
   fun looksLogged(d: CaptureDraft) = Store.value.liveTxns.any { it.amount == d.amount && Math.abs(it.occurredAt - d.occurredAt) <= 86_400_000L }
 
-  val photos = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(20)) { uris ->
-    if (uris.isEmpty()) return@rememberLauncherForActivityResult
+  fun readUris(uris: List<android.net.Uri>) {
+    if (uris.isEmpty()) return
     reading = true
     scope.launch {
       val c = context(); var missed = 0
@@ -66,6 +66,11 @@ import kotlin.coroutines.resume
       recognizer.close()
       drafts = drafts + found; unread = missed; reading = false
     }
+  }
+  val photos = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(20)) { uris -> readUris(uris) }
+  // Shared from a UPI app (GPay, PhonePe, Paytm…): read them straight away.
+  LaunchedEffect(Ui.sharedImages) {
+    if (!voice && Ui.sharedImages.isNotEmpty()) { val u = Ui.sharedImages; Ui.sharedImages = emptyList(); readUris(u) }
   }
   fun parseSentence(text: String) {
     if (text.isBlank()) return
@@ -117,7 +122,7 @@ import kotlin.coroutines.resume
       }
       if (skipped.isNotEmpty()) item { Text("Didn't catch an amount in: ${skipped.joinToString(", ")}", style = T.footnote, color = C.secondary, modifier = Modifier.padding(horizontal = 32.dp)) }
     } else {
-      group(footer = if (unread > 0) "$unread screenshot${if (unread == 1) "" else "s"} had no amount we could read." else "Payment screens from GPay, PhonePe, Paytm, CRED or your bank. Read on this phone.") {
+      group(footer = if (unread > 0) "$unread screenshot${if (unread == 1) "" else "s"} had no amount we could read." else "Payment screens from GPay, PhonePe, Paytm, BHIM, CRED, Amazon Pay, WhatsApp, Navi or your bank. Read on this phone. Tip: share a screenshot straight from any UPI app to Paisa Pulse.") {
         Button({ photos.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }, enabled = !reading,
           modifier = Modifier.fillMaxWidth().padding(16.dp).height(50.dp), shape = RoundedCornerShape(25.dp), colors = ButtonDefaults.buttonColors(containerColor = C.accent)) {
           Text(if (reading) "Reading…" else if (drafts.isEmpty()) "Choose Screenshots" else "Choose More", style = T.headline, color = Color.White)

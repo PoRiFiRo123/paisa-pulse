@@ -29,6 +29,7 @@ class MainActivity : FragmentActivity() {
     intent.getStringExtra("PaisaTab")?.let { t -> Ui.tab = Tab.entries.firstOrNull { it.name.equals(t, true) } ?: Tab.Home }
     if (intent.getBooleanExtra("PaisaAdd", false)) Ui.sheet = com.paisapulse.app.ui.Sheet.Add()
     Ui.handle(intent?.data)
+    Ui.handleShare(intent)
     installShortcuts()
     locked.value = Prefs.appLock
     setContent { PaisaTheme { Root(locked.value) { authenticate() } } }
@@ -48,7 +49,7 @@ class MainActivity : FragmentActivity() {
     ))
   }
 
-  override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); Ui.handle(intent.data) }
+  override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); Ui.handle(intent.data); Ui.handleShare(intent) }
 
   override fun onStart() { super.onStart(); Services.runMaintenance() }
 

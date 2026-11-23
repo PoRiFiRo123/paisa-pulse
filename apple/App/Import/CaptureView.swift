@@ -30,7 +30,7 @@ struct CaptureView: View {
         .listRowBackground(Color.clear)
       } footer: {
         Text(unread > 0 ? "\(unread) screenshot\(unread == 1 ? "" : "s") had no amount we could read."
-             : "Payment screens from GPay, PhonePe, Paytm, CRED or your bank. Read on this phone.")
+             : "Payment screens from GPay, PhonePe, Paytm, BHIM, CRED, Amazon Pay, WhatsApp, Navi or your bank. Read on this phone. Tip: share a screenshot straight from any UPI app to Paisa Pulse.")
       }
       if drafts.isEmpty && !reading {
         EmptyHint(title: "Snap it, log it", icon: "camera.viewfinder",
@@ -71,16 +71,7 @@ struct CaptureView: View {
     txns.contains { $0.amount == d.amount && abs($0.occurredAt.timeIntervalSince(d.occurredAt)) <= 86_400 }
   }
 
-  static func recognize(_ image: CGImage) async -> [String] {
-    await Task.detached(priority: .userInitiated) {
-      let request = VNRecognizeTextRequest()
-      request.recognitionLevel = .accurate
-      request.usesLanguageCorrection = false
-      request.recognitionLanguages = ["en-IN", "en-US"]
-      try? VNImageRequestHandler(cgImage: image).perform([request])
-      return (request.results ?? []).compactMap { $0.topCandidates(1).first?.string }
-    }.value
-  }
+  static func recognize(_ image: CGImage) async -> [String] { await ScreenText.read(image) }
 
   private func commit() {
     var added: [Txn] = []

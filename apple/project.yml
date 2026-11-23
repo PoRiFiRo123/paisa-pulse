@@ -48,6 +48,7 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
     dependencies:
       - target: PaisaPulseWidgets
+      - target: PaisaShare
   PaisaPulseWidgets:
     type: app-extension
     platform: iOS
@@ -67,6 +68,31 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.paisapulse.app.widgets
+        TARGETED_DEVICE_FAMILY: "1"
+  # Share a payment screenshot from any UPI app → check → Save (uses the 3rd free-Apple-ID app slot).
+  PaisaShare:
+    type: app-extension
+    platform: iOS
+    sources: [Share, Shared, App/Import/Capture.swift, App/Import/Narration.swift]
+    info:
+      path: Share/Info.plist
+      properties:
+        CFBundleDisplayName: Paisa Pulse
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.share-services
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
+          NSExtensionAttributes:
+            NSExtensionActivationRule:
+              NSExtensionActivationSupportsImageWithMaxCount: 10
+    entitlements:
+      path: Share/PaisaShare.entitlements
+      properties:
+        com.apple.security.application-groups: [group.com.paisapulse.app]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.paisapulse.app.share
         TARGETED_DEVICE_FAMILY: "1"
   PaisaPulseTests:
     type: bundle.unit-test

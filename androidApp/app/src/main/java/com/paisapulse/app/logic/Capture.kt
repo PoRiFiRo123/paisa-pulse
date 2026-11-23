@@ -114,12 +114,16 @@ object ScreenshotParser {
   fun toLines(texts: List<String>) = texts.flatMap { it.split(Regex("\r?\n")) }.map { it.replace(Regex("\\s+"), " ").trim() }.filter { it.isNotEmpty() }
 
   private val idLine = ri("\\b(utr|upi ref|ref(erence)?\\s*(no|number|id)?|transaction id|txn id|order id|google transaction|upi transaction|rrn)\\b")
+  /** Lines with other amounts: balances, rewards, fees and limits (Paytm, PhonePe, bank apps). */
+  private val otherAmount = ri("\\b(balance|bal\\b|cashback|reward|coins?|scratch|won|offer|fee|charges?|limit|points?|save|saved|discount)\\b")
 
   private fun paise(s: String): Long? = s.replace(",", "").toBigDecimalOrNull()?.let { Money.paise(it) }?.takeIf { it > 0 }
 
   fun findPaidAmount(lines: List<String>): Long? {
     val money = ri("(?:₹|rs\\.?|inr|amount\\s*(?:paid|sent|received)?\\s*:?\\s*₹?)\\s*([\\d,]+(?:\\.\\d{1,2})?)\\b")
-    for (line in lines) { if (idLine.containsMatchIn(line)) continue; money.find(line)?.let { m -> paise(m.groupValues[1])?.let { return it } } }
+    for (line in lines) { if (idLine.containsMatchIn(line) || otherAmount.containsMatchIn(line)) continue; money.find(line)?.let { m -> paise(m.groupValues[1])?.let { return it } } }
+    // OCR often reads the ₹ sign as Z, %, ? or 2 on a line of its own amount ("Z349", "% 1,245.00").
+    for (line in lines) ri("^[z%?]\\s?(\\d[\\d,]*(?:\\.\\d{1,2})?)$").find(line)?.let { m -> paise(m.groupValues[1])?.let { return it } }
     for (line in lines) {
       val m = Regex("^([\\d,]{1,9}(?:\\.\\d{2})?)$").find(line) ?: continue
       if (!Regex("^\\d{10,}$").matches(m.groupValues[1].replace(",", ""))) paise(m.groupValues[1])?.let { return it }
@@ -139,6 +143,11 @@ object ScreenshotParser {
         day = c.groupValues[1].toInt(); month = c.groupValues[2].toInt(); val y = c.groupValues[3].toInt(); year = if (y < 100) 2000 + y else y
       }
     }
+    // "Today, 10:15 AM" / "Yesterday 9:02 pm" (Paytm, PhonePe, Navi, bank apps).
+    if (day == null) ri("\\b(today|yesterday)\\b").find(text)?.let { r ->
+      val base = Instant.ofEpochMilli(now).atZone(zone).toLocalDate().minusDays(if (r.groupValues[1].lowercase() == "yesterday") 1 else 0)
+      day = base.dayOfMonth; month = base.monthValue; year = base.year
+    }
     val d = day ?: return null; val m = month ?: return null
     var hours = 12; var minutes = 0
     ri("\\b(\\d{1,2}):(\\d{2})(?::\\d{2})?\\s*(am|pm)?\\b").find(text)?.let { t ->
@@ -155,21 +164,21 @@ object ScreenshotParser {
   }
 
   private val received = ri("\\b(received from|money received|you received|credited to your|received)\\b")
-  private val sent = ri("\\b(paid to|paid successfully|payment successful|money sent|sent to|debited from|you paid|transaction successful)\\b")
-  private val failed = ri("\\b(failed|declined|unsuccessful|pending|processing)\\b")
-  private val payeeLabel = ri("^(paid to|paid successfully to|money sent to|sent to|received from|to|from|beneficiary( name)?|payee( name)?|merchant( name)?|paying)\\s*:?$")
-  private val notAName = ri("(@|\\d{6,}|successful|completed|transaction|upi|banking name|share|split|pay again|view|details|debited|credited|xx|\\*\\*|•)")
+  private val sent = ri("\\b(paid to|paid successfully|payment successful|payment success|money sent|sent to|debited from|you paid|transaction successful|completed|payment of|payment to|sent successfully|transfer successful|transferred|paid|debited|payment done|payment complete|success)\\b")
+  private val failed = ri("\\b(failed|declined|unsuccessful|pending|processing|reversed|cancelled|canceled|in progress|awaiting|will be refunded)\\b")
+  private val payeeLabel = ri("^(paid to|paid successfully to|money sent to|sent to|sent money to|payment to|transferred to|received from|payment from|money received from|sender( name)?|to|from|beneficiary( name)?|payee( name)?|merchant( name)?|recipient( name)?|receiver( name)?|to account|paying)\\s*:?$")
+  private val notAName = ri("(@|\\d{6,}|successful|completed|transaction|upi|banking name|share|split|pay again|view|details|debited|credited|xx|\\*\\*|•|powered by|phonepe|google pay|\\bgpay\\b|paytm|\\bbhim\\b|whatsapp|mobikwik|freecharge|super\\.money|receipt|download|help|support)")
 
   private fun payeeFrom(lines: List<String>, isReceived: Boolean): Pair<String?, String?> {
     val upi = lines.firstNotNullOfOrNull { ri("\\b[\\w.-]{2,}@[a-z]{2,}\\b").find(it)?.value }
-    val want = if (isReceived) ri("^(received from|from|money received from)\\b") else ri("^(paid to|paid successfully to|money sent to|sent to|to|beneficiary|payee|merchant|paying)\\b")
+    val want = if (isReceived) ri("^(received from|from|money received from|payment from|sender)\\b") else ri("^(paid to|paid successfully to|money sent to|sent to|sent money to|payment to|transferred to|to|beneficiary|payee|merchant|recipient|receiver|paying)\\b")
     for ((i, line) in lines.withIndex()) {
       if (payeeLabel.matches(line) && want.containsMatchIn(line)) {
         val next = lines.drop(i + 1).take(2).firstOrNull { !notAName.containsMatchIn(it) && ri("[a-z]").containsMatchIn(it) && !it.startsWith("₹") }
         if (next != null) return next to upi
         continue
       }
-      val inline = (if (isReceived) ri("^(?:received from|from)\\s*:?\\s+(.+)$") else ri("^(?:paid to|paid successfully to|money sent to|sent to|to|beneficiary name|payee name)\\s*:?\\s+(.+)$")).find(line)
+      val inline = (if (isReceived) ri("^(?:received from|money received from|payment from|from|sender name)\\s*:?\\s+(.+)$") else ri("^(?:paid to|paid successfully to|money sent to|sent to|sent money to|payment to|transferred to|paying|to|beneficiary name|payee name|recipient name|merchant name)\\s*:?\\s+(.+)$")).find(line)
       if (inline != null && !notAName.containsMatchIn(inline.groupValues[1]) && ri("[a-z]").containsMatchIn(inline.groupValues[1]))
         return inline.groupValues[1].replace(Regex("\\s*\\(.*\\)\\s*$"), "") to upi
     }
@@ -179,14 +188,15 @@ object ScreenshotParser {
   private fun accountFrom(lines: List<String>, ctx: CaptureContext): CaptureAccount? {
     val own = lines.filter { ri("(debited|credited|from|account|a/c|bank|xx|\\*{2,}|•{2,})").containsMatchIn(it) }
     for (line in own) {
-      val last4 = ri("(?:x{2,}|\\*{2,}|•{2,}|\\.{2,}|a/c\\s*(?:no\\.?)?\\s*)\\s*(\\d{4})\\b").find(line)?.groupValues?.get(1)
+      val last4 = ri("(?:x{2,}|\\*{2,}|•{2,}|\\.{2,}|a/c\\s*(?:no\\.?)?\\s*|ending\\s*(?:in|with)?\\s*)\\s*(\\d{4})\\b").find(line)?.groupValues?.get(1)
       if (last4 != null) ctx.accounts.firstOrNull { it.last4 == last4 }?.let { return it }
     }
     for (line in own) CaptureDrafts.findAccount(line, ctx.accounts)?.let { return it.first }
     return null
   }
 
-  /** One payment screenshot (GPay, PhonePe, Paytm, BHIM, CRED, bank apps) → a draft, or null with no amount. */
+  /** One payment screenshot → a draft, or null with no amount. Tested with GPay, PhonePe, Paytm, BHIM, CRED, Amazon Pay,
+   *  WhatsApp, Navi, super.money, MobiKwik, Freecharge, Fi/Jupiter-style and bank apps (Axis, BoB, SBI YONO, HDFC, ICICI). */
   fun parse(texts: List<String>, ctx: CaptureContext, key: String = "shot"): CaptureDraft? {
     val lines = toLines(texts)
     val amount = findPaidAmount(lines) ?: return null
