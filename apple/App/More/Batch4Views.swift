@@ -153,6 +153,7 @@ struct RecapView: View {
   @Query private var categories: [Category]
   @AppStorage(PrefKey.monthStartDay, store: AppGroup.defaults) private var monthStartDay = 1
   @Environment(\.displayScale) private var scale
+  @State private var shareImage: UIImage?
 
   var body: some View {
     let lookups = Lookups(accounts: accounts, categories: categories)
@@ -162,13 +163,18 @@ struct RecapView: View {
                          biggest: r.biggestId.flatMap { id in txns.first { $0.id == id } })
     ScrollView {
       card.padding()
-      if let image = render(card) {
-        ShareLink(item: Image(uiImage: image), preview: SharePreview("My month", image: Image(uiImage: image))) {
-          Label("Share", systemImage: "square.and.arrow.up").frame(maxWidth: .infinity)
-        }
-        .buttonStyle(.borderedProminent).controlSize(.large).padding(.horizontal)
-        Text("The picture shows totals only, no account names.").font(.caption).foregroundStyle(.secondary).padding(.top, 4)
+      // The picture is drawn when you tap Share, never while the screen is being built
+      // (rendering inside body crashed the app on some iPhones).
+      Button {
+        shareImage = render(card)
+      } label: {
+        Label("Share", systemImage: "square.and.arrow.up").frame(maxWidth: .infinity)
       }
+      .buttonStyle(.borderedProminent).controlSize(.large).padding(.horizontal)
+      Text("The picture shows totals only, no account names.").font(.caption).foregroundStyle(.secondary).padding(.top, 4)
+    }
+    .sheet(item: Binding(get: { shareImage.map(ShareImage.init) }, set: { if $0 == nil { shareImage = nil } })) { item in
+      ActivitySheet(items: [item.image]).presentationDetents([.medium, .large])
     }
     .background(Color(.systemGroupedBackground))
     .navigationTitle("Recap")
@@ -185,6 +191,15 @@ struct RecapView: View {
     r.scale = scale
     return r.uiImage
   }
+}
+
+private struct ShareImage: Identifiable { let id = UUID(); let image: UIImage }
+
+/// The system share sheet for things SwiftUI's ShareLink can't take directly (a freshly drawn picture).
+struct ActivitySheet: UIViewControllerRepresentable {
+  let items: [Any]
+  func makeUIViewController(context: Context) -> UIActivityViewController { UIActivityViewController(activityItems: items, applicationActivities: nil) }
+  func updateUIViewController(_ vc: UIActivityViewController, context: Context) {}
 }
 
 struct RecapCard: View {
@@ -208,11 +223,15 @@ struct RecapCard: View {
       .background(LinearGradient(colors: [Color(hex: "#5E5CE6"), Color(hex: "#AF52DE")], startPoint: .topLeading, endPoint: .bottomTrailing),
                   in: RoundedRectangle(cornerRadius: 24, style: .continuous))
 
-      LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
-        tile("Top category", top?.name ?? "—", Money.format(recap.topCategoryAmount), top?.icon ?? "chart.pie.fill", top?.color ?? "#FF9500")
-        tile(recap.saved >= 0 ? "Saved" : "Overspent", Money.format(abs(recap.saved)), "of \(Money.format(recap.income)) income", "banknote.fill", recap.saved >= 0 ? "#34C759" : "#E5484D")
-        tile("No-spend days", "\(recap.noSpendDays) of \(recap.days)", "Best streak \(recap.longestNoSpendStreak) days", "leaf.fill", "#30B0C7")
-        tile("Favourite place", recap.topPayee ?? "—", recap.topPayeeCount > 1 ? "\(recap.topPayeeCount) times" : "", "storefront.fill", "#FF2D55")
+      Grid(horizontalSpacing: 12, verticalSpacing: 12) {
+        GridRow {
+          tile("Top category", top?.name ?? "—", Money.format(recap.topCategoryAmount), top?.icon ?? "chart.pie.fill", top?.color ?? "#FF9500")
+          tile(recap.saved >= 0 ? "Saved" : "Overspent", Money.format(abs(recap.saved)), "of \(Money.format(recap.income)) income", "banknote.fill", recap.saved >= 0 ? "#34C759" : "#E5484D")
+        }
+        GridRow {
+          tile("No-spend days", "\(recap.noSpendDays) of \(recap.days)", "Best streak \(recap.longestNoSpendStreak) days", "leaf.fill", "#30B0C7")
+          tile("Favourite place", recap.topPayee ?? "—", recap.topPayeeCount > 1 ? "\(recap.topPayeeCount) times" : "", "storefront.fill", "#FF2D55")
+        }
       }
       if let b = biggest {
         HStack {

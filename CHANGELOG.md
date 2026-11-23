@@ -5,6 +5,9 @@ Newest first. Every push to `main` becomes a GitHub Release `build-<number>` wit
 
 ## [Unreleased]
 
+- iPhone: Insights and Monthly Recap no longer crash (the share picture was drawn while the screen was being built; it's now drawn when you tap Share).
+- iPhone share sheet: when no amount is found you can "Add It Myself" (date guessed from the picture), every card's amount is editable, and "What Paisa Pulse read" shows the text it saw.
+
 - iPhone: screenshot reading works again. Vision rejected the "en-IN" language, so nothing was read (in the share sheet and in From Screenshots); large pictures are scaled down first.
 - CRED receipts and payment screens: "<you> paid" + name, the name above the amount, "23rd nov'26" dates. The share sheet also opens pictures apps hand over as files, and says so when it can't.
 

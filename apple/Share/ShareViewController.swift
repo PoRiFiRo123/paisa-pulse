@@ -27,6 +27,8 @@ final class ShareViewController: UIViewController {
   var unread = 0
   /// Pictures the sharing app handed over in a form we couldn't open.
   var unopened = 0
+  /// The text read from each picture, shown under "What Paisa Pulse read" when no payment was found.
+  var readText: [[String]] = []
 
   init(context: NSExtensionContext?) { self.context = context }
 
@@ -61,6 +63,14 @@ final class ShareViewController: UIViewController {
     }
   }
 
+  /// Nothing readable: start a blank card (date, payee and account guessed from the text) to fill in by hand.
+  func addManually(defaultAccountId: String?) {
+    let lines = readText.flatMap { $0 }
+    let at = ScreenshotParser.findReceiptDate(lines, now: .now) ?? .now
+    drafts.append(CaptureDraft(key: "manual-\(drafts.count)", type: .expense, amount: 0, accountId: defaultAccountId, toAccountId: nil,
+                               categoryId: nil, payee: nil, note: nil, occurredAt: at, source: "screenshot", include: true, warning: nil))
+  }
+
   func read(accounts: [Account], categories: [Category], txns: [Txn]) async {
     defer { reading = false }
     await loadImages()
@@ -68,6 +78,7 @@ final class ShareViewController: UIViewController {
     let ctx = CaptureDrafts.context(accounts: accounts, categories: categories, txns: txns, defaultAccountId: last?.isEmpty == false ? last : nil)
     for (i, img) in images.enumerated() {
       let lines = await ScreenText.read(img)
+      readText.append(lines)
       guard var d = ScreenshotParser.parse(lines, ctx: ctx, key: "share-\(i)") else { unread += 1; continue }
       if d.warning == nil, txns.contains(where: { $0.amount == d.amount && abs($0.occurredAt.timeIntervalSince(d.occurredAt)) <= 86_400 }) {
         d.include = false; d.warning = "Looks like you've already added this one."
@@ -104,12 +115,32 @@ struct ShareView: View {
           }
           .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if model.drafts.isEmpty {
-          if model.unopened > 0 && model.images.isEmpty {
-            ContentUnavailableView("Couldn't open the picture", systemImage: "photo.badge.exclamationmark",
-                                   description: Text("This app shared it in a form Paisa Pulse can't read. Take a screenshot of the payment instead and share that from Photos."))
-          } else {
-            ContentUnavailableView("No payment found", systemImage: "doc.text.magnifyingglass",
-                                   description: Text("Couldn't read an amount in this picture. Share the payment's success screen or receipt from GPay, PhonePe, Paytm, CRED or your bank."))
+          List {
+            Section {
+              if model.unopened > 0 && model.images.isEmpty {
+                ContentUnavailableView("Couldn't open the picture", systemImage: "photo.badge.exclamationmark",
+                                       description: Text("This app shared it in a form Paisa Pulse can't read. Take a screenshot of the payment and share that from Photos."))
+              } else {
+                ContentUnavailableView("No payment found", systemImage: "doc.text.magnifyingglass",
+                                       description: Text("Couldn't find an amount in this picture. You can still add it by hand."))
+              }
+            }
+            .listRowBackground(Color.clear)
+            Section {
+              Button {
+                model.addManually(defaultAccountId: AppGroup.defaults.string(forKey: PrefKey.lastAccountId))
+              } label: { Label("Add It Myself", systemImage: "square.and.pencil") }
+            }
+            // So a misread can be fixed: send a screenshot of this list and the parser can learn the layout.
+            Section("What Paisa Pulse read") {
+              let lines = model.readText.flatMap { $0 }
+              if lines.isEmpty {
+                Text(model.images.isEmpty ? "No picture was received." : "No text found in the picture (\(model.images.first.map { "\($0.width)×\($0.height)" } ?? "")).")
+                  .font(.footnote).foregroundStyle(.secondary)
+              } else {
+                ForEach(Array(lines.enumerated()), id: \.offset) { _, l in Text(l).font(.footnote.monospaced()) }
+              }
+            }
           }
         } else {
           List {
@@ -127,7 +158,7 @@ struct ShareView: View {
       .toolbar {
         ToolbarItem(placement: .cancellationAction) { Button(saved ? "Done" : "Cancel") { model.done() } }
         if !model.reading && !saved && !model.drafts.isEmpty {
-          let n = model.drafts.filter { $0.include && $0.accountId != nil }.count
+          let n = model.drafts.filter { $0.include && $0.accountId != nil && $0.amount > 0 }.count
           ToolbarItem(placement: .confirmationAction) {
             Button(n > 1 ? "Save \(n)" : "Save") { save() }.fontWeight(.semibold).disabled(n == 0)
           }
@@ -141,7 +172,7 @@ struct ShareView: View {
   }
 
   private func save() {
-    for d in model.drafts where d.include {
+    for d in model.drafts where d.include && d.amount > 0 {
       guard let accountId = d.accountId else { continue }
       context.insert(Txn(type: d.type, amount: d.amount, accountId: accountId, toAccountId: d.toAccountId, categoryId: d.categoryId,
                          payee: d.payee, note: d.note, occurredAt: d.occurredAt, source: "screenshot"))
@@ -166,7 +197,12 @@ struct ShareDraftCard: View {
       HStack {
         Text(draft.type == .income ? "Received" : draft.type == .transfer ? "Card bill" : "Paid").foregroundStyle(.secondary)
         Spacer()
-        Text(Money.format(draft.amount)).font(.system(size: 30, weight: .bold, design: .rounded))
+        TextField("0", text: Binding(
+          get: { draft.amount == 0 ? "" : (draft.amount % 100 == 0 ? String(draft.amount / 100) : String(format: "%.2f", Double(draft.amount) / 100)) },
+          set: { draft.amount = Int(((Double($0.replacingOccurrences(of: ",", with: "")) ?? 0) * 100).rounded()) }))
+          .keyboardType(.decimalPad)
+          .multilineTextAlignment(.trailing)
+          .font(.system(size: 30, weight: .bold, design: .rounded))
           .foregroundStyle(draft.type == .income ? Color.income : draft.type == .transfer ? Color.secondary : Color.expense)
       }
       if draft.type != .transfer {
