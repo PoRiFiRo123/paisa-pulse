@@ -5,6 +5,9 @@ Newest first. Every push to `main` becomes a GitHub Release `build-<number>` wit
 
 ## [Unreleased]
 
+- iPhone: screenshot reading works again. Vision rejected the "en-IN" language, so nothing was read (in the share sheet and in From Screenshots); large pictures are scaled down first.
+- CRED receipts and payment screens: "<you> paid" + name, the name above the amount, "23rd nov'26" dates. The share sheet also opens pictures apps hand over as files, and says so when it can't.
+
 - iPhone: the end of every list (pushed screens too) clears the floating tab bar again; forms no longer hide under the keyboard.
 - Both: the month-end forecast shows whole rupees; card bills read "Due in 9 days" on both phones.
 - Android: Activity's search text is no longer cut off; lists end above the navigation bar on 3-button phones.

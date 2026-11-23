@@ -25,6 +25,8 @@ final class ShareViewController: UIViewController {
   var drafts: [CaptureDraft] = []
   var reading = true
   var unread = 0
+  /// Pictures the sharing app handed over in a form we couldn't open.
+  var unopened = 0
 
   init(context: NSExtensionContext?) { self.context = context }
 
@@ -35,12 +37,20 @@ final class ShareViewController: UIViewController {
     let providers = (context?.inputItems as? [NSExtensionItem] ?? []).flatMap { $0.attachments ?? [] }
       .filter { $0.hasItemConformingToTypeIdentifier(UTType.image.identifier) }
     for p in providers.prefix(10) {
-      if let img = await Self.image(from: p) { images.append(img) } else { unread += 1 }
+      if let img = await Self.image(from: p) { images.append(img) } else { unopened += 1 }
     }
   }
 
+  /// Apps share pictures as data, a file or a UIImage; try each (CRED, GPay and Photos all differ).
   private static func image(from p: NSItemProvider) async -> CGImage? {
-    await withCheckedContinuation { cont in
+    let type = p.registeredTypeIdentifiers.first { UTType($0)?.conforms(to: .image) == true } ?? UTType.image.identifier
+    if let data = await withCheckedContinuation({ (c: CheckedContinuation<Data?, Never>) in
+      _ = p.loadDataRepresentation(forTypeIdentifier: type) { d, _ in c.resume(returning: d) }
+    }), let img = UIImage(data: data)?.cgImage { return img }
+    if let data = await withCheckedContinuation({ (c: CheckedContinuation<Data?, Never>) in
+      _ = p.loadFileRepresentation(forTypeIdentifier: type) { url, _ in c.resume(returning: url.flatMap { try? Data(contentsOf: $0) }) }
+    }), let img = UIImage(data: data)?.cgImage { return img }
+    return await withCheckedContinuation { cont in
       p.loadItem(forTypeIdentifier: UTType.image.identifier) { item, _ in
         var image: UIImage?
         if let url = item as? URL, let data = try? Data(contentsOf: url) { image = UIImage(data: data) }
@@ -94,8 +104,13 @@ struct ShareView: View {
           }
           .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if model.drafts.isEmpty {
-          ContentUnavailableView("No payment found", systemImage: "doc.text.magnifyingglass",
-                                 description: Text("Couldn't read an amount in this picture. Share the payment's success screen from GPay, PhonePe, Paytm or your bank."))
+          if model.unopened > 0 && model.images.isEmpty {
+            ContentUnavailableView("Couldn't open the picture", systemImage: "photo.badge.exclamationmark",
+                                   description: Text("This app shared it in a form Paisa Pulse can't read. Take a screenshot of the payment instead and share that from Photos."))
+          } else {
+            ContentUnavailableView("No payment found", systemImage: "doc.text.magnifyingglass",
+                                   description: Text("Couldn't read an amount in this picture. Share the payment's success screen or receipt from GPay, PhonePe, Paytm, CRED or your bank."))
+          }
         } else {
           List {
             ForEach($model.drafts) { $d in

@@ -167,7 +167,7 @@ object ScreenshotParser {
   private val sent = ri("\\b(paid to|paid successfully|payment successful|payment success|money sent|sent to|debited from|you paid|transaction successful|completed|payment of|payment to|sent successfully|transfer successful|transferred|paid|debited|payment done|payment complete|success)\\b")
   private val failed = ri("\\b(failed|declined|unsuccessful|pending|processing|reversed|cancelled|canceled|in progress|awaiting|will be refunded)\\b")
   private val payeeLabel = ri("^(paid to|paid successfully to|money sent to|sent to|sent money to|payment to|transferred to|received from|payment from|money received from|sender( name)?|to|from|beneficiary( name)?|payee( name)?|merchant( name)?|recipient( name)?|receiver( name)?|to account|paying)\\s*:?$")
-  private val notAName = ri("(@|\\d{6,}|successful|completed|transaction|upi|banking name|share|split|pay again|view|details|debited|credited|xx|\\*\\*|•|powered by|phonepe|google pay|\\bgpay\\b|paytm|\\bbhim\\b|whatsapp|mobikwik|freecharge|super\\.money|receipt|download|help|support)")
+  private val notAName = ri("(@|\\d{6,}|successful|completed|transaction|upi|banking name|share|split|pay again|view|details|debited|credited|xx|\\*\\*|•|powered by|phonepe|google pay|\\bgpay\\b|paytm|\\bbhim\\b|whatsapp|mobikwik|freecharge|super\\.money|receipt|download|help|support|again|\\?)")
 
   private fun payeeFrom(lines: List<String>, isReceived: Boolean): Pair<String?, String?> {
     val upi = lines.firstNotNullOfOrNull { ri("\\b[\\w.-]{2,}@[a-z]{2,}\\b").find(it)?.value }
@@ -182,8 +182,19 @@ object ScreenshotParser {
       if (inline != null && !notAName.containsMatchIn(inline.groupValues[1]) && ri("[a-z]").containsMatchIn(inline.groupValues[1]))
         return inline.groupValues[1].replace(Regex("\\s*\\(.*\\)\\s*$"), "") to upi
     }
+    if (!isReceived) {
+      // "Nishit Kirani paid" / "You paid" on one line, the payee on the next (CRED receipts).
+      for ((i, line) in lines.withIndex()) if (ri("\\bpaid$").containsMatchIn(line)) lines.drop(i + 1).take(2).firstOrNull { nameLike(it) }?.let { return it to upi }
+      // No label at all: the name just above the amount (CRED, bank apps).
+      val at = lines.indexOfFirst { amountLine.containsMatchIn(it) }
+      if (at > 0) lines.subList(maxOf(0, at - 3), at).reversed().firstOrNull { nameLike(it) }?.let { return it to upi }
+    }
     return null to upi
   }
+
+  private val amountLine = ri("^(?:₹|rs\\.?|inr|[z%?])?\\s?\\d[\\d,]*(?:\\.\\d{1,2})?$")
+  private fun nameLike(s: String) = ri("^[a-z][a-z .'&-]{2,40}$").matches(s) && !notAName.containsMatchIn(s) && !payeeLabel.matches(s) &&
+    !ri("\\b(today|yesterday|payment|paid|bank|account|balance|amount|status|cred)\\b").containsMatchIn(s)
 
   private fun accountFrom(lines: List<String>, ctx: CaptureContext): CaptureAccount? {
     val own = lines.filter { ri("(debited|credited|from|account|a/c|bank|xx|\\*{2,}|•{2,})").containsMatchIn(it) }
