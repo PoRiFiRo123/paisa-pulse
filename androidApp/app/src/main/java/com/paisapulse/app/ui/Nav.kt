@@ -69,6 +69,20 @@ object Ui {
   var toast by mutableStateOf<Toast?>(null)
   /** Hidden while Activity is in select mode (its bulk bar takes the space), like iOS. */
   var hideTabBar by mutableStateOf(false)
+  /** Screenshots shared to the app from a UPI app, waiting for the capture screen. */
+  var sharedImages by mutableStateOf(listOf<android.net.Uri>())
+  fun handleShare(intent: android.content.Intent?) {
+    val i = intent ?: return
+    if (i.type?.startsWith("image/") != true) return
+    val uris = when (i.action) {
+      android.content.Intent.ACTION_SEND -> listOfNotNull(androidx.core.content.IntentCompat.getParcelableExtra(i, android.content.Intent.EXTRA_STREAM, android.net.Uri::class.java))
+      android.content.Intent.ACTION_SEND_MULTIPLE -> androidx.core.content.IntentCompat.getParcelableArrayListExtra(i, android.content.Intent.EXTRA_STREAM, android.net.Uri::class.java).orEmpty()
+      else -> emptyList()
+    }
+    if (uris.isEmpty()) return
+    sharedImages = uris.take(10)
+    tab = Tab.Home; stacks.getValue(Tab.Home).add(Route.Capture("screenshot"))
+  }
   private var toastJob: Job? = null
   private val scope = CoroutineScope(Dispatchers.Main)
 

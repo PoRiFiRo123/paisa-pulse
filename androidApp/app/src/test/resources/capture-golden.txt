@@ -1,4 +1,4 @@
-shot expense | 42000 | bob |  | food | Swiggy |  | 2026-10-10T08:45:00.000Z | true | Couldn’t tell if this was a payment. Check the details.
+shot expense | 42000 | bob |  | food | Swiggy |  | 2026-10-10T08:45:00.000Z | true | 
 shot expense | 124500 | axis |  | groceries | Blinkit |  | 2026-10-09T08:45:00.000Z | true | 
 shot expense | 200000 | axis |  |  | Rahul Sharma |  | 2026-10-10T04:11:00.000Z | true | 
 shot income | 50000 | axis |  |  | Priya Mehta |  | 2026-10-08T13:32:00.000Z | true | 

@@ -363,3 +363,40 @@ final class Batch4Tests: XCTestCase {
     XCTAssertEqual(String(data: try BackupCrypto.decrypt(Data(android.utf8), password: "pw"), encoding: .utf8), "hello ₹")
   }
 }
+
+/// More UPI apps' screenshots (same cases as Android ScreenshotAppsTest).
+final class ScreenshotAppsTests: XCTestCase {
+  private let ctx = CaptureContext(
+    accounts: [CaptureAccount(id: "axis", name: "Axis Bank", type: .bank, institution: "Axis Bank", last4: "5678"),
+               CaptureAccount(id: "bob", name: "Bank of Baroda", type: .bank, institution: "Bank of Baroda", last4: "9012")],
+    categories: [CaptureCategory(id: "food", name: "Food & Dining", kind: .expense, parentId: nil),
+                 CaptureCategory(id: "groceries", name: "Groceries", kind: .expense, parentId: nil)],
+    defaultAccountId: "axis",
+    now: Calendar.current.date(from: DateComponents(year: 2026, month: 10, day: 10, hour: 18))!)
+  private func hm(_ d: Date) -> [Int] { let c = Calendar.current.dateComponents([.month, .day, .hour, .minute], from: d); return [c.month!, c.day!, c.hour!, c.minute!] }
+
+  func testAmazonPay() {
+    let d = ScreenshotParser.parse(["Payment successful", "₹ 199.00", "Paid to", "Airtel Prepaid", "Today, 10:15 AM", "Paid using Axis Bank ••5678", "Amazon Pay UPI"], ctx: ctx)!
+    XCTAssertEqual(d.amount, 19_900); XCTAssertEqual(d.accountId, "axis"); XCTAssertTrue(d.payee!.hasPrefix("Airtel")); XCTAssertEqual(hm(d.occurredAt), [10, 10, 10, 15]); XCTAssertNil(d.warning)
+  }
+  func testWhatsApp() {
+    let d = ScreenshotParser.parse(["Payment to Rohan Gupta", "₹250", "Completed", "9 Oct 2026, 8:30 pm", "Bank of Baroda ...9012", "UPI transaction ID: 428812345678"], ctx: ctx)!
+    XCTAssertEqual(d.amount, 25_000); XCTAssertEqual(d.payee, "Rohan Gupta"); XCTAssertEqual(d.accountId, "bob"); XCTAssertEqual(hm(d.occurredAt), [10, 9, 20, 30])
+  }
+  func testOcrRupeeAsZAndCashback() {
+    let d = ScreenshotParser.parse(["Cashback won ₹10", "Payment Successful", "Z349", "Paid to", "Swiggy", "Yesterday, 9:02 PM", "Axis Bank account ending 5678"], ctx: ctx)!
+    XCTAssertEqual(d.amount, 34_900); XCTAssertEqual(d.payee, "Swiggy"); XCTAssertEqual(d.categoryId, "food"); XCTAssertEqual(d.accountId, "axis"); XCTAssertEqual(hm(d.occurredAt), [10, 9, 21, 2])
+  }
+  func testPaytmSkipsBalance() {
+    let d = ScreenshotParser.parse(["Paid Successfully to", "Chai Point", "Wallet Balance ₹1,250", "₹40", "10 Oct, 09:41 AM"], ctx: ctx)!
+    XCTAssertEqual(d.amount, 4_000); XCTAssertEqual(d.payee, "Chai Point")
+  }
+  func testBhimReceived() {
+    let d = ScreenshotParser.parse(["Money received from", "Amit Kumar", "₹1,000", "Credited to", "Axis Bank XX5678", "Yesterday 7:10 pm"], ctx: ctx)!
+    XCTAssertEqual(d.type, .income); XCTAssertEqual(d.payee, "Amit Kumar"); XCTAssertEqual(d.amount, 100_000)
+  }
+  func testPendingIsUnticked() {
+    let d = ScreenshotParser.parse(["Payment pending", "₹500", "Paid to", "Zepto"], ctx: ctx)!
+    XCTAssertFalse(d.include); XCTAssertEqual(d.payee, "Zepto")
+  }
+}
