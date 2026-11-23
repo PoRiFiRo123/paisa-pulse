@@ -125,7 +125,8 @@ struct ActivityView: View {
     .navigationBarTitleDisplayMode(selecting ? .inline : .automatic)
     .searchable(text: $query, prompt: "Payee, note, category, amount")
     .navigationDestination(for: Txn.self) { TransactionDetailView(txn: $0) }
-    .toolbar(selecting ? .hidden : .automatic, for: .tabBar)
+    .onChange(of: selecting) { _, on in router.hideTabBar = on }
+    .onDisappear { router.hideTabBar = false }
     .toolbar {
       if selecting {
         ToolbarItem(placement: .topBarLeading) {
@@ -145,7 +146,6 @@ struct ActivityView: View {
             .disabled(filter.monthOffset >= 0).accessibilityLabel("Next month")
         }
         ToolbarItem(placement: .topBarTrailing) { filterMenu(lookups, canSave: !filter.isDefault || !query.isEmpty) }
-        ToolbarItem(placement: .topBarTrailing) { AddButton() }
       }
     }
     .alert("Save Filter", isPresented: $savingNew) {

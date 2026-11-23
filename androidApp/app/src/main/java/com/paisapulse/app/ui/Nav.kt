@@ -89,7 +89,7 @@ object Ui {
     when (uri.host) {
       "add" -> sheet = Sheet.Add(TxnType.of(uri.getQueryParameter("type")))
       "capture" -> { tab = Tab.Home; stacks.getValue(Tab.Home).add(Route.Capture(uri.getQueryParameter("mode") ?: "screenshot")) }
-      "tab" -> tab = when (uri.lastPathSegment) { "activity" -> Tab.Activity; "accounts" -> Tab.Accounts; "settings" -> Tab.Settings; "search" -> Tab.Search; else -> Tab.Home }
+      "tab" -> tab = when (uri.lastPathSegment) { "activity" -> Tab.Activity; "accounts" -> Tab.Accounts; "settings" -> Tab.Settings; "search" -> Tab.Activity; else -> Tab.Home }
     }
   }
 }

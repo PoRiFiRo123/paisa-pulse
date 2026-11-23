@@ -63,6 +63,10 @@ struct ToastMessage: Identifiable, Equatable {
   var capture = false
   /// After saving a split: ask the people who owe you (Messages, QR, link).
   var request: SplitRequest?
+  /// Hides the floating tab bar (Activity select mode).
+  var hideTabBar = false
+  /// Toggled when the selected tab is tapped again.
+  var popToRoot = false
 
   /// paisapulse://add?type=expense|income|transfer (widget, Control Center, Shortcuts).
   func handle(url: URL) {
@@ -77,7 +81,7 @@ struct ToastMessage: Identifiable, Equatable {
       case "activity": tab = .activity
       case "accounts": tab = .accounts
       case "settings": tab = .settings
-      case "search": tab = .search
+      case "search": tab = .activity
       default: tab = .home
       }
     }

@@ -206,7 +206,7 @@ fun PRow(
   }
 }
 
-/** Floating Liquid Glass tab bar with a separate Search button (iOS 26 layout). */
+/** Floating Liquid Glass tab bar with the round + beside it, where the thumb is (iOS 26 layout). */
 @Composable fun TabBar() {
   val tabs = listOf(Tab.Home to ("house.fill" to "Home"), Tab.Activity to ("list.bullet.rectangle.fill" to "Activity"),
     Tab.Accounts to ("creditcard.fill" to "Accounts"), Tab.Settings to ("gearshape.fill" to "Settings"))
@@ -224,9 +224,7 @@ fun PRow(
       }
     }
     Spacer(Modifier.width(10.dp))
-    Box(Modifier.size(64.dp).glass().clickable { Ui.select(Tab.Search) }, contentAlignment = Alignment.Center) {
-      Icon(Sym.of("magnifyingglass"), "Search", tint = if (Ui.tab == Tab.Search) C.accent else C.label, modifier = Modifier.size(26.dp))
-    }
+    com.paisapulse.app.ui.screens.AddButton(big = true)
   }
 }
 

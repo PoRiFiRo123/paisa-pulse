@@ -34,7 +34,7 @@ import java.util.Locale
   val title = month.start.toDate().month.getDisplayName(TextStyle.FULL, Locale.ENGLISH)
   val off = HomeSections.hidden(Prefs.homeHidden)
 
-  PScreen(title, leading = { GlassIcon("calendar", "Calendar") { Ui.push(Route.Calendar) } }, actions = { AddButton() }) {
+  PScreen(title, leading = { GlassIcon("calendar", "Calendar") { Ui.push(Route.Calendar) } }) {
     HomeSections.order(Prefs.homeOrder).filter { it !in off }.forEach { key ->
       when (key) {
         "hero" -> group { HeroCard(Ledger.summary(txns, month), db.budgets.firstOrNull { it.categoryId == null && it.period != "weekly" }?.amount) }

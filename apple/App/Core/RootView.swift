@@ -40,30 +40,47 @@ struct MainTabs: View {
 
   var body: some View {
     @Bindable var router = router
-    TabView(selection: $router.tab) {
-      Tab("Home", systemImage: "house.fill", value: AppTab.home) {
-        NavigationStack { HomeView() }
-      }
-      Tab("Activity", systemImage: "list.bullet.rectangle.fill", value: AppTab.activity) {
-        NavigationStack { ActivityView() }
-      }
-      Tab("Accounts", systemImage: "creditcard.fill", value: AppTab.accounts) {
-        NavigationStack { AccountsView() }
-      }
-      Tab("Settings", systemImage: "gearshape.fill", value: AppTab.settings) {
-        NavigationStack { SettingsView() }
-      }
-      // iOS 26: its own Liquid Glass button at the end of the tab bar.
-      Tab(value: AppTab.search, role: .search) {
-        NavigationStack { SearchView() }
+    // Our own floating bar (round + beside it) instead of the system tab bar, the same on Android.
+    // Every tab stays alive, so each keeps its scroll position and navigation.
+    ZStack {
+      tab(.home) { HomeView() }
+      tab(.activity) { ActivityView() }
+      tab(.accounts) { AccountsView() }
+      tab(.settings) { SettingsView() }
+    }
+    .overlay(alignment: .bottom) {
+      if !router.hideTabBar {
+        FloatingTabBar().transition(.move(edge: .bottom).combined(with: .opacity))
       }
     }
-    .modifier(TabBarMinimize())
+    .ignoresSafeArea(.keyboard, edges: .bottom)
+    .animation(.spring(duration: 0.3), value: router.hideTabBar)
     .sheet(item: $router.add) { request in
       QuickAddView(request: request)
     }
     .sheet(isPresented: $router.capture) { NavigationStack { CaptureView() } }
     .sheet(item: $router.request) { r in NavigationStack { RequestView(request: r) } }
+  }
+
+  @ViewBuilder private func tab<V: View>(_ t: AppTab, @ViewBuilder _ content: () -> V) -> some View {
+    let on = router.tab == t
+    TabStack(tab: t, content: content())
+      .safeAreaInset(edge: .bottom, spacing: 0) { Color.clear.frame(height: router.hideTabBar ? 0 : 74) }
+      .opacity(on ? 1 : 0)
+      .allowsHitTesting(on)
+      .accessibilityHidden(!on)
+  }
+}
+
+/// One tab's navigation. Tapping the selected tab again goes back to its first screen.
+private struct TabStack<V: View>: View {
+  @Environment(Router.self) private var router
+  let tab: AppTab
+  let content: V
+  @State private var path = NavigationPath()
+  var body: some View {
+    NavigationStack(path: $path) { content }
+      .onChange(of: router.popToRoot) { if router.tab == tab { path = NavigationPath() } }
   }
 }
 

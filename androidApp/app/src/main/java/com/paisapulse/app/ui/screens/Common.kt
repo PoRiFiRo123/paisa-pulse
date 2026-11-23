@@ -1,5 +1,12 @@
 package com.paisapulse.app.ui.screens
 
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -112,19 +119,38 @@ object TxnOps {
   }
 }
 
-@Composable fun AddButton() {
+/** The round + beside the tab bar: tap for an expense, long-press for the quick menu. */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable fun AddButton(big: Boolean = false) {
   var menu by remember { mutableStateOf(false) }
+  val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+  val db by Store.db.collectAsState()
+  val templates = db.templates.sortedBy { it.sortOrder }.take(3)
+  val press = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+  val pressed by press.collectIsPressedAsState()
+  val scale by androidx.compose.animation.core.animateFloatAsState(if (pressed || menu) 1.1f else 1f, androidx.compose.animation.core.spring(0.5f), label = "add")
+  val size = if (big) 64.dp else 44.dp
   Box {
-    Box(Modifier.size(44.dp).glass().combinedClickableCompat(onClick = { Ui.sheet = Sheet.Add() }, onLongClick = { menu = true }), contentAlignment = Alignment.Center) {
-      Icon(Sym.of("plus"), "Add expense", tint = C.accent)
+    Box(Modifier.size(size).graphicsLayer { scaleX = scale; scaleY = scale }.clip(CircleShape).background(C.accent)
+      .combinedClickable(interactionSource = press, indication = null,
+        onClick = { haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove); Ui.sheet = Sheet.Add() },
+        onLongClick = { haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress); menu = true })
+      .semantics { contentDescription = "Add expense. Long-press for more" }, contentAlignment = Alignment.Center) {
+      Icon(Sym.of("plus"), null, tint = Color.White, modifier = Modifier.size(if (big) 30.dp else 22.dp))
     }
-    DropdownMenu(menu, { menu = false }, modifier = Modifier.background(C.card)) {
-      DropdownMenuItem({ Text("Income", style = T.body) }, { menu = false; Ui.sheet = Sheet.Add(TxnType.Income) })
-      DropdownMenuItem({ Text("Transfer", style = T.body) }, { menu = false; Ui.sheet = Sheet.Add(TxnType.Transfer) })
-      DropdownMenuItem({ Text("Expense", style = T.body) }, { menu = false; Ui.sheet = Sheet.Add(TxnType.Expense) })
+    DropdownMenu(menu, { menu = false }, modifier = Modifier.background(C.card), shape = RoundedCornerShape(16.dp)) {
+      DropdownMenuItem({ Text("Income", style = T.body) }, { menu = false; Ui.sheet = Sheet.Add(TxnType.Income) }, trailingIcon = { Icon(Sym.of("arrow.down.left"), null) })
+      DropdownMenuItem({ Text("Transfer", style = T.body) }, { menu = false; Ui.sheet = Sheet.Add(TxnType.Transfer) }, trailingIcon = { Icon(Sym.of("arrow.left.arrow.right"), null) })
+      DropdownMenuItem({ Text("Expense", style = T.body) }, { menu = false; Ui.sheet = Sheet.Add(TxnType.Expense) }, trailingIcon = { Icon(Sym.of("arrow.up.right"), null) })
+      if (templates.isNotEmpty()) {
+        HorizontalDivider(color = C.separator)
+        templates.forEach { t ->
+          DropdownMenuItem({ Text("${t.name} · ${Money.format(t.amount)}", style = T.body) }, { menu = false; quickAdd(t) }, trailingIcon = { Icon(Sym.of("bolt.fill"), null, tint = C.accent) })
+        }
+      }
       HorizontalDivider(color = C.separator)
-      DropdownMenuItem({ Text("From Screenshots", style = T.body) }, { menu = false; Ui.push(Route.Capture("screenshot")) }, leadingIcon = { Icon(Sym.of("photo.on.rectangle"), null) })
-      DropdownMenuItem({ Text("Say It", style = T.body) }, { menu = false; Ui.push(Route.Capture("voice")) }, leadingIcon = { Icon(Sym.of("mic.fill"), null) })
+      DropdownMenuItem({ Text("From Screenshots", style = T.body) }, { menu = false; Ui.push(Route.Capture("screenshot")) }, trailingIcon = { Icon(Sym.of("photo.on.rectangle"), null) })
+      DropdownMenuItem({ Text("Say It", style = T.body) }, { menu = false; Ui.push(Route.Capture("voice")) }, trailingIcon = { Icon(Sym.of("mic.fill"), null) })
     }
   }
 }
