@@ -9,27 +9,26 @@ Downloads: [latest release](https://github.com/PoRiFiRo123/paisa-pulse/releases/
    installs over the old one. Your data stays.
 
 ## iPhone (free Apple ID)
-A free Apple ID allows 3 sideloaded apps at a time, and each install lasts 7 days until it is refreshed.
-Paisa Pulse uses 2 of the 3 (the app and its widget). The iPhone app is native Swift; the Android app is the Expo one, and backups move between them.
+A free Apple ID allows 3 sideloaded apps at a time, and each install lasts 7 days. Paisa Pulse uses all 3:
+the app, its widget and the share extension (share payment screenshots from UPI apps).
 
-**One-time setup, needs a computer once:** install [SideStore](https://sidestore.io) by following its
-guide (it creates a pairing file with your Apple ID). After that, everything happens on the phone.
+**Over USB with [iloader](https://github.com/nab138/iloader)** (Windows, Mac or Linux):
+1. Download **PaisaPulse.ipa** from the latest release onto the computer.
+2. Connect the iPhone, open iloader, sign in with your Apple ID and choose **Import IPA** → the file.
+3. Settings › General › VPN & Device Management: trust your Apple ID if iOS asks. Turn on Developer Mode if asked.
+4. Every week, install the same (or newer) .ipa again before the 7 days run out. Your data stays.
+   If it expires, it just won't open until you reinstall; nothing is lost.
 
-1. On the iPhone, open the latest release, long-press **PaisaPulse.ipa** and share it to SideStore
-   (or download it, then SideStore › My Apps › + and pick the file).
-2. Sign in with your Apple ID when SideStore asks. It signs and installs the app.
-3. Settings › General › VPN & Device Management: trust your Apple ID if iOS asks.
-4. Open SideStore every few days and tap **Refresh All** (or turn on background refresh) so the app
-   doesn't expire after 7 days. If it does expire, refreshing brings it back with your data.
-5. Updates: Settings › Software Update in Paisa Pulse opens the new build in SideStore.
+[Sideloadly](https://sideloadly.io) works the same way. SideStore can refresh on the phone, but it needs one of the
+3 slots for itself, so you'd have to give up the share extension.
 
-Without SideStore: [Sideloadly](https://sideloadly.io) on Windows/Mac installs the same .ipa over USB
-(refresh weekly the same way).
+To use the share extension: in GPay, PhonePe, Paytm or Photos tap Share › Paisa Pulse (if it's missing, tap
+More at the end of the app row and turn it on).
 
 ### Not in the free iPhone build
 - **iCloud backups** (Apple only gives iCloud to paid accounts). Backups are saved daily in Files › On My
-  iPhone › Paisa Pulse › backups; Settings › Backup & Restore › Save to Google Drive keeps a copy off the phone.
-- **Statement import, voice and screenshot capture** aren't ported to the Swift app yet.
+  iPhone › Paisa Pulse › backups; copy one off the phone now and then, or turn on backup encryption.
+- **Voice entry** is Android only.
 
 ## Keeping Android updates installable
 Every APK is signed with the same key so updates install over each other. Set it permanently once:

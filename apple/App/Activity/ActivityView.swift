@@ -123,7 +123,7 @@ struct ActivityView: View {
     .environment(\.editMode, .constant(selecting ? .active : .inactive))
     .navigationTitle(selecting ? (selection.isEmpty ? "Select" : "\(selection.count) selected") : "Activity")
     .navigationBarTitleDisplayMode(selecting ? .inline : .automatic)
-    .searchable(text: $query, prompt: "Payee, note, category, amount")
+    .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Payee, note, category, amount")
     .navigationDestination(for: Txn.self) { TransactionDetailView(txn: $0) }
     .onChange(of: selecting) { _, on in router.hideTabBar = on }
     .onDisappear { router.hideTabBar = false }

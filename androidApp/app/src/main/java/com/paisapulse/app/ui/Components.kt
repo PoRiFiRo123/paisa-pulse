@@ -1,5 +1,8 @@
 package com.paisapulse.app.ui
 
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
@@ -211,15 +214,42 @@ fun PRow(
   val tabs = listOf(Tab.Home to ("house.fill" to "Home"), Tab.Activity to ("list.bullet.rectangle.fill" to "Activity"),
     Tab.Accounts to ("creditcard.fill" to "Accounts"), Tab.Settings to ("gearshape.fill" to "Settings"))
   Row(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 20.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-    Row(Modifier.weight(1f).height(64.dp).glass(RoundedCornerShape(32.dp)).padding(4.dp)) {
-      tabs.forEach { (t, v) ->
-        val sel = Ui.tab == t
-        val bg by animateColorAsState(if (sel) C.fill else Color.Transparent, label = "tab")
-        Column(Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(28.dp)).background(bg)
-          .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { Ui.select(t) },
-          horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-          Icon(Sym.of(v.first), v.second, tint = if (sel) C.accent else C.label, modifier = Modifier.size(24.dp))
-          Text(v.second, style = T.caption2.copy(fontWeight = FontWeight.Medium), color = if (sel) C.accent else C.label)
+    // Slide a finger across the bar to switch tabs; the lens follows it (iOS 26 tab bar).
+    val haptics = LocalHapticFeedback.current
+    var dragX by remember { mutableStateOf<Float?>(null) }
+    var hover by remember { mutableStateOf<Tab?>(null) }
+    BoxWithConstraints(Modifier.weight(1f).height(64.dp).glass(RoundedCornerShape(32.dp)).padding(4.dp)) {
+      val density = androidx.compose.ui.platform.LocalDensity.current
+      val wPx = with(density) { maxWidth.toPx() } / tabs.size
+      fun at(x: Float) = tabs[(x / wPx).toInt().coerceIn(0, tabs.size - 1)].first
+      val index = tabs.indexOfFirst { it.first == Ui.tab }.coerceAtLeast(0)
+      val target = dragX?.let { (it - wPx / 2).coerceIn(0f, wPx * (tabs.size - 1)) } ?: (index * wPx)
+      val lensX by androidx.compose.animation.core.animateFloatAsState(target,
+        if (dragX != null) androidx.compose.animation.core.spring(0.9f, 1500f) else androidx.compose.animation.core.spring(0.7f, 400f), label = "lens")
+      val lensScale by androidx.compose.animation.core.animateFloatAsState(if (dragX != null) 1.1f else 1f, label = "lensScale")
+      Box(Modifier.graphicsLayer { translationX = lensX; scaleX = lensScale; scaleY = lensScale }
+        .width(maxWidth / tabs.size).fillMaxHeight().clip(RoundedCornerShape(28.dp)).background(if (dragX != null) C.fill.copy(alpha = 0.9f) else C.fill))
+      Row(Modifier.fillMaxSize().pointerInput(Unit) {
+        detectHorizontalDragGestures(
+          onDragStart = { o -> dragX = o.x; hover = at(o.x) },
+          onDragEnd = { hover?.takeIf { it != Ui.tab }?.let { Ui.select(it) }; dragX = null; hover = null },
+          onDragCancel = { dragX = null; hover = null },
+        ) { change, _ ->
+          dragX = change.position.x
+          val t = at(change.position.x)
+          if (t != hover) { hover = t; haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove) }
+        }
+      }) {
+        tabs.forEach { (t, v) ->
+          val lit = (hover ?: Ui.tab) == t
+          Column(Modifier.weight(1f).fillMaxHeight()
+            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {
+              haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove); Ui.select(t)
+            },
+            horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+            Icon(Sym.of(v.first), v.second, tint = if (lit) C.accent else C.label, modifier = Modifier.size(24.dp))
+            Text(v.second, style = T.caption2.copy(fontWeight = FontWeight.Medium), color = if (lit) C.accent else C.label)
+          }
         }
       }
     }
