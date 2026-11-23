@@ -5,6 +5,8 @@ Newest first. Every push to `main` becomes a GitHub Release `build-<number>` wit
 
 ## [Unreleased]
 
+- Both: accounts now use **email and password** (Create Account / Sign In), with no emails sent; change your password in Account. There's no password reset yet.
+
 - Both: **Paisa Pulse accounts (optional).** Settings › Sign In: email a 6-digit code, pick a @username, add your name, UPI ID and (optionally) phone. Only shared things go to the server; your own accounts and transactions stay on the phone.
 - Both: **People.** Find friends by @username, email or phone, match your contacts (numbers are hashed on the phone first), or share your invite QR / link / code. Link any friend in your splits to their account from their page.
 - Both: **Shared splits.** Splitting with a linked friend sends it to their phone: they accept or decline their share, and it lands in their balance with you. "Friend paid", "they owe me" and settle-ups go across too (the other person confirms a settle-up). Groups and trips with linked friends are shared, so everyone sees the trip, its budget items and the group's spending.

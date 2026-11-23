@@ -42,7 +42,7 @@ object Sym {
     "doc.text.image" to Icons.Rounded.Receipt, "storefront.fill" to Icons.Rounded.Storefront, "chart.pie.fill" to Icons.Rounded.PieChart,
     "clock.fill" to Icons.Rounded.Schedule, "circle.lefthalf.filled" to Icons.Rounded.Contrast,
     "paintpalette.fill" to Icons.Rounded.Palette, "bell.badge.fill" to Icons.Rounded.NotificationsActive, "envelope.fill" to Icons.Rounded.Mail,
-    "faceid" to Icons.Rounded.Fingerprint, "eye.slash.fill" to Icons.Rounded.VisibilityOff, "externaldrive.fill" to Icons.Rounded.Backup,
+    "eye" to Icons.Rounded.Visibility, "eye.slash" to Icons.Rounded.VisibilityOff, "faceid" to Icons.Rounded.Fingerprint, "eye.slash.fill" to Icons.Rounded.VisibilityOff, "externaldrive.fill" to Icons.Rounded.Backup,
     "tablecells.fill" to Icons.Rounded.TableChart, "arrow.down.circle.fill" to Icons.Rounded.Download,
     "calendar.day.timeline.left" to Icons.Rounded.DateRange, "line.3.horizontal.decrease" to Icons.Rounded.FilterList,
     "chevron.left" to Icons.AutoMirrored.Rounded.ArrowBackIos, "chevron.right" to Icons.AutoMirrored.Rounded.ArrowForwardIos,

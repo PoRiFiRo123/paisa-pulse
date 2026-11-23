@@ -65,7 +65,7 @@ No sign-up. No servers. No ads. Your money data never leaves your phone.
 - **Currencies:** foreign spends are converted to rupees with live rates, plus a converter.
 
 ### 🤝 Friends and loans
-- **Optional account** (email code, no password) to split with friends who use Paisa Pulse: find them by @username, email, phone or contacts, or share an invite QR. Shared splits, groups and trips show up on their phone to accept; your own money never leaves yours.
+- **Optional account** (email and password) to split with friends who use Paisa Pulse: find them by @username, email, phone or contacts, or share an invite QR. Shared splits, groups and trips show up on their phone to accept; your own money never leaves yours.
 - **Split** a bill equally, by amounts or by shares, whoever paid. Saved groups, settle-up.
 - **Request money** over Messages with a UPI QR code and a pay link; "Pay with…" opens any UPI app.
 - **Loans** you gave or took: due dates, part repayments, reminders.

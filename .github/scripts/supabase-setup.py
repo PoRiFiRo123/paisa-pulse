@@ -5,7 +5,7 @@ Needs the SUPABASE_ACCESS_TOKEN secret (a personal access token from Supabase â€
 Optional: the SUPABASE_PROJECT_REF variable, if the account has more than one project.
 
 1. Applies supabase/migrations/*.sql that haven't run yet (tracked in public._paisa_migrations).
-2. Makes sign-in emails carry a 6-digit code (the apps sign in with email codes, not links).
+2. Turns on email + password sign-in without confirmation emails (no emails are ever sent).
 3. Writes the project URL and its public (publishable) key to $GITHUB_OUTPUT as `url` and `key`,
    for the Android and iOS builds. Both are public by design; the database is guarded by the
    functions in the migration.
@@ -68,17 +68,11 @@ def main():
         sql = open(path).read()
         query(sql + f"\ninsert into public._paisa_migrations(name) values ('{name}');")
 
-    code_mail = ("<h2>Your Paisa Pulse code</h2><p>Enter this code in the app:</p>"
-                 "<p style=\"font-size:32px;font-weight:700;letter-spacing:6px\">{{ .Token }}</p>"
-                 "<p>It works for an hour. If you didn't ask for it, ignore this email.</p>")
+    # Email + password sign-in with no emails sent: new accounts are confirmed straight away.
     call("PATCH", f"/projects/{ref}/config/auth", {
         "external_email_enabled": True,
-        "mailer_otp_length": 6,
-        "mailer_otp_exp": 3600,
-        "mailer_subjects_magic_link": "Your Paisa Pulse code",
-        "mailer_templates_magic_link_content": code_mail,
-        "mailer_subjects_confirmation": "Your Paisa Pulse code",
-        "mailer_templates_confirmation_content": code_mail,
+        "mailer_autoconfirm": True,
+        "disable_signup": False,
     })
 
     keys = call("GET", f"/projects/{ref}/api-keys?reveal=true") or []
@@ -86,7 +80,7 @@ def main():
         or next((k["api_key"] for k in keys if k.get("name") == "anon" and k.get("api_key")), None)
     if not key:
         sys.exit("No publishable or anon key found for the project.")
-    print("Database and sign-in emails are ready.")
+    print("Database and sign-in are ready.")
     output(f"https://{ref}.supabase.co", key)
 
 

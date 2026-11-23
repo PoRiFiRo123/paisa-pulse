@@ -119,7 +119,9 @@ object Cloud {
 
   private fun friendly(m: String) = when {
     m.contains("rate limit", true) || m.contains("security purposes", true) -> "Too many tries. Wait a minute and try again."
-    m.contains("expired", true) && m.contains("token", true) || m.contains("otp", true) -> "That code is wrong or has expired."
+    m.contains("invalid login", true) -> "Wrong email or password."
+    m.contains("already registered", true) || m.contains("already been registered", true) -> "That email already has an account. Sign in instead."
+    m.contains("password", true) && m.contains("characters", true) -> "Use a longer password (at least 8 characters)."
     m.contains("Not signed in") -> "Please sign in again."
     else -> m
   }
@@ -147,19 +149,24 @@ object Cloud {
 
   // ------------------------------------------------------------ sign in
 
-  suspend fun sendCode(email: String) = withContext(Dispatchers.IO) {
-    http("POST", "/auth/v1/otp", buildJsonObject { put("email", email.trim().lowercase()); put("create_user", true) }, false)
-  }
+  // Email + password, no emails sent (the CI setup turns email confirmation off).
 
-  suspend fun verify(email: String, code: String) = withContext(Dispatchers.IO) {
-    val r = http("POST", "/auth/v1/verify", buildJsonObject {
-      put("type", "email"); put("email", email.trim().lowercase()); put("token", code.filter { it.isDigit() })
-    }, false)!!.jsonObject
-    val s = sessionFrom(r, email.trim().lowercase())
+  suspend fun signUp(email: String, password: String) = signInWith("/auth/v1/signup", email, password)
+  suspend fun signIn(email: String, password: String) = signInWith("/auth/v1/token?grant_type=password", email, password)
+
+  private suspend fun signInWith(path: String, email: String, password: String) = withContext(Dispatchers.IO) {
+    val e = email.trim().lowercase()
+    val r = http("POST", path, buildJsonObject { put("email", e); put("password", password) }, false)!!.jsonObject
+    if (r["access_token"] == null) throw CloudError("Account made, but sign-in needs email confirmation. Ask for the build to be run again, then sign in.")
+    val s = sessionFrom(r, e)
     if (s.userId != prefs().getString("cloud.user", null)) resetLocal()
     prefs().edit().putString("cloud.user", s.userId).apply()
     saveSession(s)
     syncNow()
+  }
+
+  suspend fun changePassword(password: String) = withContext(Dispatchers.IO) {
+    ensureFresh(); http("PUT", "/auth/v1/user", buildJsonObject { put("password", password) }, true); Unit
   }
 
   /** Signs out on this phone. Shared items stay in your splits. */
