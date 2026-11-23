@@ -50,38 +50,24 @@ struct MainTabs: View {
 
   var body: some View {
     @Bindable var router = router
-    // Our own floating bar (round + beside it) instead of the system tab bar, the same on Android.
-    // Every tab stays alive, so each keeps its scroll position and navigation.
-    ZStack {
-      tab(.home) { HomeView() }
-      tab(.activity) { ActivityView() }
-      tab(.accounts) { AccountsView() }
-      tab(.settings) { SettingsView() }
+    // The system tab bar: real Liquid Glass on iOS 26 (drag the lens across tabs), blur on iOS 18.
+    // The + is the separate round button iOS gives the search-role tab; choosing it opens Quick Add
+    // and stays on the current tab.
+    TabView(selection: Binding(get: { router.tab }, set: { t in
+      if t == .search { router.add = AddRequest(type: .expense) } else if t == router.tab { router.popToRoot.toggle() } else { router.tab = t }
+    })) {
+      Tab("Home", systemImage: "house.fill", value: AppTab.home) { TabStack(tab: .home, content: HomeView()) }
+      Tab("Activity", systemImage: "list.bullet.rectangle.fill", value: AppTab.activity) { TabStack(tab: .activity, content: ActivityView()) }
+      Tab("Accounts", systemImage: "creditcard.fill", value: AppTab.accounts) { TabStack(tab: .accounts, content: AccountsView()) }
+      Tab("Settings", systemImage: "gearshape.fill", value: AppTab.settings) { TabStack(tab: .settings, content: SettingsView()) }
+      Tab("Add", systemImage: "plus", value: AppTab.search, role: .search) { Color.clear }
     }
-    .overlay(alignment: .bottom) {
-      if !router.hideTabBar {
-        FloatingTabBar()
-          .ignoresSafeArea(.keyboard, edges: .bottom)
-          .transition(.move(edge: .bottom).combined(with: .opacity))
-      }
-    }
-    .animation(.spring(duration: 0.3), value: router.hideTabBar)
+    .modifier(TabBarMinimize())
     .sheet(item: $router.add) { request in
       QuickAddView(request: request)
     }
     .sheet(isPresented: $router.capture) { NavigationStack { CaptureView() } }
     .sheet(item: $router.request) { r in NavigationStack { RequestView(request: r) } }
-  }
-
-  @ViewBuilder private func tab<V: View>(_ t: AppTab, @ViewBuilder _ content: () -> V) -> some View {
-    let on = router.tab == t
-    TabStack(tab: t, content: content())
-      // Room for the floating bar at the end of every list, on pushed screens too.
-      .contentMargins(.bottom, router.hideTabBar ? 0 : 84, for: .scrollContent)
-      .contentMargins(.bottom, router.hideTabBar ? 0 : 76, for: .scrollIndicators)
-      .opacity(on ? 1 : 0)
-      .allowsHitTesting(on)
-      .accessibilityHidden(!on)
   }
 }
 
@@ -93,6 +79,7 @@ private struct TabStack<V: View>: View {
   @State private var path = NavigationPath()
   var body: some View {
     NavigationStack(path: $path) { content }
+      .toolbar(router.hideTabBar && router.tab == tab ? .hidden : .automatic, for: .tabBar)
       .onChange(of: router.popToRoot) { if router.tab == tab { path = NavigationPath() } }
   }
 }

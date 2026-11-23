@@ -131,6 +131,13 @@ struct QuickAddView: View {
         ToolbarItem(placement: .cancellationAction) {
           Button { dismiss() } label: { Image(systemName: "xmark") }.accessibilityLabel("Cancel")
         }
+        if request.editing == nil {
+          // What the + long-press menu used to offer: add from payment screenshots.
+          ToolbarItem(placement: .topBarLeading) {
+            Button { dismiss(); router.capture = true } label: { Image(systemName: "photo.on.rectangle") }
+              .accessibilityLabel("Add from Screenshots")
+          }
+        }
         ToolbarItem(placement: .confirmationAction) {
           Button { save() } label: { Image(systemName: "checkmark") }
             .buttonStyle(.borderedProminent)

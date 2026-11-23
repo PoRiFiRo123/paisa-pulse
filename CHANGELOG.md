@@ -5,6 +5,8 @@ Newest first. Every push to `main` becomes a GitHub Release `build-<number>` wit
 
 ## [Unreleased]
 
+- iPhone: back to the real iOS tab bar (Liquid Glass you can drag across), with + as its round button. Quick Add gained a "From Screenshots" button; templates stay in Quick Add.
+
 - Both: accounts now use **email and password** (Create Account / Sign In), with no emails sent; change your password in Account. There's no password reset yet.
 
 - Both: **Paisa Pulse accounts (optional).** Settings › Sign In: email a 6-digit code, pick a @username, add your name, UPI ID and (optionally) phone. Only shared things go to the server; your own accounts and transactions stay on the phone.
