@@ -85,6 +85,8 @@ enum class Frequency(val key: String, val noun: String) {
 @Serializable data class Friend(
   val id: String = newId(), val name: String, val upiId: String? = null, val createdAt: Long = now(),
   val phone: String? = null,
+  /** Their Paisa Pulse account, when linked (accounts and sharing). */
+  val userId: String? = null,
 )
 
 /** amount > 0: they owe you; < 0: you owe them. txnId null = settle-up / manual entry. */

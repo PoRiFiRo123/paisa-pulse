@@ -25,10 +25,30 @@ env:
   PAISA_RELEASE_REPO: ${{ github.repository }}
 
 jobs:
+  cloud:
+    # Accounts and sharing (Supabase): applies supabase/migrations and hands the project URL and public key
+    # to both app builds. Needs the SUPABASE_ACCESS_TOKEN secret; without it the apps build without accounts.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      url: ${{ steps.setup.outputs.url }}
+      key: ${{ steps.setup.outputs.key }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: setup
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+        run: python3 .github/scripts/supabase-setup.py
+
   android:
     # Native Kotlin + Jetpack Compose app in androidApp/ (the Expo app is retired).
+    needs: cloud
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    env:
+      PAISA_SUPABASE_URL: ${{ needs.cloud.outputs.url }}
+      PAISA_SUPABASE_KEY: ${{ needs.cloud.outputs.key }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -82,6 +102,7 @@ jobs:
 
   ios:
     # Native SwiftUI app in apple/ (XcodeGen project). Free Apple ID: app + widget + share extension (3 slots).
+    needs: cloud
     runs-on: macos-26
     timeout-minutes: 75
     defaults:
@@ -90,6 +111,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: xcodebuild -version && sw_vers
+      - name: Accounts configuration
+        env:
+          URL: ${{ needs.cloud.outputs.url }}
+          KEY: ${{ needs.cloud.outputs.key }}
+        run: |
+          printf '// Written by CI (build.yml). Public values: the database is guarded by its functions.\nenum CloudConfig {\n  static let url = "%s"\n  static let key = "%s"\n}\n' "$URL" "$KEY" > Shared/CloudConfig.swift
       - name: Generate the Xcode project
         run: brew install xcodegen >/dev/null && xcodegen generate
       - name: Build (unsigned archive)

@@ -11,6 +11,7 @@ class PaisaApp : Application() {
     super.onCreate()
     Store.init(this); Prefs.init(this)
     Services.init(this)
+    com.paisapulse.app.cloud.Cloud.init(this)
     Seed.ensureCategories()
   }
 }

@@ -297,7 +297,7 @@ private data class ItemRow(val id: String, val label: String, val budget: String
           }
         })
       }
-      group("Who's going", footer = "They become a split group, so you can split expenses and settle up at the end.") {
+      group("Who's going", footer = "They become a split group, so you can split expenses and settle up at the end. Friends linked to Paisa Pulse see the trip and its shared expenses on their phone.") {
         friends.forEachIndexed { i, f ->
           if (i > 0) Divider(56.dp)
           val on = f.id in people
@@ -475,6 +475,18 @@ private data class ItemRow(val id: String, val label: String, val budget: String
         }
         Divider()
         PRow("Settle Up", titleColor = C.accent, leading = { Icon(Sym.of("checkmark.circle"), null, tint = C.accent) }, chevron = true, onClick = { Ui.push(Route.Group(group.id)) })
+      }
+    }
+    val shared = com.paisapulse.app.cloud.Cloud.state.expenses.filter { it.spaceId == id && !it.deleted }
+    if (shared.isNotEmpty()) {
+      val s2 = com.paisapulse.app.cloud.Cloud.state
+      group("Group spending", footer = "Everything split in this trip by everyone, from Paisa Pulse.") {
+        PRow("Total", value = Money.format(shared.sumOf { it.amount }, hidden), valueColor = C.label)
+        shared.groupBy { it.paidBy }.forEach { (u, v) ->
+          Divider(56.dp)
+          val name = if (u == com.paisapulse.app.cloud.Cloud.me) "You" else s2.person(u)?.label ?: "Someone"
+          PRow("$name paid", leading = { Avatar(name, 28.dp) }, value = Money.format(v.sumOf { it.amount }, hidden), valueColor = C.label)
+        }
       }
     }
     group("Expenses (${mine.size})") {

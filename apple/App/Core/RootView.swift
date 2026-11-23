@@ -1,3 +1,4 @@
+import Combine
 import SwiftData
 import SwiftUI
 
@@ -17,6 +18,12 @@ struct RootView: View {
       if locked { LockView { locked = false } }
     }
     .overlay(alignment: .bottom) { ToastView() }
+    .sheet(item: Binding(get: { router.invite }, set: { router.invite = $0 })) { i in
+      NavigationStack { PeopleView(invite: i.code) }
+    }
+    .onReceive(NotificationCenter.default.publisher(for: ModelContext.didSave).debounce(for: .seconds(4), scheduler: RunLoop.main)) { _ in
+      Cloud.shared.pushSoon()
+    }
     .task {
       DemoData.seedIfRequested(context)
       // Screenshot automation (CI): -PaisaTab activity, -PaisaAdd YES.
@@ -24,13 +31,16 @@ struct RootView: View {
       if UserDefaults.standard.bool(forKey: "PaisaAdd") { router.add = AddRequest(type: .expense) }
       Seed.ensureCategories(context)
       Maintenance.run(context)
+      Cloud.shared.syncSoon()
       if appLock { locked = true }
     }
     .onChange(of: phase) { _, new in
       if new == .background, appLock { locked = true }
       if new == .active {
         Maintenance.run(context)
+        Cloud.shared.syncSoon()
       }
+      if new == .background { Cloud.scheduleBackground() }
     }
   }
 }

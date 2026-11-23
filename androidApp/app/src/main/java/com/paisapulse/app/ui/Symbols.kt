@@ -67,6 +67,10 @@ object Sym {
     "location.fill" to Icons.Rounded.MyLocation, "mappin.and.ellipse" to Icons.Rounded.Place, "minus.circle.fill" to Icons.Rounded.RemoveCircle,
     "party.popper.fill" to Icons.Rounded.Celebration, "plus.circle" to Icons.Rounded.AddCircleOutline, "plus.circle.fill" to Icons.Rounded.AddCircle,
     "questionmark.circle" to Icons.AutoMirrored.Rounded.HelpOutline, "tent.fill" to Icons.Rounded.Cabin, "trash.fill" to Icons.Rounded.Delete,
+    "bell.fill" to Icons.Rounded.Notifications, "bell" to Icons.Rounded.NotificationsNone, "rectangle.portrait.and.arrow.right" to Icons.AutoMirrored.Rounded.Logout,
+    "person.crop.circle" to Icons.Rounded.AccountCircle, "person.crop.circle.fill" to Icons.Rounded.AccountCircle,
+    "person.crop.circle.badge.plus" to Icons.Rounded.PersonAdd, "checkmark.seal.fill" to Icons.Rounded.Verified, "link" to Icons.Rounded.Link,
+    "icloud" to Icons.Rounded.Cloud, "cloud.fill" to Icons.Rounded.Cloud,
   )
   fun of(name: String?): ImageVector = name?.let { map[it] } ?: Icons.Rounded.Sell
 }

@@ -14,6 +14,8 @@ android {
     targetSdk = 36
     versionCode = (System.getenv("PAISA_BUILD_NUMBER") ?: "1").toInt()
     versionName = "1.0"
+    buildConfigField("String", "SUPABASE_URL", "\"${System.getenv("PAISA_SUPABASE_URL") ?: ""}\"")
+    buildConfigField("String", "SUPABASE_KEY", "\"${System.getenv("PAISA_SUPABASE_KEY") ?: ""}\"")
     buildConfigField("String", "RELEASE_REPO", "\"${System.getenv("PAISA_RELEASE_REPO") ?: "PoRiFiRo123/paisa-pulse"}\"")
   }
   signingConfigs {

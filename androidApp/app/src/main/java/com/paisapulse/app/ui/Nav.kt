@@ -28,6 +28,9 @@ sealed interface Route {
   data class Friend(val id: String, val groupId: String? = null) : Route
   data object Backup : Route
   data object Converter : Route
+  data object Account : Route
+  data class People(val invite: String? = null, val link: String? = null) : Route
+  data object Inbox : Route
   data object MainCurrency : Route
   data object Accent : Route
   data object AppIcon : Route
@@ -111,6 +114,7 @@ object Ui {
     when (uri.host) {
       "add" -> sheet = Sheet.Add(TxnType.of(uri.getQueryParameter("type")))
       "capture" -> { tab = Tab.Home; stacks.getValue(Tab.Home).add(Route.Capture(uri.getQueryParameter("mode") ?: "screenshot")) }
+      "invite" -> { tab = Tab.Settings; stacks.getValue(Tab.Settings).add(Route.People(uri.getQueryParameter("c"))) }
       "tab" -> tab = when (uri.lastPathSegment) { "activity" -> Tab.Activity; "accounts" -> Tab.Accounts; "settings" -> Tab.Settings; "search" -> Tab.Activity; else -> Tab.Home }
     }
   }

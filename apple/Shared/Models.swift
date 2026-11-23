@@ -249,9 +249,11 @@ enum Frequency: String, Codable, CaseIterable, Identifiable {
   var upiId: String?
   var phone: String?
   var createdAt: Date
+  /// Their Paisa Pulse account, when linked (accounts and sharing).
+  var userId: String?
 
-  init(id: String = UUID().uuidString.lowercased(), name: String, upiId: String? = nil, phone: String? = nil, createdAt: Date = .now) {
-    self.id = id; self.name = name; self.upiId = upiId; self.phone = phone; self.createdAt = createdAt
+  init(id: String = UUID().uuidString.lowercased(), name: String, upiId: String? = nil, phone: String? = nil, createdAt: Date = .now, userId: String? = nil) {
+    self.id = id; self.name = name; self.upiId = upiId; self.phone = phone; self.createdAt = createdAt; self.userId = userId
   }
 }
 

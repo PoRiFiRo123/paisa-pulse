@@ -296,7 +296,7 @@ struct TripFormView: View {
           Button("Add", action: addPerson).disabled(newPerson.trimmingCharacters(in: .whitespaces).isEmpty)
         }
       } header: { Text("Who's going") } footer: {
-        Text("They become a split group, so you can split expenses and settle up at the end.")
+        Text("They become a split group, so you can split expenses and settle up at the end. Friends linked to Paisa Pulse see the trip and its shared expenses on their phone.")
       }
 
       Section {
@@ -521,6 +521,8 @@ struct TripDetailView: View {
           Text("Split an expense with \"\(group.name)\" in Quick Add › Split.")
         }
       }
+
+      TripGroupSpendingSection(tripId: trip.id)
 
       Section {
         if mine.isEmpty {

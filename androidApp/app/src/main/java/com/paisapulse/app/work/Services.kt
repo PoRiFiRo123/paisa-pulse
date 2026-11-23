@@ -56,7 +56,7 @@ object Services {
 
   fun refreshWidget() { scope.launch { runCatching { SpendingWidget().updateAll(ctx) } } }
 
-  private fun notify(id: Int, title: String, body: String) {
+  fun notify(id: Int, title: String, body: String) {
     if (!NotificationManagerCompat.from(ctx).areNotificationsEnabled()) return
     val n = NotificationCompat.Builder(ctx, CHANNEL).setSmallIcon(R.mipmap.ic_launcher).setContentTitle(title).setContentText(body).setAutoCancel(true).build()
     runCatching { NotificationManagerCompat.from(ctx).notify(id, n) }
