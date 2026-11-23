@@ -203,7 +203,7 @@ enum ScreenshotParser {
   private static let sent = Rx("\\b(paid to|paid successfully|payment successful|payment success|money sent|sent to|debited from|you paid|transaction successful|completed|payment of|payment to|sent successfully|transfer successful|transferred|paid|debited|payment done|payment complete|success)\\b")
   private static let failed = Rx("\\b(failed|declined|unsuccessful|pending|processing|reversed|cancelled|canceled|in progress|awaiting|will be refunded)\\b")
   private static let payeeLabel = Rx("^(paid to|paid successfully to|money sent to|sent to|sent money to|payment to|transferred to|received from|payment from|money received from|sender( name)?|to|from|beneficiary( name)?|payee( name)?|merchant( name)?|recipient( name)?|receiver( name)?|to account|paying)\\s*:?$")
-  private static let notAName = Rx("(@|\\d{6,}|successful|completed|transaction|upi|banking name|share|split|pay again|view|details|debited|credited|xx|\\*\\*|•|powered by|phonepe|google pay|\\bgpay\\b|paytm|\\bbhim\\b|whatsapp|mobikwik|freecharge|super\\.money|receipt|download|help|support)")
+  private static let notAName = Rx("(@|\\d{6,}|successful|completed|transaction|upi|banking name|share|split|pay again|view|details|debited|credited|xx|\\*\\*|•|powered by|phonepe|google pay|\\bgpay\\b|paytm|\\bbhim\\b|whatsapp|mobikwik|freecharge|super\\.money|receipt|download|help|support|again|\\?)")
   private static let letter = Rx("[a-z]")
 
   private static func payeeFrom(_ lines: [String], received: Bool) -> (name: String?, upi: String?) {
@@ -219,7 +219,22 @@ enum ScreenshotParser {
         return (Rx("\\s*\\(.*\\)\\s*$").replace(inline[1], with: ""), upi)
       }
     }
+    if !received {
+      // "Nishit Kirani paid" / "You paid" on one line, the payee on the next (CRED receipts).
+      for (i, line) in lines.enumerated() where Rx("\\bpaid$").test(line) {
+        if let next = lines.dropFirst(i + 1).prefix(2).first(where: nameLike) { return (next, upi) }
+      }
+      // No label at all: the name just above the amount (CRED, bank apps).
+      if let at = lines.firstIndex(where: { amountLine.test($0) }), at > 0,
+         let name = lines[max(0, at - 3)..<at].reversed().first(where: nameLike) { return (name, upi) }
+    }
     return (nil, upi)
+  }
+
+  private static let amountLine = Rx("^(?:₹|rs\\.?|inr|[z%?])?\\s?\\d[\\d,]*(?:\\.\\d{1,2})?$")
+  private static func nameLike(_ s: String) -> Bool {
+    Rx("^[a-z][a-z .'&-]{2,40}$").test(s) && !notAName.test(s) && !payeeLabel.test(s) &&
+      !Rx("\\b(today|yesterday|payment|paid|bank|account|balance|amount|status|cred)\\b").test(s)
   }
 
   private static func accountFrom(_ lines: [String], _ ctx: CaptureContext) -> CaptureAccount? {
@@ -272,9 +287,25 @@ enum ScreenText {
       let request = VNRecognizeTextRequest()
       request.recognitionLevel = .accurate
       request.usesLanguageCorrection = false
-      request.recognitionLanguages = ["en-IN", "en-US"]
-      try? VNImageRequestHandler(cgImage: image).perform([request])
+      // Only languages Vision supports: an unsupported one ("en-IN") makes the request fail and read nothing.
+      let supported = (try? request.supportedRecognitionLanguages()) ?? ["en-US"]
+      request.recognitionLanguages = ["en-GB", "en-US"].filter { supported.contains($0) }
+      if request.recognitionLanguages.isEmpty { request.recognitionLanguages = ["en-US"] }
+      do { try VNImageRequestHandler(cgImage: downscaled(image), options: [:]).perform([request]) } catch { return [] }
       return (request.results ?? []).compactMap { $0.topCandidates(1).first?.string }
     }.value
+  }
+
+  /// Screenshots are up to ~3000 px tall; 2000 px reads just as well and keeps the share extension within its memory limit.
+  static func downscaled(_ image: CGImage, maxSide: Int = 2000) -> CGImage {
+    let side = max(image.width, image.height)
+    guard side > maxSide else { return image }
+    let scale = Double(maxSide) / Double(side)
+    let w = Int(Double(image.width) * scale), h = Int(Double(image.height) * scale)
+    guard let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0,
+                              space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue) else { return image }
+    ctx.interpolationQuality = .high
+    ctx.draw(image, in: CGRect(x: 0, y: 0, width: w, height: h))
+    return ctx.makeImage() ?? image
   }
 }

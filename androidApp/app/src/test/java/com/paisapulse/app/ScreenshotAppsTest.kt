@@ -43,6 +43,20 @@ class ScreenshotAppsTest {
     assertEquals("income", d.type); assertEquals("Amit Kumar", d.payee); assertEquals(100_000L, d.amount)
   }
 
+  /** CRED's "Share receipt" card: "<you> paid" then the payee, no "paid to" label. */
+  @Test fun credReceipt() {
+    val d = ScreenshotParser.parse(listOf("Nishit Raghunandan Kirani paid", "Rohan Gouda D D", "8310228359@ibl", "₹160", "paid securely by", "CRED", "powered by", "23 NOV 2026, 12:51PM | TXN ID: 669329312874"), ctx())!!
+    assertEquals(16_000L, d.amount); assertEquals("Rohan Gouda D D", d.payee); assertEquals(listOf(11, 23, 12, 51), hm(d.occurredAt)); assertEquals(null, d.warning)
+  }
+
+  /** CRED's payment detail screen: the name sits above the amount, "23rd nov'26", bank name + XXXXXX1234. */
+  @Test fun credDetail() {
+    val d = ScreenshotParser.parse(listOf("R", "Rohan Gouda D D", "₹160", "PAID IN 1 SECOND", "12:51pm, 23rd nov'26", "Paid via CRED", "BANK OF BARODA", "XXXXXX7556",
+      "Check balance", "payment initiated from your BANK OF BARODA account", "amount deducted from Nishit's bank", "amount credited to recipient's bank", "paying them again?"), ctx())!!
+    assertEquals(16_000L, d.amount); assertEquals("expense", d.type); assertEquals("Rohan Gouda D D", d.payee); assertEquals("bob", d.accountId)
+    assertEquals(listOf(11, 23, 12, 51), hm(d.occurredAt))
+  }
+
   @Test fun pendingIsUnticked() {
     val d = ScreenshotParser.parse(listOf("Payment pending", "₹500", "Paid to", "Zepto"), ctx())!!
     assertEquals(false, d.include); assertEquals("Zepto", d.payee)

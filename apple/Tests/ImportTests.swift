@@ -395,6 +395,16 @@ final class ScreenshotAppsTests: XCTestCase {
     let d = ScreenshotParser.parse(["Money received from", "Amit Kumar", "₹1,000", "Credited to", "Axis Bank XX5678", "Yesterday 7:10 pm"], ctx: ctx)!
     XCTAssertEqual(d.type, .income); XCTAssertEqual(d.payee, "Amit Kumar"); XCTAssertEqual(d.amount, 100_000)
   }
+  func testCredReceipt() {
+    let d = ScreenshotParser.parse(["Nishit Raghunandan Kirani paid", "Rohan Gouda D D", "8310228359@ibl", "₹160", "paid securely by", "CRED", "powered by", "23 NOV 2026, 12:51PM | TXN ID: 669329312874"], ctx: ctx)!
+    XCTAssertEqual(d.amount, 16_000); XCTAssertEqual(d.payee, "Rohan Gouda D D"); XCTAssertEqual(hm(d.occurredAt), [11, 23, 12, 51]); XCTAssertNil(d.warning)
+  }
+  func testCredDetail() {
+    let d = ScreenshotParser.parse(["R", "Rohan Gouda D D", "₹160", "PAID IN 1 SECOND", "12:51pm, 23rd nov'26", "Paid via CRED", "BANK OF BARODA", "XXXXXX7556",
+      "Check balance", "payment initiated from your BANK OF BARODA account", "amount deducted from Nishit's bank", "amount credited to recipient's bank", "paying them again?"], ctx: ctx)!
+    XCTAssertEqual(d.amount, 16_000); XCTAssertEqual(d.type, .expense); XCTAssertEqual(d.payee, "Rohan Gouda D D"); XCTAssertEqual(d.accountId, "bob")
+    XCTAssertEqual(hm(d.occurredAt), [11, 23, 12, 51])
+  }
   func testPendingIsUnticked() {
     let d = ScreenshotParser.parse(["Payment pending", "₹500", "Paid to", "Zepto"], ctx: ctx)!
     XCTAssertFalse(d.include); XCTAssertEqual(d.payee, "Zepto")
