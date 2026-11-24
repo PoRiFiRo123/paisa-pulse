@@ -124,6 +124,7 @@ private struct SignInView: View {
   @State private var password = ""
   @State private var again = ""
   @State private var busy = false
+  @State private var resetting = false
   private var valid: Bool { email.range(of: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", options: .regularExpression) != nil }
   private var ready: Bool { valid && password.count >= 8 && (!creating || again == password) }
 
@@ -152,13 +153,51 @@ private struct SignInView: View {
           }
         }
         .disabled(!ready || busy)
+        if !creating { Button("Forgot Password?") { resetting = true } }
       } footer: {
         Text(creating && !password.isEmpty && password.count < 8 ? "At least 8 characters."
              : creating && !again.isEmpty && again != password ? "The passwords don't match."
-             : creating ? "Keep your password safe: there's no email reset yet. Only what you share goes to the server; your own money stays on this phone."
-             : "Forgot it? There's no email reset yet; make a new account and add your friends again.")
+             : creating ? "Only what you share goes to the server; your own money stays on this phone."
+             : "Only what you share goes to the server; your own money stays on this phone.")
       }
     }
+    .sheet(isPresented: $resetting) { NavigationStack { ResetPasswordView(email: email) } }
+  }
+}
+
+/// Forgot password: email a code, then type it with a new password.
+private struct ResetPasswordView: View {
+  @Environment(Router.self) private var router
+  @Environment(\.dismiss) private var dismiss
+  @State var email: String
+  @State private var sent = false
+  @State private var code = ""
+  @State private var password = ""
+  @State private var busy = false
+
+  var body: some View {
+    Form {
+      Section {
+        TextField("Email", text: $email).textContentType(.emailAddress).keyboardType(.emailAddress)
+          .textInputAutocapitalization(.never).autocorrectionDisabled().disabled(sent)
+        if sent {
+          TextField("Code", text: $code).textContentType(.oneTimeCode).keyboardType(.numberPad)
+            .onChange(of: code) { _, v in let c = String(v.filter(\.isNumber).prefix(10)); if c != v { code = c } }
+          SecureField("New password (8+ characters)", text: $password).textContentType(.newPassword)
+        }
+        Button(busy ? "Please wait…" : sent ? "Reset Password" : "Send Code") {
+          if !sent { run(router, $busy) { try await Cloud.shared.sendResetCode(email); sent = true } }
+          else { run(router, $busy) { try await Cloud.shared.resetPassword(email, code: code, password: password); router.show("Password changed. You're signed in."); dismiss() } }
+        }
+        .disabled(busy || (!sent && !email.contains("@")) || (sent && (code.count < 6 || password.count < 8)))
+        if sent { Button("Send the Code Again") { run(router, $busy) { try await Cloud.shared.sendResetCode(email); router.show("Sent") } } }
+      } footer: {
+        Text(sent ? "Check your email (and spam) for a 6-digit code from Paisa Pulse." : "We'll email you a 6-digit code.")
+      }
+    }
+    .navigationTitle("Reset Password")
+    .navigationBarTitleDisplayMode(.inline)
+    .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } } }
   }
 }
 

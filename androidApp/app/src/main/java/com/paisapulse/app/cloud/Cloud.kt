@@ -120,6 +120,9 @@ object Cloud {
   private fun friendly(m: String) = when {
     m.contains("rate limit", true) || m.contains("security purposes", true) -> "Too many tries. Wait a minute and try again."
     m.contains("invalid login", true) -> "Wrong email or password."
+    m.contains("token has expired", true) || m.contains("otp", true) || m.contains("invalid token", true) -> "That code is wrong or has expired."
+    m.contains("sending recovery", true) || m.contains("error sending", true) -> "Couldn't send the email right now. Try again later."
+    m.contains("same password", true) || m.contains("different from the old", true) -> "Pick a password you haven't used here."
     m.contains("already registered", true) || m.contains("already been registered", true) -> "That email already has an account. Sign in instead."
     m.contains("password", true) && m.contains("characters", true) -> "Use a longer password (at least 8 characters)."
     m.contains("Not signed in") -> "Please sign in again."
@@ -162,6 +165,23 @@ object Cloud {
     if (s.userId != prefs().getString("cloud.user", null)) resetLocal()
     prefs().edit().putString("cloud.user", s.userId).apply()
     saveSession(s)
+    syncNow()
+  }
+
+  /** Emails a 6-digit reset code (through Resend, set up by CI). */
+  suspend fun sendResetCode(email: String) = withContext(Dispatchers.IO) {
+    http("POST", "/auth/v1/recover", buildJsonObject { put("email", email.trim().lowercase()) }, false); Unit
+  }
+
+  /** Checks the emailed code, signs you in and sets the new password. */
+  suspend fun resetPassword(email: String, code: String, password: String) = withContext(Dispatchers.IO) {
+    val e = email.trim().lowercase()
+    val r = http("POST", "/auth/v1/verify", buildJsonObject { put("type", "recovery"); put("email", e); put("token", code.filter { it.isDigit() }) }, false)!!.jsonObject
+    val s = sessionFrom(r, e)
+    if (s.userId != prefs().getString("cloud.user", null)) resetLocal()
+    prefs().edit().putString("cloud.user", s.userId).apply()
+    saveSession(s)
+    http("PUT", "/auth/v1/user", buildJsonObject { put("password", password) }, true)
     syncNow()
   }
 
