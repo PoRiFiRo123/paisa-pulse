@@ -57,6 +57,14 @@ class ScreenshotAppsTest {
     assertEquals(listOf(11, 23, 12, 51), hm(d.occurredAt))
   }
 
+  /** A real CRED detail screen where Vision read the ₹ as a dot ("·1,000"). */
+  @Test fun credRupeeReadAsDot() {
+    val d = ScreenshotParser.parse(listOf("Lathaasri", "·1,000", "08:00pm, 23rd nov'26", "Paid via CRED", "SUCCESSFUL", "BANK OF BARODA", "XXXXXX7556 LPI»",
+      "Check balance", "payment initiated from your BANK", "OF BARODA", "account", "bank details of lathaasri have been", "authenticated by NPCI",
+      "amount deducted from Nishit's bank", "amount credited to recipient's bank", "paying them again?", "send money to Lathaasri instantly", "Pay again →"), ctx())!!
+    assertEquals(100_000L, d.amount); assertEquals("Lathaasri", d.payee); assertEquals("bob", d.accountId); assertEquals(listOf(11, 23, 20, 0), hm(d.occurredAt))
+  }
+
   @Test fun pendingIsUnticked() {
     val d = ScreenshotParser.parse(listOf("Payment pending", "₹500", "Paid to", "Zepto"), ctx())!!
     assertEquals(false, d.include); assertEquals("Zepto", d.payee)
