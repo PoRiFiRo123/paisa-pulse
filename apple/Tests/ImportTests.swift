@@ -405,6 +405,13 @@ final class ScreenshotAppsTests: XCTestCase {
     XCTAssertEqual(d.amount, 16_000); XCTAssertEqual(d.type, .expense); XCTAssertEqual(d.payee, "Rohan Gouda D D"); XCTAssertEqual(d.accountId, "bob")
     XCTAssertEqual(hm(d.occurredAt), [11, 23, 12, 51])
   }
+  /// A real CRED detail screen where Vision read the ₹ as a dot ("·1,000").
+  func testCredRupeeReadAsDot() {
+    let d = ScreenshotParser.parse(["Lathaasri", "·1,000", "08:00pm, 23rd nov'26", "Paid via CRED", "SUCCESSFUL", "BANK OF BARODA", "XXXXXX7556 LPI»",
+      "Check balance", "payment initiated from your BANK", "OF BARODA", "account", "bank details of lathaasri have been", "authenticated by NPCI",
+      "amount deducted from Nishit's bank", "amount credited to recipient's bank", "paying them again?", "send money to Lathaasri instantly", "Pay again →"], ctx: ctx)!
+    XCTAssertEqual(d.amount, 100_000); XCTAssertEqual(d.payee, "Lathaasri"); XCTAssertEqual(d.accountId, "bob"); XCTAssertEqual(hm(d.occurredAt), [11, 23, 20, 0])
+  }
   func testPendingIsUnticked() {
     let d = ScreenshotParser.parse(["Payment pending", "₹500", "Paid to", "Zepto"], ctx: ctx)!
     XCTAssertFalse(d.include); XCTAssertEqual(d.payee, "Zepto")

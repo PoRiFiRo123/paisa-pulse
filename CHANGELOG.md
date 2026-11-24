@@ -5,6 +5,7 @@ Newest first. Every push to `main` becomes a GitHub Release `build-<number>` wit
 
 ## [Unreleased]
 
+- Both: CRED screenshots where the ₹ sign is read as a dot ("·1,000") now work.
 - iPhone: back to the real iOS tab bar (Liquid Glass you can drag across), with + as its round button. Quick Add gained a "From Screenshots" button; templates stay in Quick Add.
 
 - Both: accounts now use **email and password** (Create Account / Sign In), with no emails sent; change your password in Account. There's no password reset yet.

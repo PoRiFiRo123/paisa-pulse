@@ -122,8 +122,8 @@ object ScreenshotParser {
   fun findPaidAmount(lines: List<String>): Long? {
     val money = ri("(?:₹|rs\\.?|inr|amount\\s*(?:paid|sent|received)?\\s*:?\\s*₹?)\\s*([\\d,]+(?:\\.\\d{1,2})?)\\b")
     for (line in lines) { if (idLine.containsMatchIn(line) || otherAmount.containsMatchIn(line)) continue; money.find(line)?.let { m -> paise(m.groupValues[1])?.let { return it } } }
-    // OCR often reads the ₹ sign as Z, %, ? or 2 on a line of its own amount ("Z349", "% 1,245.00").
-    for (line in lines) ri("^[z%?]\\s?(\\d[\\d,]*(?:\\.\\d{1,2})?)$").find(line)?.let { m -> paise(m.groupValues[1])?.let { return it } }
+    // OCR often reads the ₹ sign as Z, %, ?, a dot or 2 on a line of its own amount ("Z349", "% 1,245.00", "·1,000" from CRED).
+    for (line in lines) ri("^[z%?·•*~]\\s?(\\d[\\d,]*(?:\\.\\d{1,2})?)$").find(line)?.let { m -> paise(m.groupValues[1])?.let { return it } }
     for (line in lines) {
       val m = Regex("^([\\d,]{1,9}(?:\\.\\d{2})?)$").find(line) ?: continue
       if (!Regex("^\\d{10,}$").matches(m.groupValues[1].replace(",", ""))) paise(m.groupValues[1])?.let { return it }
@@ -192,7 +192,7 @@ object ScreenshotParser {
     return null to upi
   }
 
-  private val amountLine = ri("^(?:₹|rs\\.?|inr|[z%?])?\\s?\\d[\\d,]*(?:\\.\\d{1,2})?$")
+  private val amountLine = ri("^(?:₹|rs\\.?|inr|[z%?·•*~])?\\s?\\d[\\d,]*(?:\\.\\d{1,2})?$")
   private fun nameLike(s: String) = ri("^[a-z][a-z .'&-]{2,40}$").matches(s) && !notAName.containsMatchIn(s) && !payeeLabel.matches(s) &&
     !ri("\\b(today|yesterday|payment|paid|bank|account|balance|amount|status|cred)\\b").containsMatchIn(s)
 

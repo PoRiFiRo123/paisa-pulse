@@ -155,8 +155,8 @@ enum ScreenshotParser {
     for line in lines where !idLine.test(line) && !otherAmount.test(line) {
       if let m = money.first(line), let p = paise(m[1]) { return p }
     }
-    // OCR often reads the ₹ sign as Z, %, ? or 2 on a line of its own amount ("Z349", "% 1,245.00").
-    for line in lines { if let m = Rx("^[z%?]\\s?(\\d[\\d,]*(?:\\.\\d{1,2})?)$").first(line), let p = paise(m[1]) { return p } }
+    // OCR often reads the ₹ sign as Z, %, ?, a dot or 2 on a line of its own amount ("Z349", "% 1,245.00", "·1,000" from CRED).
+    for line in lines { if let m = Rx("^[z%?·•*~]\\s?(\\d[\\d,]*(?:\\.\\d{1,2})?)$").first(line), let p = paise(m[1]) { return p } }
     for line in lines {
       guard let m = Rx("^([\\d,]{1,9}(?:\\.\\d{2})?)$").first(line) else { continue }
       if !Rx("^\\d{10,}$").test(m[1].replacingOccurrences(of: ",", with: "")), let p = paise(m[1]) { return p }
@@ -231,7 +231,7 @@ enum ScreenshotParser {
     return (nil, upi)
   }
 
-  private static let amountLine = Rx("^(?:₹|rs\\.?|inr|[z%?])?\\s?\\d[\\d,]*(?:\\.\\d{1,2})?$")
+  private static let amountLine = Rx("^(?:₹|rs\\.?|inr|[z%?·•*~])?\\s?\\d[\\d,]*(?:\\.\\d{1,2})?$")
   private static func nameLike(_ s: String) -> Bool {
     Rx("^[a-z][a-z .'&-]{2,40}$").test(s) && !notAName.test(s) && !payeeLabel.test(s) &&
       !Rx("\\b(today|yesterday|payment|paid|bank|account|balance|amount|status|cred)\\b").test(s)
