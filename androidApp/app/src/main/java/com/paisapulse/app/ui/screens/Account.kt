@@ -131,6 +131,7 @@ private fun CoroutineScopeRun(scope: kotlinx.coroutines.CoroutineScope, busy: Mu
   var email by remember { mutableStateOf("") }
   var password by remember { mutableStateOf("") }
   var again by remember { mutableStateOf("") }
+  var resetting by remember { mutableStateOf(false) }
   val valid = Regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$").matches(email.trim())
   val ready = valid && password.length >= 8 && (!creating || again == password)
   PScreen("Account", back = true) {
@@ -148,8 +149,8 @@ private fun CoroutineScopeRun(scope: kotlinx.coroutines.CoroutineScope, busy: Mu
     group(footer = when {
       creating && password.isNotEmpty() && password.length < 8 -> "At least 8 characters."
       creating && again.isNotEmpty() && again != password -> "The passwords don't match."
-      creating -> "Keep your password safe: there's no email reset yet. Only what you share goes to the server; your own money stays on this phone."
-      else -> "Forgot it? There's no email reset yet; make a new account and add your friends again."
+      creating -> "Only what you share goes to the server; your own money stays on this phone."
+      else -> "Only what you share goes to the server; your own money stays on this phone."
     }) {
       FieldRow(email, { email = it.trim() }, "Email")
       Divider(); PasswordRow(password, { password = it }, "Password")
@@ -158,8 +159,41 @@ private fun CoroutineScopeRun(scope: kotlinx.coroutines.CoroutineScope, busy: Mu
       PRow(if (busy.value) "Please wait…" else if (creating) "Create Account" else "Sign In", titleColor = if (ready && !busy.value) C.accent else C.tertiary, onClick = {
         if (ready && !busy.value) CoroutineScopeRun(scope, busy) { if (creating) Cloud.signUp(email, password) else Cloud.signIn(email, password) }
       })
+      if (!creating) { Divider(); PRow("Forgot Password?", titleColor = C.accent, onClick = { resetting = true }) }
     }
   }
+  if (resetting) ResetPasswordDialog(email) { resetting = false }
+}
+
+/** Forgot password: email a code, then type it with a new password. */
+@Composable private fun ResetPasswordDialog(startEmail: String, onDone: () -> Unit) {
+  val scope = rememberCoroutineScope()
+  val busy = remember { mutableStateOf(false) }
+  var email by remember { mutableStateOf(startEmail) }
+  var sent by remember { mutableStateOf(false) }
+  var code by remember { mutableStateOf("") }
+  var password by remember { mutableStateOf("") }
+  AlertDialog(onDone, containerColor = C.card, title = { Text("Reset password", style = T.headline, color = C.label) },
+    text = {
+      Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(if (sent) "Enter the 6-digit code we emailed to $email, and a new password." else "We'll email you a 6-digit code.", style = T.subhead, color = C.secondary)
+        if (!sent) FieldRow(email, { email = it.trim() }, "Email")
+        else {
+          FieldRow(code, { code = it.filter { c -> c.isDigit() }.take(10) }, "Code", number = true)
+          PasswordRow(password, { password = it }, "New password (8+ characters)")
+          Text("Send the code again", style = T.subhead, color = C.accent, modifier = Modifier.clickable { CoroutineScopeRun(scope, busy) { Cloud.sendResetCode(email); Ui.show("Sent") } }.padding(vertical = 8.dp))
+        }
+      }
+    },
+    confirmButton = {
+      val ok = if (!sent) email.contains('@') else code.length >= 6 && password.length >= 8
+      TextButton({
+        if (!ok || busy.value) return@TextButton
+        if (!sent) CoroutineScopeRun(scope, busy) { Cloud.sendResetCode(email); sent = true }
+        else CoroutineScopeRun(scope, busy) { Cloud.resetPassword(email, code, password); Ui.show("Password changed. You're signed in."); onDone() }
+      }) { Text(if (busy.value) "Please wait…" else if (sent) "Reset" else "Send Code", color = if (ok) C.accent else C.tertiary, style = T.headline) }
+    },
+    dismissButton = { TextButton(onDone) { Text("Cancel", color = C.accent) } })
 }
 
 @Composable private fun PasswordRow(value: String, onChange: (String) -> Unit, placeholder: String) {

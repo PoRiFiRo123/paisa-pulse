@@ -69,6 +69,9 @@ final class Cloud {
     let l = m.lowercased()
     if l.contains("rate limit") || l.contains("security purposes") { return "Too many tries. Wait a minute and try again." }
     if l.contains("invalid login") { return "Wrong email or password." }
+    if l.contains("token has expired") || l.contains("otp") || l.contains("invalid token") { return "That code is wrong or has expired." }
+    if l.contains("sending recovery") || l.contains("error sending") { return "Couldn't send the email right now. Try again later." }
+    if l.contains("same password") || l.contains("different from the old") { return "Pick a password you haven't used here." }
     if l.contains("already registered") || l.contains("already been registered") { return "That email already has an account. Sign in instead." }
     if l.contains("password") && l.contains("characters") { return "Use a longer password (at least 8 characters)." }
     if l.contains("not signed in") { return "Please sign in again." }
@@ -116,6 +119,23 @@ final class Cloud {
     if s.userId != defaults.string(forKey: "cloud.user") { resetLocal() }
     defaults.set(s.userId, forKey: "cloud.user")
     save(session: s)
+    await syncNow()
+  }
+
+  /// Emails a 6-digit reset code (through Resend, set up by CI).
+  func sendResetCode(_ email: String) async throws {
+    _ = try await http("POST", "/auth/v1/recover", ["email": email.trimmingCharacters(in: .whitespaces).lowercased()], auth: false)
+  }
+
+  /// Checks the emailed code, signs you in and sets the new password.
+  func resetPassword(_ email: String, code: String, password: String) async throws {
+    let e = email.trimmingCharacters(in: .whitespaces).lowercased()
+    let r = try await http("POST", "/auth/v1/verify", ["type": "recovery", "email": e, "token": code.filter(\.isNumber)], auth: false) as? [String: Any] ?? [:]
+    let s = try Self.session(from: r, email: e)
+    if s.userId != defaults.string(forKey: "cloud.user") { resetLocal() }
+    defaults.set(s.userId, forKey: "cloud.user")
+    save(session: s)
+    _ = try await http("PUT", "/auth/v1/user", ["password": password], auth: true)
     await syncNow()
   }
 

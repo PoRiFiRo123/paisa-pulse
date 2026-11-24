@@ -5,7 +5,8 @@ Needs the SUPABASE_ACCESS_TOKEN secret (a personal access token from Supabase â€
 Optional: the SUPABASE_PROJECT_REF variable, if the account has more than one project.
 
 1. Applies supabase/migrations/*.sql that haven't run yet (tracked in public._paisa_migrations).
-2. Turns on email + password sign-in without confirmation emails (no emails are ever sent).
+2. Turns on email + password sign-in without confirmation emails, and, with the RESEND_API_KEY secret,
+   sends password reset codes through Resend (from MAIL_FROM, default no-reply@nishitrk.tech).
 3. Writes the project URL and its public (publishable) key to $GITHUB_OUTPUT as `url` and `key`,
    for the Android and iOS builds. Both are public by design; the database is guarded by the
    functions in the migration.
@@ -78,6 +79,25 @@ def main():
         "mailer_autoconfirm": True,
         "disable_signup": False,
     })
+
+    # Password reset emails through Resend (needs the RESEND_API_KEY secret and the sending domain
+    # verified in Resend). The email carries a 6-digit code the app asks for; no links.
+    resend = os.environ.get("RESEND_API_KEY", "").strip()
+    if resend:
+        sender = os.environ.get("MAIL_FROM", "").strip() or "no-reply@nishitrk.tech"
+        code_mail = ("<h2>Reset your Paisa Pulse password</h2><p>Enter this code in the app:</p>"
+                     "<p style=\"font-size:32px;font-weight:700;letter-spacing:6px\">{{ .Token }}</p>"
+                     "<p>It works for an hour. If you didn't ask for it, ignore this email; your password stays the same.</p>")
+        call("PATCH", f"/projects/{ref}/config/auth", {
+            "smtp_host": "smtp.resend.com", "smtp_port": "465", "smtp_user": "resend", "smtp_pass": resend,
+            "smtp_admin_email": sender, "smtp_sender_name": "Paisa Pulse",
+            "mailer_otp_length": 6, "mailer_otp_exp": 3600,
+            "mailer_subjects_recovery": "Your Paisa Pulse reset code",
+            "mailer_templates_recovery_content": code_mail,
+        })
+        print(f"Password reset emails go out from {sender} through Resend.")
+    else:
+        print("RESEND_API_KEY is not set: no password reset emails.")
 
     keys = call("GET", f"/projects/{ref}/api-keys?reveal=true") or []
     key = next((k["api_key"] for k in keys if k.get("type") == "publishable" and k.get("api_key")), None) \
