@@ -5,6 +5,8 @@ Newest first. Every push to `main` becomes a GitHub Release `build-<number>` wit
 
 ## [Unreleased]
 
+- Both: CRED's payment details screen (₹ read as "₴", dates like "25th nov'26") is now read; your own UPI ID ("paid from UPI ID") is no longer taken as the payee.
+- iPhone: the share sheet showed no accounts or categories when the installer (iloader) didn't tell the extension its App Group. The group is now read from the signing profile too, and an old database or settings kept outside the group are moved in once.
 - Both: **Polish.** Big amounts roll when they change; animations are a snappy 0.2 s; buttons and cards shrink slightly when pressed; loading lists show skeleton rows.
 - Both: **Celebrations.** Confetti and a success tap when you reach a goal, finish a month under budget, or settle up with everyone.
 - Both: a slow, living colour shader on the Home balance card and progress bars (30 fps, paused in Low Power / Battery Saver and with Reduce Motion).

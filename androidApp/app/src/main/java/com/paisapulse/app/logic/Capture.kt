@@ -123,7 +123,7 @@ object ScreenshotParser {
     val money = ri("(?:₹|rs\\.?|inr|amount\\s*(?:paid|sent|received)?\\s*:?\\s*₹?)\\s*([\\d,]+(?:\\.\\d{1,2})?)\\b")
     for (line in lines) { if (idLine.containsMatchIn(line) || otherAmount.containsMatchIn(line)) continue; money.find(line)?.let { m -> paise(m.groupValues[1])?.let { return it } } }
     // OCR often reads the ₹ sign as Z, %, ?, a dot or 2 on a line of its own amount ("Z349", "% 1,245.00", "·1,000" from CRED).
-    for (line in lines) ri("^[z%?·•*~]\\s?(\\d[\\d,]*(?:\\.\\d{1,2})?)$").find(line)?.let { m -> paise(m.groupValues[1])?.let { return it } }
+    for (line in lines) ri("^[z%?·•*~₴₸₺]\\s?(\\d[\\d,]*(?:\\.\\d{1,2})?)$").find(line)?.let { m -> paise(m.groupValues[1])?.let { return it } }
     for (line in lines) {
       val m = Regex("^([\\d,]{1,9}(?:\\.\\d{2})?)$").find(line) ?: continue
       if (!Regex("^\\d{10,}$").matches(m.groupValues[1].replace(",", ""))) paise(m.groupValues[1])?.let { return it }
@@ -134,8 +134,8 @@ object ScreenshotParser {
   fun findReceiptDate(lines: List<String>, now: Long): Long? {
     val text = lines.joinToString(" \n ")
     var day: Int? = null; var month: Int? = null; var year: Int? = null
-    val a = ri("\\b(\\d{1,2})(?:st|nd|rd|th)?[\\s-]+(jan|feb|mar|apr|may|jun|jul|aug|sept?|oct|nov|dec)[a-z]*[\\s,-]*(\\d{4})?").find(text)
-    if (a != null) { day = a.groupValues[1].toInt(); month = months[a.groupValues[2].lowercase()]; year = a.groupValues[3].toIntOrNull() }
+    val a = ri("\\b(\\d{1,2})(?:st|nd|rd|th)?[\\s-]+(jan|feb|mar|apr|may|jun|jul|aug|sept?|oct|nov|dec)[a-z]*[\\s,-]*(?:['’](\\d{2})|(\\d{4}))?").find(text)
+    if (a != null) { day = a.groupValues[1].toInt(); month = months[a.groupValues[2].lowercase()]; year = a.groupValues[4].toIntOrNull() ?: a.groupValues[3].toIntOrNull()?.let { 2000 + it } }
     else {
       val b = ri("\\b(jan|feb|mar|apr|may|jun|jul|aug|sept?|oct|nov|dec)[a-z]*\\s+(\\d{1,2}),?\\s*(\\d{4})?").find(text)
       if (b != null) { month = months[b.groupValues[1].lowercase()]; day = b.groupValues[2].toInt(); year = b.groupValues[3].toIntOrNull() }
@@ -170,7 +170,13 @@ object ScreenshotParser {
   private val notAName = ri("(@|\\d{6,}|successful|completed|transaction|upi|banking name|share|split|pay again|view|details|debited|credited|xx|\\*\\*|•|powered by|phonepe|google pay|\\bgpay\\b|paytm|\\bbhim\\b|whatsapp|mobikwik|freecharge|super\\.money|receipt|download|help|support|again|\\?)")
 
   private fun payeeFrom(lines: List<String>, isReceived: Boolean): Pair<String?, String?> {
-    val upi = lines.firstNotNullOfOrNull { ri("\\b[\\w.-]{2,}@[a-z]{2,}\\b").find(it)?.value }
+    // Skip your own UPI ID: masked ("******8787@yescred") or under "paid from UPI ID" (CRED).
+    val own = ri("paid from|from upi|your upi|debited from")
+    val upi = lines.indices.firstNotNullOfOrNull { i ->
+      val line = lines[i]
+      if ('*' in line || own.containsMatchIn(line) || (i > 0 && own.containsMatchIn(lines[i - 1]))) null
+      else ri("\\b[\\w.-]{2,}@[a-z]{2,}\\b").find(line)?.value
+    }
     val want = if (isReceived) ri("^(received from|from|money received from|payment from|sender)\\b") else ri("^(paid to|paid successfully to|money sent to|sent to|sent money to|payment to|transferred to|to|beneficiary|payee|merchant|recipient|receiver|paying)\\b")
     for ((i, line) in lines.withIndex()) {
       if (payeeLabel.matches(line) && want.containsMatchIn(line)) {
@@ -192,7 +198,7 @@ object ScreenshotParser {
     return null to upi
   }
 
-  private val amountLine = ri("^(?:₹|rs\\.?|inr|[z%?·•*~])?\\s?\\d[\\d,]*(?:\\.\\d{1,2})?$")
+  private val amountLine = ri("^(?:₹|rs\\.?|inr|[z%?·•*~₴₸₺])?\\s?\\d[\\d,]*(?:\\.\\d{1,2})?$")
   private fun nameLike(s: String) = ri("^[a-z][a-z .'&-]{2,40}$").matches(s) && !notAName.containsMatchIn(s) && !payeeLabel.matches(s) &&
     !ri("\\b(today|yesterday|payment|paid|bank|account|balance|amount|status|cred)\\b").containsMatchIn(s)
 

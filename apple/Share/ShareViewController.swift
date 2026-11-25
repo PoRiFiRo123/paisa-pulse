@@ -144,6 +144,11 @@ struct ShareView: View {
           }
         } else {
           List {
+            if accounts.isEmpty {
+              // The extension opened a different (empty) database: the App Group wasn't found.
+              Label("Can't see your accounts yet. Open Paisa Pulse once, then share the screenshot again.", systemImage: "exclamationmark.triangle.fill")
+                .font(.footnote).foregroundStyle(.orange)
+            }
             ForEach($model.drafts) { $d in
               ShareDraftCard(draft: $d, accounts: accounts.filter { $0.archivedAt == nil }, categories: categories.filter { $0.archivedAt == nil })
             }

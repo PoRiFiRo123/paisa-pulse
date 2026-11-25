@@ -412,6 +412,13 @@ final class ScreenshotAppsTests: XCTestCase {
       "amount deducted from Nishit's bank", "amount credited to recipient's bank", "paying them again?", "send money to Lathaasri instantly", "Pay again →"], ctx: ctx)!
     XCTAssertEqual(d.amount, 100_000); XCTAssertEqual(d.payee, "Lathaasri"); XCTAssertEqual(d.accountId, "bob"); XCTAssertEqual(hm(d.occurredAt), [11, 23, 20, 0])
   }
+  func testCredPaymentDetailsHryvniaSign() {
+    let d = ScreenshotParser.parse(["Souled Store", "₴199", "07:43am, 25th nov'26", "SUCCESSFUL", "Bank of Baroda", "XXXXXX7556 LJF",
+      "Check balance", "CRED transaction ID", "8d53cf7d-db61-48a4-b5be-", "ef42381e8694", "paid from UPI ID", "******8787@yescred",
+      "still having trouble?", "our customer support should be able to help", "you out with all your queries", "Contact support"], ctx: ctx)!
+    XCTAssertEqual(d.amount, 19_900); XCTAssertEqual(d.payee, "Souled Store"); XCTAssertEqual(d.accountId, "bob")
+    XCTAssertEqual(hm(d.occurredAt), [11, 25, 7, 43]); XCTAssertTrue(d.include)
+  }
   func testPendingIsUnticked() {
     let d = ScreenshotParser.parse(["Payment pending", "₹500", "Paid to", "Zepto"], ctx: ctx)!
     XCTAssertFalse(d.include); XCTAssertEqual(d.payee, "Zepto")

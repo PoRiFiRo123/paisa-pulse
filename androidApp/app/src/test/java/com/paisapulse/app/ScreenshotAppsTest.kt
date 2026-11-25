@@ -65,6 +65,14 @@ class ScreenshotAppsTest {
     assertEquals(100_000L, d.amount); assertEquals("Lathaasri", d.payee); assertEquals("bob", d.accountId); assertEquals(listOf(11, 23, 20, 0), hm(d.occurredAt))
   }
 
+  @Test fun credPaymentDetailsHryvniaSign() {
+    val d = ScreenshotParser.parse(listOf("Souled Store", "₴199", "07:43am, 25th nov'26", "SUCCESSFUL", "Bank of Baroda", "XXXXXX7556 LJF",
+      "Check balance", "CRED transaction ID", "8d53cf7d-db61-48a4-b5be-", "ef42381e8694", "paid from UPI ID", "******8787@yescred",
+      "still having trouble?", "our customer support should be able to help", "you out with all your queries", "Contact support"), ctx())!!
+    assertEquals(19_900L, d.amount); assertEquals("Souled Store", d.payee); assertEquals("bob", d.accountId)
+    assertEquals(listOf(11, 25, 7, 43), hm(d.occurredAt)); assertEquals(true, d.include)
+  }
+
   @Test fun pendingIsUnticked() {
     val d = ScreenshotParser.parse(listOf("Payment pending", "₹500", "Paid to", "Zepto"), ctx())!!
     assertEquals(false, d.include); assertEquals("Zepto", d.payee)
