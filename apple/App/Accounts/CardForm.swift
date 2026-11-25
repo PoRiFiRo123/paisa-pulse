@@ -35,7 +35,7 @@ struct CardFormView: View {
       Section {
         PaymentCardFace(card: preview, accountColor: account.color)
           .listRowInsets(EdgeInsets()).listRowBackground(Color.clear)
-          .animation(.spring, value: network)
+          .animation(.quick, value: network)
       }
       Section {
         Button { scanning = true } label: { Label("Scan with Camera", systemImage: "camera.viewfinder") }

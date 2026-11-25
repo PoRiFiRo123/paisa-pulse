@@ -87,7 +87,7 @@ struct LoanDetailView: View {
           Avatar(name: loan.person, size: 56)
           Text(loan.closedAt != nil ? "Settled" : loan.lent ? "\(loan.person) still owes you" : "You still owe \(loan.person)")
             .font(.subheadline).foregroundStyle(.secondary).padding(.top, 6)
-          Text(Money.format(left)).font(.system(size: 40, weight: .bold, design: .rounded))
+          Text(Money.format(left)).font(.system(size: 40, weight: .bold, design: .rounded)).rolling(left)
             .foregroundStyle(loan.closedAt != nil ? Color.primary : loan.lent ? Color.income : Color.expense)
           Text("of \(Money.format(loan.amount)) \(loan.lent ? "lent" : "borrowed") on \(loan.startedAt.formatted(date: .abbreviated, time: .omitted))")
             .font(.footnote).foregroundStyle(.secondary)

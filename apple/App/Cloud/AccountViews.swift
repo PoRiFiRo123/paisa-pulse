@@ -13,8 +13,8 @@ private struct ExportFile: Identifiable { let id = UUID(); let url: URL }
     busy.wrappedValue = true
     defer { busy.wrappedValue = false }
     do { try await work() }
-    catch let e as Cloud.Failure { router.show(e.message) }
-    catch { router.show("No connection. Try again.") }
+    catch let e as Cloud.Failure { router.showError(e.message) }
+    catch { router.showError("No connection. Try again.") }
   }
 }
 
@@ -132,8 +132,7 @@ private struct SignInView: View {
     Form {
       Section {
         VStack(spacing: 10) {
-          Image(systemName: "person.2.fill").font(.system(size: 38)).foregroundStyle(.white)
-            .frame(width: 84, height: 84).background(Color.accentColor, in: .rect(cornerRadius: 24))
+          Image("AppLogo").resizable().frame(width: 84, height: 84).accessibilityHidden(true)
           Text("Split with friends on Paisa Pulse").font(.title2.bold()).multilineTextAlignment(.center)
           Text("Add friends, split bills and trips, and they see their share on their phone.")
             .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
@@ -256,6 +255,7 @@ struct PeopleView: View {
   @State private var typed = ""
   @State private var busy = false
   @State private var pendingInvite: String?
+  @State private var searching = false
 
   struct Match: Identifiable { var person: CloudLogic.Person; var phone: String; var id: String { person.id } }
 
@@ -274,8 +274,9 @@ struct PeopleView: View {
       }
       Section {
         TextField("Username, email or phone", text: $q).textInputAutocapitalization(.never).autocorrectionDisabled()
+        if searching && results.isEmpty { SkeletonRows(count: 2) }
         ForEach(results) { personRow($0) }
-        if q.trimmingCharacters(in: .whitespaces).count >= 2 && results.isEmpty {
+        if !searching && q.trimmingCharacters(in: .whitespaces).count >= 2 && results.isEmpty {
           Text("No one found. Send them your invite below.").font(.subheadline).foregroundStyle(.secondary)
         }
       } footer: { Text("Search by @username, email or phone number.") }
@@ -305,7 +306,7 @@ struct PeopleView: View {
             .frame(maxWidth: .infinity).padding(.vertical, 6)
             ShareLink(item: "Add me on Paisa Pulse to split bills and trips: \(link)") { Label("Share Invite Link", systemImage: "square.and.arrow.up") }
           } else {
-            Text("Getting your invite…").font(.subheadline).foregroundStyle(.secondary)
+            SkeletonRows(count: 1)
           }
           HStack {
             TextField("Friend's code", text: $typed).textInputAutocapitalization(.characters).autocorrectionDisabled()
@@ -322,7 +323,9 @@ struct PeopleView: View {
       let t = q.trimmingCharacters(in: .whitespaces)
       try? await Task.sleep(for: .milliseconds(350))
       guard !Task.isCancelled else { return }
+      searching = t.count >= 2
       results = t.count >= 2 ? ((try? await cloud.find(t)) ?? []) : []
+      searching = false
     }
     .task { code = try? await cloud.inviteCode(); if pendingInvite == nil { pendingInvite = invite } }
     .alert("Add this person?", isPresented: Binding(get: { pendingInvite != nil }, set: { if !$0 { pendingInvite = nil } })) {
@@ -438,7 +441,9 @@ struct InboxView: View {
           }
         }
       }
-      if s.inbox.isEmpty && shares.isEmpty && settles.isEmpty {
+      if s.inbox.isEmpty && shares.isEmpty && settles.isEmpty && cloud.syncing && s.since == nil {
+        Section { SkeletonRows(count: 4) }
+      } else if s.inbox.isEmpty && shares.isEmpty && settles.isEmpty {
         ContentUnavailableView("Nothing new", systemImage: "bell", description: Text("When friends split something with you or add you to a trip, it shows up here."))
       }
       if !s.inbox.isEmpty {

@@ -78,7 +78,7 @@ struct ActivityView: View {
                     .foregroundStyle(on ? Color.white : Color.primary)
                     .background(on ? Color.accentColor : Color.secondary.opacity(0.15), in: Capsule())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.pressable)
                 .contextMenu {
                   Button { f.filters = current.json; f.updatedAt = .now; try? context.save(); router.show("Updated \(f.name)") } label: {
                     Label("Update to Current Filters", systemImage: "arrow.triangle.2.circlepath")

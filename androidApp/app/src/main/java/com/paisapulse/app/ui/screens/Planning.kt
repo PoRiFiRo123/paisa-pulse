@@ -60,9 +60,7 @@ private fun summaries(db: Db, trips: List<Trip>) = trips.map { t ->
 /** Green under 80%, amber to 100%, red over. */
 @Composable fun BudgetBar(progress: Double, height: androidx.compose.ui.unit.Dp = 8.dp) {
   val color = if (progress > 1) C.expense else if (progress >= 0.8) hex("#FF9500") else C.income
-  Box(Modifier.fillMaxWidth().height(height).clip(CircleShape).background(C.fill)) {
-    Box(Modifier.fillMaxWidth(progress.coerceIn(0.0, 1.0).toFloat().coerceAtLeast(0.02f)).fillMaxHeight().clip(CircleShape).background(color))
-  }
+  LiquidProgress(progress, color, height = height)
 }
 
 @Composable fun TripCard(s: TripMath.Summary, onClick: () -> Unit) {
@@ -70,7 +68,7 @@ private fun summaries(db: Db, trips: List<Trip>) = trips.map { t ->
   val k = TripKinds.of(t.kind)
   val hidden = Prefs.hideAmounts
   val statusColor = when (s.status) { TripMath.Status.Ongoing -> C.income; TripMath.Status.Upcoming -> C.accent; else -> C.secondary }
-  Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(C.card).clickable(onClick = onClick).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+  Column(Modifier.fillMaxWidth().pressScale().clip(RoundedCornerShape(22.dp)).background(C.card).clickable(onClick = onClick).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
     Row(verticalAlignment = Alignment.Top) {
       Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(hex(k.color)), contentAlignment = Alignment.Center) {
         Icon(Sym.of(k.icon), null, tint = Color.White, modifier = Modifier.size(20.dp))
@@ -85,7 +83,7 @@ private fun summaries(db: Db, trips: List<Trip>) = trips.map { t ->
         modifier = Modifier.clip(CircleShape).background(statusColor.copy(alpha = 0.12f)).padding(horizontal = 8.dp, vertical = 4.dp))
     }
     Row(verticalAlignment = Alignment.Bottom) {
-      Text(Money.format(s.spent, hidden), style = T.amount(20, FontWeight.Bold), color = C.label)
+      RollingText(Money.format(s.spent, hidden), T.amount(20, FontWeight.Bold), C.label)
       if (s.budget > 0) Text("  of ${Money.format(s.budget, hidden)}", style = T.subhead, color = C.secondary)
       Spacer(Modifier.weight(1f))
       if (t.international) Icon(Sym.of("globe"), null, tint = C.secondary, modifier = Modifier.size(18.dp))
@@ -124,7 +122,7 @@ private fun summaries(db: Db, trips: List<Trip>) = trips.map { t ->
       Text("Plan something new", style = T.title3, color = C.label, modifier = Modifier.padding(start = 20.dp, top = 12.dp, bottom = 8.dp))
       Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         TripKinds.all.forEach { k ->
-          Column(Modifier.size(width = 140.dp, height = 124.dp).clip(RoundedCornerShape(20.dp))
+          Column(Modifier.size(width = 140.dp, height = 124.dp).pressScale().clip(RoundedCornerShape(20.dp))
             .background(Brush.linearGradient(listOf(hex(k.color), hex(k.color).copy(alpha = 0.75f))))
             .clickable { Ui.sheet = Sheet.TripForm(k.id) }.padding(14.dp), verticalArrangement = Arrangement.SpaceBetween) {
             Icon(Sym.of(k.icon), null, tint = Color.White, modifier = Modifier.size(26.dp))
@@ -523,7 +521,7 @@ private data class ItemRow(val id: String, val label: String, val budget: String
     Row(verticalAlignment = Alignment.Bottom) {
       Column(Modifier.weight(1f)) {
         Text("You've spent", style = T.caption, color = Color.White.copy(alpha = 0.85f))
-        Text(Money.format(s.spent, hidden), style = T.amount(34, FontWeight.Bold), color = Color.White, maxLines = 1)
+        RollingText(Money.format(s.spent, hidden), T.amount(34, FontWeight.Bold), Color.White)
       }
       Column(horizontalAlignment = Alignment.End) {
         if (s.budget > 0) {

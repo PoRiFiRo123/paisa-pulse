@@ -56,7 +56,7 @@ struct PlanningView: View {
                   .background(LinearGradient(colors: [Color(hex: k.color), Color(hex: k.color).opacity(0.75)], startPoint: .topLeading, endPoint: .bottomTrailing),
                               in: RoundedRectangle(cornerRadius: 20, style: .continuous))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.pressable)
                 .accessibilityLabel("New \(k.label)")
               }
             }
@@ -79,12 +79,12 @@ struct PlanningView: View {
             ScrollView(.horizontal, showsIndicators: false) {
               HStack(spacing: 8) {
                 ForEach([("all", "All"), ("ongoing", "Now"), ("upcoming", "Upcoming"), ("completed", "Done"), ("over", "Over budget")], id: \.0) { key, label in
-                  Button { withAnimation(.snappy) { filter = key } } label: {
+                  Button { withAnimation(.quick) { filter = key } } label: {
                     Text(label).font(.subheadline.weight(.medium)).padding(.vertical, 7).padding(.horizontal, 14)
                       .foregroundStyle(filter == key ? .white : .primary)
                       .background(filter == key ? Color.accentColor : Color(.tertiarySystemFill), in: Capsule())
                   }
-                  .buttonStyle(.plain)
+                  .buttonStyle(.pressable)
                 }
               }
             }
@@ -92,7 +92,7 @@ struct PlanningView: View {
               Text("Nothing here with these filters.").font(.subheadline).foregroundStyle(.secondary).padding(.vertical, 20).frame(maxWidth: .infinity)
             }
             ForEach(shown, id: \.trip.id) { s in
-              NavigationLink { TripDetailView(trip: s.trip) } label: { TripCard(summary: s, hidden: hidden) }.buttonStyle(.plain)
+              NavigationLink { TripDetailView(trip: s.trip) } label: { TripCard(summary: s, hidden: hidden) }.buttonStyle(.pressable)
             }
           }
         } else {
@@ -171,7 +171,7 @@ struct TripCard: View {
           .background((summary.status == .ongoing ? Color.income : summary.status == .upcoming ? Color.accentColor : Color.secondary).opacity(0.12), in: Capsule())
       }
       HStack(alignment: .firstTextBaseline) {
-        Text(Money.format(summary.spent, hidden: hidden)).font(.title3.weight(.bold)).fontDesign(.rounded)
+        Text(Money.format(summary.spent, hidden: hidden)).font(.title3.weight(.bold)).fontDesign(.rounded).rolling(summary.spent)
         if summary.budget > 0 { Text("of \(Money.format(summary.budget, hidden: hidden))").font(.subheadline).foregroundStyle(.secondary) }
         Spacer()
         if t.international { Image(systemName: "globe.asia.australia.fill").foregroundStyle(.secondary) }
@@ -190,14 +190,7 @@ struct BudgetBar: View {
   var height: CGFloat = 8
   var body: some View {
     let color: Color = progress > 1 ? .expense : progress >= 0.8 ? .orange : .income
-    GeometryReader { g in
-      ZStack(alignment: .leading) {
-        Capsule().fill(Color(.tertiarySystemFill))
-        Capsule().fill(color).frame(width: max(height, g.size.width * min(progress, 1)))
-      }
-    }
-    .frame(height: height)
-    .animation(.spring, value: progress)
+    LiquidProgress(value: progress, tint: color, height: height)
   }
 }
 
@@ -309,7 +302,7 @@ struct TripFormView: View {
             }
           }
           .onDelete { items.remove(atOffsets: $0) }
-          .onMove { items.move(fromOffsets: $0, toOffset: $1) }
+          .onMove { items.move(fromOffsets: $0, toOffset: $1); Haptic.soft() }
           HStack {
             TextField("Add an item", text: $newItem).onSubmit(addItem)
             Button("Add", action: addItem).disabled(newItem.trimmingCharacters(in: .whitespaces).isEmpty)
@@ -576,7 +569,7 @@ struct TripDetailView: View {
       HStack(alignment: .bottom) {
         VStack(alignment: .leading, spacing: 2) {
           Text("You've spent").font(.caption).opacity(0.85)
-          Text(Money.format(s.spent, hidden: hidden)).font(.system(size: 34, weight: .bold, design: .rounded)).lineLimit(1).minimumScaleFactor(0.6)
+          Text(Money.format(s.spent, hidden: hidden)).font(.system(size: 34, weight: .bold, design: .rounded)).lineLimit(1).minimumScaleFactor(0.6).rolling(s.spent)
         }
         Spacer()
         VStack(alignment: .trailing, spacing: 2) {

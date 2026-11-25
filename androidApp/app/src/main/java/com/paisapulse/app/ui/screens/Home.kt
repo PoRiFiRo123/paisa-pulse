@@ -34,7 +34,13 @@ import java.util.Locale
   val title = month.start.toDate().month.getDisplayName(TextStyle.FULL, Locale.ENGLISH)
   val off = HomeSections.hidden(Prefs.homeHidden)
 
-  PScreen(title, leading = { GlassIcon("calendar", "Calendar") { Ui.push(Route.Calendar) } }) {
+  val view = androidx.compose.ui.platform.LocalView.current
+  // One tap hides every amount in the app (and in the recent-apps preview).
+  PScreen(title, leading = { GlassIcon("calendar", "Calendar") { Ui.push(Route.Calendar) } }, actions = {
+    GlassIcon(if (Prefs.hideAmounts) "eye.slash" else "eye", if (Prefs.hideAmounts) "Show Amounts" else "Hide Amounts") {
+      Haptics.soft(view); Prefs.set("hideAmounts", !Prefs.hideAmounts)
+    }
+  }) {
     HomeSections.order(Prefs.homeOrder).filter { it !in off }.forEach { key ->
       when (key) {
         "trips" -> homeTripsSection(db)
@@ -158,13 +164,13 @@ fun quickAdd(t: TxnTemplate) {
 @Composable fun HeroCard(s: Ledger.Summary, budget: Long?) {
   val base = budget ?: s.income
   val ratio = if (base > 0) (s.spent.toDouble() / base).coerceAtMost(1.5) else 0.0
-  val sweep by animateFloatAsState(ratio.coerceAtMost(1.0).toFloat(), label = "ring")
+  val sweep by animateFloatAsState(ratio.coerceAtMost(1.0).toFloat(), quick(), label = "ring")
   val ringColor = if (ratio > 1) C.expense else C.accent
   val track = C.fill
-  Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
+  Row(Modifier.fillMaxWidth().liquidBackground().padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
     Column(Modifier.weight(1f)) {
       Text("Spent this month", style = T.subhead, color = C.secondary)
-      Text(Money.format(s.spent, Prefs.hideAmounts), style = T.amount(38, FontWeight.Bold), color = C.label, maxLines = 1, modifier = Modifier.padding(vertical = 6.dp))
+      RollingText(Money.format(s.spent, Prefs.hideAmounts), T.amount(38, FontWeight.Bold), C.label, Modifier.padding(vertical = 6.dp))
       Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         Stat("Income", Money.format(s.income, Prefs.hideAmounts), C.income)
         Stat(if (s.saved >= 0) "Saved" else "Overspent", Money.format(s.saved, Prefs.hideAmounts), if (s.saved >= 0) C.label else C.expense)
@@ -187,7 +193,7 @@ fun quickAdd(t: TxnTemplate) {
 @Composable fun Stat(label: String, value: String, color: Color) {
   Column {
     Text(label, style = T.caption, color = C.secondary)
-    Text(value, style = T.amount(15), color = color)
+    RollingText(value, T.amount(15), color)
   }
 }
 

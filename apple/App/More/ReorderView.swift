@@ -30,7 +30,7 @@ struct ReorderView: View {
               Text(item.name)
             }
           }
-          .onMove { from, to in groups[g].items.move(fromOffsets: from, toOffset: to) }
+          .onMove { from, to in groups[g].items.move(fromOffsets: from, toOffset: to); Haptic.soft() }
         }
       }
     }

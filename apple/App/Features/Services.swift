@@ -131,7 +131,7 @@ struct LockView: View {
     ZStack {
       Rectangle().fill(.ultraThinMaterial).ignoresSafeArea()
       VStack(spacing: 16) {
-        Image(systemName: "lock.fill").font(.system(size: 44)).foregroundStyle(.secondary)
+        Image("AppLogo").resizable().frame(width: 72, height: 72).accessibilityHidden(true)
         Text("Paisa Pulse is locked").font(.headline)
         Button("Unlock") { authenticate() }.buttonStyle(.borderedProminent)
         if failed { Text("Try again").font(.footnote).foregroundStyle(.secondary) }
@@ -167,7 +167,7 @@ struct OnboardingView: View {
       Form {
         Section {
           VStack(alignment: .leading, spacing: 10) {
-            Image(systemName: "indianrupeesign.circle.fill").font(.system(size: 56)).foregroundStyle(Color.accentColor)
+            Image("AppLogo").resizable().frame(width: 88, height: 88).accessibilityHidden(true)
             Text("Paisa Pulse").font(.largeTitle.bold())
             Text("Track every rupee in two taps. No account, no ads, nothing leaves your phone.").foregroundStyle(.secondary)
           }

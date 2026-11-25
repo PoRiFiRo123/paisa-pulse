@@ -197,7 +197,7 @@ fun ordinal(n: Int) = n.toString() + if (n % 100 in 11..13) "th" else when (n % 
   PScreen("", large = false, bottomInset = 40.dp) {
     item {
       Column(Modifier.padding(24.dp)) {
-        CategoryBadge("indianrupeesign.circle.fill", "#5E5CE6", 64.dp)
+        androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(com.paisapulse.app.R.drawable.app_logo), null, modifier = Modifier.size(88.dp))
         Text("Paisa Pulse", style = T.largeTitle, color = C.label, modifier = Modifier.padding(top = 12.dp))
         Text("Track every rupee in two taps. No account, no ads, nothing leaves your phone.", style = T.body, color = C.secondary)
       }

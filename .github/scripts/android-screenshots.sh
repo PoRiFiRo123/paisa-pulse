@@ -21,6 +21,12 @@ for mode in light dark; do
   for tab in home activity accounts settings; do shot "$tab-$mode" --es PaisaTab $tab; done
   shot "add-$mode" --ez PaisaAdd true
 done
+# Biggest text size, to catch clipped or overlapping text.
+adb shell cmd uimode night no
+adb shell settings put system font_scale 2.0
+for tab in home activity accounts settings; do shot "$tab-fontx2" --es PaisaTab $tab; done
+shot "add-fontx2" --ez PaisaAdd true
+adb shell settings put system font_scale 1.0
 ls -la shots
 cd shots
 git init -q -b ci-screenshots-android

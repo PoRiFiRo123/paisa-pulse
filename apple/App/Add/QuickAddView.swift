@@ -123,7 +123,7 @@ struct QuickAddView: View {
             .transition(.move(edge: .bottom).combined(with: .opacity))
         }
       }
-      .animation(.snappy, value: typing)
+      .animation(.quick, value: typing)
       .background(Color(.systemGroupedBackground))
       .navigationTitle(request.editing == nil ? "New \(type.label)" : "Edit \(type.label)")
       .navigationBarTitleDisplayMode(.inline)
@@ -167,7 +167,6 @@ struct QuickAddView: View {
     }
     .presentationDetents([.medium, .large], selection: $detent)
     .presentationDragIndicator(.visible)
-    .sensoryFeedback(.success, trigger: router.toast?.id)
   }
 
   private var amountDisplay: some View {
@@ -194,7 +193,7 @@ struct QuickAddView: View {
           .foregroundStyle(type.color)
           .lineLimit(1).minimumScaleFactor(0.4)
           .contentTransition(.numericText())
-          .animation(.snappy, value: expr)
+          .animation(.quick, value: expr)
       }
       if currency != base {
         Button {
@@ -232,7 +231,7 @@ struct QuickAddView: View {
                     .padding(.vertical, 7).padding(.horizontal, 12).background(Color.accentColor.opacity(0.12), in: Capsule())
                     .foregroundStyle(Color.accentColor)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.pressable)
               }
             }
           }
@@ -275,7 +274,7 @@ struct QuickAddView: View {
                 Label("More", systemImage: "ellipsis").font(.subheadline).padding(.vertical, 7).padding(.horizontal, 12)
                   .background(Color(.tertiarySystemFill), in: Capsule())
               }
-              .buttonStyle(.plain)
+              .buttonStyle(.pressable)
             }
           }
           .listRowInsets(EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12))
@@ -310,7 +309,7 @@ struct QuickAddView: View {
                   .foregroundStyle(on ? .white : .primary)
                   .background(on ? Color.accentColor : Color(.tertiarySystemFill), in: Capsule())
               }
-              .buttonStyle(.plain)
+              .buttonStyle(.pressable)
               .accessibilityAddTraits(on ? .isSelected : [])
             }
           }
@@ -375,7 +374,7 @@ struct QuickAddView: View {
       .foregroundStyle(selected ? .white : .primary)
       .background(selected ? Color(hex: c.color) : Color(.tertiarySystemFill), in: Capsule())
     }
-    .buttonStyle(.plain)
+    .buttonStyle(.pressable)
     .sensoryFeedback(.selection, trigger: selected)
     .accessibilityAddTraits(selected ? .isSelected : [])
   }
@@ -535,7 +534,7 @@ struct Keypad: View {
       .background(tint ? Color.accentColor.opacity(0.12) : Color(.secondarySystemGroupedBackground),
                   in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
-    .buttonStyle(.plain)
+    .buttonStyle(.pressable)
     .buttonRepeatBehavior(label == "⌫" ? .enabled : .disabled)
   }
 

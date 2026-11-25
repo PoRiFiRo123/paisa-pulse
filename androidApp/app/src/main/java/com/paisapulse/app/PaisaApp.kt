@@ -12,6 +12,7 @@ class PaisaApp : Application() {
     Store.init(this); Prefs.init(this)
     Services.init(this)
     com.paisapulse.app.cloud.Cloud.init(this)
+    com.paisapulse.app.ui.Celebrations.init(this)
     Seed.ensureCategories()
   }
 }

@@ -260,6 +260,9 @@ fun PRow(
 
 @Composable fun ToastHost(modifier: Modifier = Modifier) {
   val t = Ui.toast
+  val view = androidx.compose.ui.platform.LocalView.current
+  // A tap that matches the message: success, or error.
+  LaunchedEffect(t?.id) { t?.let { if (it.error) Haptics.error(view) else Haptics.success(view) } }
   AnimatedVisibility(t != null, modifier, enter = slideInVertically { it } + fadeIn(), exit = slideOutVertically { it } + fadeOut()) {
     val toast = t ?: return@AnimatedVisibility
     Row(Modifier.padding(bottom = 96.dp).glass(RoundedCornerShape(26.dp)).padding(horizontal = 18.dp, vertical = 12.dp),
@@ -325,9 +328,4 @@ fun PRow(
   }
 }
 
-@Composable fun ProgressBar(ratio: Double, color: Color, modifier: Modifier = Modifier) {
-  val w by animateDpAsState(0.dp, label = "p")
-  Box(modifier.fillMaxWidth().height(6.dp).clip(CircleShape).background(C.fill)) {
-    Box(Modifier.fillMaxWidth(ratio.coerceIn(0.0, 1.0).toFloat()).fillMaxHeight().clip(CircleShape).background(color).padding(start = w))
-  }
-}
+@Composable fun ProgressBar(ratio: Double, color: Color, modifier: Modifier = Modifier) = LiquidProgress(ratio, color, modifier, 6.dp)

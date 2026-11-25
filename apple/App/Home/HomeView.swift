@@ -50,6 +50,14 @@ struct HomeView: View {
         NavigationLink { CalendarView() } label: { Image(systemName: "calendar") }
           .accessibilityLabel("Calendar")
       }
+      // One tap hides every amount in the app (and in the app switcher).
+      ToolbarItem(placement: .topBarTrailing) {
+        Button { withAnimation(.quick) { hidden.toggle() } } label: {
+          Image(systemName: hidden ? "eye.slash" : "eye").contentTransition(.symbolEffect(.replace))
+        }
+        .accessibilityLabel(hidden ? "Show Amounts" : "Hide Amounts")
+        .sensoryFeedback(.selection, trigger: hidden)
+      }
     }
     .sheet(isPresented: $editingLayout) { NavigationStack { HomeLayoutView() } }
   }
@@ -78,7 +86,7 @@ struct HomeView: View {
                   .padding(.vertical, 8).padding(.horizontal, 12)
                   .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.pressable)
               }
             }
             .padding(.vertical, 2)
@@ -255,7 +263,7 @@ struct HeroCard: View {
         Text(Money.format(summary.spent, hidden: hidden))
           .font(.system(size: 40, weight: .bold, design: .rounded)).monospacedDigit()
           .minimumScaleFactor(0.5).lineLimit(1)
-          .contentTransition(.numericText())
+          .rolling(summary.spent)
         HStack(spacing: 16) {
           stat("Income", summary.income, .income)
           stat(summary.saved >= 0 ? "Saved" : "Overspent", abs(summary.saved), summary.saved >= 0 ? .primary : .expense)
@@ -274,17 +282,19 @@ struct HeroCard: View {
           }
         }
         .frame(width: 88, height: 88)
-        .animation(.spring, value: ratio)
+        .animation(.quick, value: ratio)
         .accessibilityElement(children: .combine)
       }
     }
     .padding(20)
+    .background { LiquidBackground() }
   }
 
   private func stat(_ label: String, _ value: Int, _ color: Color) -> some View {
     VStack(alignment: .leading, spacing: 1) {
       Text(label).font(.caption).foregroundStyle(.secondary)
       Text(Money.format(value, hidden: hidden)).font(.subheadline.weight(.semibold)).fontDesign(.rounded).foregroundStyle(color)
+        .rolling(value)
     }
   }
 }
@@ -303,9 +313,9 @@ struct BudgetRow: View {
         Spacer()
         Text(progress.over ? "\(Money.format(-progress.left, hidden: hidden)) over" : "\(Money.format(progress.left, hidden: hidden)) left")
           .font(.subheadline).foregroundStyle(progress.over ? Color.expense : .secondary)
+          .rolling(progress.left)
       }
-      ProgressView(value: min(progress.ratio, 1))
-        .tint(progress.over ? Color.expense : progress.ratio > 0.8 ? .orange : Color(hex: c?.color ?? "#5E5CE6"))
+      LiquidProgress(value: progress.ratio, tint: progress.over ? Color.expense : progress.ratio > 0.8 ? .orange : Color(hex: c?.color ?? "#5E5CE6"))
     }
     .padding(.vertical, 4)
   }

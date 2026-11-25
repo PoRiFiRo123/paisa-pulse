@@ -146,12 +146,12 @@ struct ConverterView: View {
           .onTapGesture {
             guard !isActive else { focused = true; return }
             if let r { amount = String(format: "%.2f", value * r).replacingOccurrences(of: ".00", with: "") }
-            withAnimation(.snappy) { active = code }
+            withAnimation(.quick) { active = code }
             focused = true
           }
           .listRowBackground(isActive ? Color.accentColor.opacity(0.08) : Color(.secondarySystemGroupedBackground))
         }
-        .onMove { codes.move(fromOffsets: $0, toOffset: $1); persist() }
+        .onMove { codes.move(fromOffsets: $0, toOffset: $1); persist(); Haptic.soft() }
         .onDelete { idx in
           let removed = idx.map { codes[$0] }
           codes.remove(atOffsets: idx)
@@ -214,7 +214,7 @@ struct MainCurrencyView: View {
       } footer: {
         Text("Totals, budgets and net worth are shown in this currency. Spends in other currencies keep their original amount too. ₹ uses lakh and crore; other currencies use thousands.")
       }
-      if working { Section { HStack { ProgressView(); Text("Converting…") } } }
+      if working { Section("Converting…") { SkeletonRows(count: 3) } }
     }
     .navigationTitle("Main Currency")
     .sheet(isPresented: $picking) {
@@ -390,7 +390,7 @@ struct AppearanceColorsView: View {
         Text(name).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
       }
     }
-    .buttonStyle(.plain)
+    .buttonStyle(.pressable)
     .accessibilityLabel(name)
     .accessibilityAddTraits(on ? .isSelected : [])
   }
@@ -414,7 +414,7 @@ struct AppIconPickerView: View {
               Text(i.name).font(.subheadline.weight(current == i.key ? .semibold : .regular)).foregroundStyle(.primary)
             }
           }
-          .buttonStyle(.plain)
+          .buttonStyle(.pressable)
           .accessibilityAddTraits(current == i.key ? .isSelected : [])
         }
       }

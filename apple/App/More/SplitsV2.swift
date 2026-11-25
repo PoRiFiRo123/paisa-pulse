@@ -155,7 +155,7 @@ struct SplitEditorView: View {
                     .foregroundStyle(on ? Color.white : Color.primary)
                     .background(on ? Color.accentColor : Color.secondary.opacity(0.15), in: Capsule())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.pressable)
               }
             }
             .padding(.horizontal, 16)
@@ -513,7 +513,7 @@ struct FriendDetailView: View {
           Avatar(name: friend.name, size: 56)
           Text(balance == 0 ? "All settled" : balance > 0 ? "\(friend.name) owes you" : "You owe \(friend.name)")
             .font(.subheadline).foregroundStyle(.secondary).padding(.top, 6)
-          Text(Money.format(balance)).font(.system(size: 40, weight: .bold, design: .rounded))
+          Text(Money.format(balance)).font(.system(size: 40, weight: .bold, design: .rounded)).rolling(balance)
             .foregroundStyle(balance > 0 ? Color.income : balance < 0 ? Color.expense : .primary)
         }
         .frame(maxWidth: .infinity).padding(.vertical, 8)

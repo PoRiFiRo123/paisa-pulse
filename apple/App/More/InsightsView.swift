@@ -45,7 +45,7 @@ struct InsightsView: View {
       Section {
         VStack(alignment: .leading, spacing: 4) {
           Text("Spent in \(kind.label(range, startDay: monthStartDay))").font(.subheadline).foregroundStyle(.secondary)
-          Text(Money.format(s.spent)).font(.system(size: 36, weight: .bold, design: .rounded))
+          Text(Money.format(s.spent)).font(.system(size: 36, weight: .bold, design: .rounded)).rolling(s.spent)
           HStack(spacing: 18) {
             stat("Per day", Money.format(s.spent / days), .primary)
             if p.spent > 0 {
@@ -173,7 +173,7 @@ struct CalendarView: View {
                 .background(Color.expense.opacity(heat), in: RoundedRectangle(cornerRadius: 8))
                 .overlay { if cal.isDate(day, inSameDayAs: selected) { RoundedRectangle(cornerRadius: 8).stroke(Color.accentColor, lineWidth: 2) } }
               }
-              .buttonStyle(.plain)
+              .buttonStyle(.pressable)
             } else {
               Color.clear.frame(minHeight: 44)
             }

@@ -42,7 +42,7 @@ import java.util.Locale
     Row(verticalAlignment = Alignment.Bottom) {
       Column(Modifier.weight(1f)) {
         Text("Likely by month-end", style = T.subhead, color = C.secondary)
-        Text(Money.format(f.projected, hidden), style = T.amount(28, FontWeight.Bold), color = if (f.projected < 0) C.expense else C.label)
+        RollingText(Money.format(f.projected, hidden), T.amount(28, FontWeight.Bold), if (f.projected < 0) C.expense else C.label)
       }
       Column(horizontalAlignment = Alignment.End) {
         Text("Now", style = T.caption, color = C.secondary)
@@ -133,7 +133,7 @@ import java.util.Locale
     group {
       Column(Modifier.padding(20.dp)) {
         Text("Spent on #$tag", style = T.subhead, color = C.secondary)
-        Text(Money.format(expenses.sumOf { it.effectiveAmount }), style = T.amount(36, FontWeight.Bold), color = C.label)
+        RollingText(Money.format(expenses.sumOf { it.effectiveAmount }), T.amount(36, FontWeight.Bold), C.label)
         if (list.isNotEmpty()) Text("${shortDate.format(list.last().occurredAt.toDate())} – ${shortDate.format(list.first().occurredAt.toDate())}", style = T.footnote, color = C.secondary)
       }
     }

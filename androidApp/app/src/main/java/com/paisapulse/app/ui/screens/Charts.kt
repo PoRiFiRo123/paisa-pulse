@@ -58,7 +58,7 @@ import kotlin.math.sqrt
     group {
       Column(Modifier.padding(20.dp)) {
         Text("Spent in ${kind.label(range, Prefs.monthStartDay)}", style = T.subhead, color = C.secondary)
-        Text(Money.format(s.spent), style = T.amount(36, FontWeight.Bold), color = C.label)
+        RollingText(Money.format(s.spent), T.amount(36, FontWeight.Bold), C.label)
         Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(18.dp)) {
           Stat("Per day", Money.format(s.spent / days), C.label)
           if (p.spent > 0) { val ch = (s.spent - p.spent).toDouble() / p.spent

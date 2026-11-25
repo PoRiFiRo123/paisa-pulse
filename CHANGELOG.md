@@ -5,6 +5,13 @@ Newest first. Every push to `main` becomes a GitHub Release `build-<number>` wit
 
 ## [Unreleased]
 
+- Both: **Polish.** Big amounts roll when they change; animations are a snappy 0.2 s; buttons and cards shrink slightly when pressed; loading lists show skeleton rows.
+- Both: **Celebrations.** Confetti and a success tap when you reach a goal, finish a month under budget, or settle up with everyone.
+- Both: a slow, living colour shader on the Home balance card and progress bars (30 fps, paused in Low Power / Battery Saver and with Reduce Motion).
+- Both: haptics match toasts (success / error), a soft tap while reordering.
+- Both: an eye button on Home hides amounts in one tap; with App Lock or hidden amounts on, the app-switcher preview is covered by the logo.
+- Both: launch screen matches the app's background (no white flash) and shows the ₹ logo; the same logo is used in onboarding, the lock screen and sign-in. Dark and tinted app icons (iOS), themed icon (Android 13+).
+- CI: screenshots at the largest text size (iOS `*-ax5.png`, Android `*-fontx2.png`).
 - Both: **Forgot password?** on the sign-in screen emails a 6-digit code (sent through Resend from nishitrk.tech) to set a new password.
 - Both: CRED screenshots where the ₹ sign is read as a dot ("·1,000") now work.
 - iPhone: back to the real iOS tab bar (Liquid Glass you can drag across), with + as its round button. Quick Add gained a "From Screenshots" button; templates stay in Quick Add.

@@ -68,7 +68,7 @@ val AccountType.order get() = when (this) { AccountType.Bank -> 0; AccountType.C
     item {
       Column(Modifier.padding(horizontal = 20.dp, vertical = 4.dp)) {
         Text("Net worth", style = T.subhead, color = C.secondary)
-        Text(Money.format(net, Prefs.hideAmounts), style = T.amount(36, FontWeight.Bold), color = if (net < 0) C.expense else C.label)
+        RollingText(Money.format(net, Prefs.hideAmounts), T.amount(36, FontWeight.Bold), if (net < 0) C.expense else C.label)
         Text("Net worth over time", style = T.subhead.copy(fontWeight = FontWeight.Medium), color = C.accent,
           modifier = Modifier.padding(top = 4.dp).combinedClickableCompat({ Ui.push(Route.NetWorth) }, {}))
       }
@@ -77,7 +77,7 @@ val AccountType.order get() = when (this) { AccountType.Bank -> 0; AccountType.C
     item {
       Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy((-128).dp)) {
         active.forEachIndexed { i, a ->
-          Box(Modifier.zIndex(i.toFloat()).shadow(14.dp, RoundedCornerShape(24.dp), ambientColor = Color.Black.copy(alpha = 0.25f))
+          Box(Modifier.zIndex(i.toFloat()).pressScale().shadow(14.dp, RoundedCornerShape(24.dp), ambientColor = Color.Black.copy(alpha = 0.25f))
             .combinedClickableCompat({ Ui.push(Route.AccountDetail(a.id)) }, {})) {
             WalletCard(a, b[a.id] ?: 0, db.cards.filter { it.accountId == a.id && it.archivedAt == null })
           }
@@ -113,7 +113,7 @@ val AccountType.order get() = when (this) { AccountType.Bank -> 0; AccountType.C
       }
       Spacer(Modifier.weight(1f))
       Text(if (balance < 0) (if (a.kind == AccountType.Card) "Due" else "Overdrawn") else "Balance", style = T.caption, color = Color.White.copy(alpha = 0.75f))
-      Text(Money.format(balance, Prefs.hideAmounts), style = T.amount(28, FontWeight.Bold), color = Color.White)
+      RollingText(Money.format(balance, Prefs.hideAmounts), T.amount(28, FontWeight.Bold), Color.White)
       Row(verticalAlignment = Alignment.CenterVertically) {
         (a.last4 ?: primary?.last4)?.let { Text("•••• $it", style = T.subhead.copy(fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Medium), color = Color.White.copy(alpha = 0.85f)) }
         Spacer(Modifier.weight(1f))

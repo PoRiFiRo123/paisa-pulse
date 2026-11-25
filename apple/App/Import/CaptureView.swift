@@ -108,7 +108,7 @@ struct DraftRow: View {
         Image(systemName: draft.include ? "checkmark.circle.fill" : "circle").font(.title3)
           .foregroundStyle(draft.include ? Color.accentColor : Color.secondary)
       }
-      .buttonStyle(.plain)
+      .buttonStyle(.pressable)
       VStack(alignment: .leading, spacing: 4) {
         HStack {
           if draft.type == .transfer {
