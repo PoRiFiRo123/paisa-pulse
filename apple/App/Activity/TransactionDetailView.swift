@@ -128,7 +128,7 @@ struct TransactionDetailView: View {
             Image(uiImage: img).resizable().scaledToFill().frame(height: 180).frame(maxWidth: .infinity).clipped()
               .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
           }
-          .buttonStyle(.plain)
+          .buttonStyle(.pressable)
           Button("Remove Receipt", role: .destructive) { Receipts.delete(txn.receipt); txn.receipt = nil; try? context.save() }
         } else {
           PhotosPicker(selection: $photo, matching: .images) { Label("Add a Photo of the Receipt", systemImage: "doc.text.image") }

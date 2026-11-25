@@ -227,7 +227,7 @@ struct ImportView: View {
         Image(systemName: p.include ? "checkmark.circle.fill" : "circle").font(.title3)
           .foregroundStyle(p.include ? Color.accentColor : Color.secondary)
       }
-      .buttonStyle(.plain)
+      .buttonStyle(.pressable)
       .accessibilityLabel(p.include ? "Included" : "Skipped")
       VStack(alignment: .leading, spacing: 3) {
         HStack {

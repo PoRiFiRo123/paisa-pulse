@@ -40,8 +40,8 @@ import kotlinx.coroutines.launch
 private fun CoroutineScopeRun(scope: kotlinx.coroutines.CoroutineScope, busy: MutableState<Boolean>, block: suspend () -> Unit) {
   scope.launch {
     busy.value = true
-    try { block() } catch (e: Cloud.CloudError) { Ui.show(e.message ?: "Something went wrong") }
-    catch (e: java.io.IOException) { Ui.show("No connection. Try again.") }
+    try { block() } catch (e: Cloud.CloudError) { Ui.showError(e.message ?: "Something went wrong") }
+    catch (e: java.io.IOException) { Ui.showError("No connection. Try again.") }
     finally { busy.value = false }
   }
 }
@@ -137,9 +137,7 @@ private fun CoroutineScopeRun(scope: kotlinx.coroutines.CoroutineScope, busy: Mu
   PScreen("Account", back = true) {
     item {
       Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(Modifier.size(84.dp).clip(RoundedCornerShape(24.dp)).background(C.accent), contentAlignment = Alignment.Center) {
-          Icon(Sym.of("person.2.fill"), null, tint = Color.White, modifier = Modifier.size(40.dp))
-        }
+        Image(androidx.compose.ui.res.painterResource(com.paisapulse.app.R.drawable.app_logo), null, modifier = Modifier.size(84.dp))
         Text("Split with friends on Paisa Pulse", style = T.title2, color = C.label, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 16.dp))
         Text("Add friends, split bills and trips, and they see their share on their phone.",
           style = T.subhead, color = C.secondary, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 6.dp))
@@ -250,7 +248,12 @@ private fun CoroutineScopeRun(scope: kotlinx.coroutines.CoroutineScope, busy: Mu
   var pendingInvite by remember { mutableStateOf(invite) }
   val linking = link?.let { id -> db.friends.firstOrNull { it.id == id } }
   if (!Cloud.signedIn) { AccountScreen(); return }
-  LaunchedEffect(q) { delay(350); results = if (q.trim().length >= 2) runCatching { Cloud.find(q.trim()) }.getOrDefault(emptyList()) else emptyList() }
+  var searching by remember { mutableStateOf(false) }
+  LaunchedEffect(q) {
+    delay(350); searching = q.trim().length >= 2
+    results = if (q.trim().length >= 2) runCatching { Cloud.find(q.trim()) }.getOrDefault(emptyList()) else emptyList()
+    searching = false
+  }
   LaunchedEffect(Unit) { code = runCatching { Cloud.inviteCode() }.getOrNull() }
   val readContacts = {
     CoroutineScopeRun(scope, busy) {
@@ -294,8 +297,9 @@ private fun CoroutineScopeRun(scope: kotlinx.coroutines.CoroutineScope, busy: Mu
     }
     group(footer = "Search by @username, email or phone number.") {
       FieldRow(q, { q = it }, "Username, email or phone")
+      if (searching && results.isEmpty()) { Divider(); SkeletonRows(2) }
       results.forEach { Divider(56.dp); PersonRow(it) }
-      if (q.trim().length >= 2 && results.isEmpty()) { Divider(); Text("No one found. Send them your invite below.", style = T.subhead, color = C.secondary, modifier = Modifier.padding(16.dp)) }
+      if (!searching && q.trim().length >= 2 && results.isEmpty()) { Divider(); Text("No one found. Send them your invite below.", style = T.subhead, color = C.secondary, modifier = Modifier.padding(16.dp)) }
     }
     group("From your contacts", footer = "Phone numbers are turned into fingerprints on this phone before matching; the numbers themselves aren't sent.") {
       if (contacts == null) PRow("Find Friends from Contacts", titleColor = C.accent, leading = { Icon2("person.crop.circle.badge.plus") }, onClick = {
@@ -321,7 +325,7 @@ private fun CoroutineScopeRun(scope: kotlinx.coroutines.CoroutineScope, busy: Mu
             ctx.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain")
               .putExtra(Intent.EXTRA_TEXT, "Add me on Paisa Pulse to split bills and trips: $link2"), "Invite"))
           })
-        } ?: Text("Getting your invite…", style = T.subhead, color = C.secondary, modifier = Modifier.padding(16.dp))
+        } ?: SkeletonRows(1)
         Divider()
         Row(verticalAlignment = Alignment.CenterVertically) {
           FieldRow(typed, { typed = it.uppercase().filter { c -> c.isLetterOrDigit() }.take(12) }, "Friend's code", modifier = Modifier.weight(1f))
@@ -382,7 +386,8 @@ private fun CoroutineScopeRun(scope: kotlinx.coroutines.CoroutineScope, busy: Mu
         }
       }
     }
-    if (s.inbox.isEmpty() && shares.isEmpty() && settles.isEmpty()) item {
+    if (s.inbox.isEmpty() && shares.isEmpty() && settles.isEmpty() && Cloud.syncing && s.since == null) group { SkeletonRows(4) }
+    else if (s.inbox.isEmpty() && shares.isEmpty() && settles.isEmpty()) item {
       Box(Modifier.padding(top = 40.dp)) { EmptyHint("Nothing new", "bell", "When friends split something with you or add you to a trip, it shows up here.") }
     }
     if (s.inbox.isNotEmpty()) group("Recent") {

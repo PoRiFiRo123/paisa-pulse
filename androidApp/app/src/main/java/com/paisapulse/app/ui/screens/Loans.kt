@@ -84,7 +84,7 @@ import java.time.LocalDate
       Column(Modifier.fillMaxWidth().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Avatar(l.person, 56.dp)
         Text(if (l.closedAt != null) "Settled" else if (l.lent) "${l.person} still owes you" else "You still owe ${l.person}", style = T.subhead, color = C.secondary, modifier = Modifier.padding(top = 6.dp))
-        Text(Money.format(left), style = T.amount(40, FontWeight.Bold), color = if (l.closedAt != null) C.label else if (l.lent) C.income else C.expense)
+        RollingText(Money.format(left), T.amount(40, FontWeight.Bold), if (l.closedAt != null) C.label else if (l.lent) C.income else C.expense)
         Text("of ${Money.format(l.amount)} ${if (l.lent) "lent" else "borrowed"} on ${shortDate.format(l.startedAt.toDate())} ${l.startedAt.toDate().year}", style = T.footnote, color = C.secondary)
       }
       if (l.closedAt == null) {

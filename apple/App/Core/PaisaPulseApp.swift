@@ -57,6 +57,7 @@ struct ToastMessage: Identifiable, Equatable {
   let id = UUID()
   let text: String
   var undo: (() -> Void)? = nil
+  var error = false
   static func == (a: ToastMessage, b: ToastMessage) -> Bool { a.id == b.id }
 }
 
@@ -96,8 +97,11 @@ struct ToastMessage: Identifiable, Equatable {
     }
   }
 
-  func show(_ text: String, undo: (() -> Void)? = nil) {
-    let msg = ToastMessage(text: text, undo: undo)
+  /// A problem message: shows like a toast with an error tap.
+  func showError(_ text: String) { show(text, error: true) }
+
+  func show(_ text: String, undo: (() -> Void)? = nil, error: Bool = false) {
+    let msg = ToastMessage(text: text, undo: undo, error: error)
     toast = msg
     Task { @MainActor in
       try? await Task.sleep(for: .seconds(5))

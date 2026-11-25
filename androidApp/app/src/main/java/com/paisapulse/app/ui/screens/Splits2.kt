@@ -344,7 +344,7 @@ fun shareBitmap(ctx: Context, bmp: Bitmap, title: String, name: String = "upi-qr
       Column(Modifier.fillMaxWidth().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Avatar(f.name, 56.dp)
         Text(if (bal == 0L) "All settled" else if (bal > 0) "${f.name} owes you" else "You owe ${f.name}", style = T.subhead, color = C.secondary, modifier = Modifier.padding(top = 6.dp))
-        Text(Money.format(bal), style = T.amount(40, FontWeight.Bold), color = if (bal > 0) C.income else if (bal < 0) C.expense else C.label)
+        RollingText(Money.format(bal), T.amount(40, FontWeight.Bold), if (bal > 0) C.income else if (bal < 0) C.expense else C.label)
       }
       if (bal > 0) { Divider(); PRow("Ask ${f.name} to Pay", titleColor = C.accent, leading = { Icon2("paperplane.fill") }, onClick = { Ui.sheet = Sheet.Request(null, mapOf(id to bal)) }) }
       if (bal < 0 && upi.isNotBlank()) { Divider(); PRow("Pay ${Money.format(-bal)} with…", titleColor = C.accent, leading = { Icon2("indianrupeesign.circle") }, onClick = {

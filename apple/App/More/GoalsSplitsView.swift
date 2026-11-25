@@ -38,7 +38,7 @@ struct GoalRow: View {
           Spacer()
           Text("\(Money.format(goal.saved)) of \(Money.format(goal.target))").font(.footnote).foregroundStyle(.secondary)
         }
-        ProgressView(value: min(ratio, 1)).tint(Color(hex: goal.color))
+        LiquidProgress(value: ratio, tint: Color(hex: goal.color))
         if let d = goal.deadline, goal.saved < goal.target {
           let months = max(1, Calendar.current.dateComponents([.month], from: .now, to: d).month ?? 1)
           Text("Save \(Money.format((goal.target - goal.saved) / months)) a month to make it by \(d.formatted(.dateTime.month(.abbreviated).year()))")

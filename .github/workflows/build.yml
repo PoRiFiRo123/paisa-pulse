@@ -195,6 +195,12 @@ jobs:
             for tab in home activity accounts settings; do shot "$tab-$mode" -PaisaTab $tab; done
             shot "add-$mode" -PaisaAdd YES
           done
+          # Biggest accessibility text size, to catch clipped or overlapping text.
+          xcrun simctl ui "$UDID" appearance light
+          xcrun simctl ui "$UDID" content_size accessibility-extra-extra-extra-large
+          for tab in home activity accounts settings; do shot "$tab-ax5" -PaisaTab $tab; done
+          shot "add-ax5" -PaisaAdd YES
+          xcrun simctl ui "$UDID" content_size large
           ls -la shots
           # Publish to the ci-screenshots branch so they can be viewed without downloading artifacts.
           cd shots

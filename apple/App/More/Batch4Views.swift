@@ -13,7 +13,7 @@ struct ForecastCard: View {
       HStack(alignment: .firstTextBaseline) {
         VStack(alignment: .leading, spacing: 2) {
           Text("Likely by month-end").font(.subheadline).foregroundStyle(.secondary)
-          Text(Money.format(forecast.projected, hidden: hidden)).font(.system(size: 28, weight: .bold, design: .rounded))
+          Text(Money.format(forecast.projected, hidden: hidden)).font(.system(size: 28, weight: .bold, design: .rounded)).rolling(forecast.projected)
             .foregroundStyle(forecast.projected < 0 ? Color.expense : .primary)
         }
         Spacer()
@@ -65,6 +65,7 @@ struct TemplatesView: View {
       }
       .onDelete { idx in idx.map { templates[$0] }.forEach { context.delete($0) }; try? context.save() }
       .onMove { from, to in
+        Haptic.soft()
         var list = templates
         list.move(fromOffsets: from, toOffset: to)
         for (i, t) in list.enumerated() { t.sortOrder = i }
@@ -121,7 +122,7 @@ struct TagDetailView: View {
       Section {
         VStack(alignment: .leading, spacing: 4) {
           Text("Spent on #\(tag)").font(.subheadline).foregroundStyle(.secondary)
-          Text(Money.format(spent)).font(.system(size: 36, weight: .bold, design: .rounded))
+          Text(Money.format(spent)).font(.system(size: 36, weight: .bold, design: .rounded)).rolling(spent)
           if let first = list.last?.occurredAt, let last = list.first?.occurredAt {
             Text("\(first.formatted(date: .abbreviated, time: .omitted)) – \(last.formatted(date: .abbreviated, time: .omitted))").font(.footnote).foregroundStyle(.secondary)
           }
@@ -276,7 +277,7 @@ struct HomeLayoutView: View {
             Label { Text(info?.label ?? key) } icon: { Image(systemName: info?.icon ?? "square").foregroundStyle(Color.accentColor) }
           }
         }
-        .onMove { order.move(fromOffsets: $0, toOffset: $1) }
+        .onMove { order.move(fromOffsets: $0, toOffset: $1); Haptic.soft() }
       } footer: { Text("Drag to reorder, switch off what you don't need.") }
       Section { Button("Reset to Default") { order = HomeSections.all.map(\.key); hidden = [] } }
     }

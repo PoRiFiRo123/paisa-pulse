@@ -70,7 +70,7 @@ sealed interface Sheet {
   data class Wallet(val tripId: String) : Sheet
 }
 
-data class Toast(val text: String, val undo: (() -> Unit)? = null, val id: Long = System.nanoTime())
+data class Toast(val text: String, val undo: (() -> Unit)? = null, val id: Long = System.nanoTime(), val error: Boolean = false)
 
 /** App-wide UI state: tab, per-tab back stacks, the open sheet, the toast. Mirrors the iOS Router. */
 object Ui {
@@ -102,8 +102,11 @@ object Ui {
   fun pop(): Boolean { if (stack.size > 1) { stack.removeAt(stack.lastIndex); return true }; return false }
   fun select(t: Tab) { if (tab == t) { val s = stacks.getValue(t); while (s.size > 1) s.removeAt(s.lastIndex) }; tab = t }
 
-  fun show(text: String, undo: (() -> Unit)? = null) {
-    val t = Toast(text, undo); toast = t
+  /** A problem message: shows like a toast, with an error tap. */
+  fun showError(text: String) = show(text, error = true)
+
+  fun show(text: String, undo: (() -> Unit)? = null, error: Boolean = false) {
+    val t = Toast(text, undo, error = error); toast = t
     toastJob?.cancel(); toastJob = scope.launch { delay(5000); if (toast?.id == t.id) toast = null }
   }
 

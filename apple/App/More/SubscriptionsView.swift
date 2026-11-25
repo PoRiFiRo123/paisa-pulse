@@ -25,7 +25,7 @@ struct SubscriptionsView: View {
       Section {
         VStack(alignment: .leading, spacing: 4) {
           Text("Every month").font(.subheadline).foregroundStyle(.secondary)
-          Text(Money.format(monthly, hidden: hidden)).font(.system(size: 40, weight: .bold, design: .rounded))
+          Text(Money.format(monthly, hidden: hidden)).font(.system(size: 40, weight: .bold, design: .rounded)).rolling(monthly)
             .foregroundStyle(Color.expense)
           Text("\(Money.format(monthly * 12, hidden: hidden)) a year · \(active.count) active")
             .font(.subheadline).foregroundStyle(.secondary)

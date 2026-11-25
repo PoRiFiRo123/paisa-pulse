@@ -32,7 +32,7 @@ import com.paisapulse.app.ui.*
     group {
       Column(Modifier.padding(16.dp)) {
         Text("Every month", style = T.subhead, color = C.secondary)
-        Text(Money.format(monthly, Prefs.hideAmounts), style = T.amount(40, FontWeight.Bold), color = C.expense)
+        RollingText(Money.format(monthly, Prefs.hideAmounts), T.amount(40, FontWeight.Bold), C.expense)
         Text("${Money.format(monthly * 12, Prefs.hideAmounts)} a year · ${active.size} active", style = T.subhead, color = C.secondary)
       }
     }

@@ -38,14 +38,15 @@ import dev.chrisbanes.haze.hazeSource
             val push = targetState.first == initialState.first && targetState.second.size > initialState.second.size
             val pop = targetState.first == initialState.first && targetState.second.size < initialState.second.size
             when {
-              push -> slideInHorizontally { it } togetherWith slideOutHorizontally { -it / 3 }
-              pop -> slideInHorizontally { -it / 3 } togetherWith slideOutHorizontally { it }
-              else -> androidx.compose.animation.fadeIn() togetherWith androidx.compose.animation.fadeOut()
+              push -> slideInHorizontally(tween(260)) { it } togetherWith slideOutHorizontally(tween(260)) { -it / 3 }
+              pop -> slideInHorizontally(tween(260)) { -it / 3 } togetherWith slideOutHorizontally(tween(260)) { it }
+              else -> androidx.compose.animation.fadeIn(quick()) togetherWith androidx.compose.animation.fadeOut(quick())
             }
           }, label = "nav") { (tab, s) -> Screen(tab, s.last()) }
         }
         if (!Ui.hideTabBar) Box(Modifier.align(Alignment.BottomCenter)) { TabBar() }
         ToastHost(Modifier.align(Alignment.BottomCenter))
+        ConfettiOverlay()
         when (val sh = Ui.sheet) {
           is Sheet.Add -> QuickAddSheet(sh)
           is Sheet.AccountForm -> AccountForm(sh.id)
@@ -112,7 +113,7 @@ import dev.chrisbanes.haze.hazeSource
 @Composable fun LockScreen(unlock: () -> Unit) {
   Box(Modifier.fillMaxSize().background(C.background), contentAlignment = Alignment.Center) {
     androidx.compose.foundation.layout.Column(horizontalAlignment = Alignment.CenterHorizontally) {
-      androidx.compose.material3.Icon(Sym.of("lock.fill"), null, tint = C.secondary, modifier = Modifier.size(androidx.compose.ui.unit.Dp(44f)))
+      androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(com.paisapulse.app.R.drawable.app_logo), null, modifier = Modifier.size(androidx.compose.ui.unit.Dp(72f)))
       androidx.compose.material3.Text("Paisa Pulse is locked", style = T.headline, color = C.label, modifier = Modifier.padding(androidx.compose.ui.unit.Dp(16f)))
       androidx.compose.material3.Button(unlock, colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = C.accent)) { androidx.compose.material3.Text("Unlock", style = T.headline) }
     }

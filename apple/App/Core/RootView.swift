@@ -8,6 +8,7 @@ struct RootView: View {
   @Environment(\.scenePhase) private var phase
   @AppStorage(PrefKey.onboarded, store: AppGroup.defaults) private var onboarded = false
   @AppStorage(PrefKey.appLock, store: AppGroup.defaults) private var appLock = false
+  @AppStorage(PrefKey.hideAmounts, store: AppGroup.defaults) private var hideAmounts = false
   @State private var locked = false
 
   var body: some View {
@@ -16,13 +17,23 @@ struct RootView: View {
     }
     .overlay {
       if locked { LockView { locked = false } }
+      // Privacy in the app switcher: with Face ID Lock or hidden amounts, nothing shows there.
+      else if phase != .active && (appLock || hideAmounts) {
+        ZStack {
+          Color(.systemGroupedBackground)
+          Image("AppLogo").resizable().frame(width: 88, height: 88)
+        }
+        .ignoresSafeArea()
+      }
     }
     .overlay(alignment: .bottom) { ToastView() }
+    .overlay { ConfettiOverlay() }
     .sheet(item: Binding(get: { router.invite }, set: { router.invite = $0 })) { i in
       NavigationStack { PeopleView(invite: i.code) }
     }
     .onReceive(NotificationCenter.default.publisher(for: ModelContext.didSave).debounce(for: .seconds(4), scheduler: RunLoop.main)) { _ in
       Cloud.shared.pushSoon()
+      Celebrations.check(context)
     }
     .task {
       DemoData.seedIfRequested(context)
@@ -38,6 +49,7 @@ struct RootView: View {
       if new == .background, appLock { locked = true }
       if new == .active {
         Maintenance.run(context)
+        Celebrations.check(context)
         Cloud.shared.syncSoon()
       }
       if new == .background { Cloud.scheduleBackground() }
@@ -114,7 +126,11 @@ struct ToastView: View {
       .glassCapsule()
       .padding(.bottom, 96)
       .transition(.move(edge: .bottom).combined(with: .opacity))
-      .animation(.spring, value: router.toast)
+      .animation(.quick, value: router.toast)
+    }
+    EmptyView().sensoryFeedback(trigger: router.toast) { _, new in
+      guard let new else { return nil }
+      return new.error ? .error : .success
     }
   }
 }

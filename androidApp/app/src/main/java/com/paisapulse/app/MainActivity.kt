@@ -55,6 +55,12 @@ class MainActivity : FragmentActivity() {
 
   override fun onStop() { super.onStop(); if (Prefs.appLock) locked.value = true }
 
+  // Privacy in recent apps: with the lock or hidden amounts on, the preview is blank (screenshots still work).
+  override fun onPause() {
+    if (android.os.Build.VERSION.SDK_INT >= 33) setRecentsScreenshotEnabled(!(Prefs.appLock || Prefs.hideAmounts))
+    super.onPause()
+  }
+
   override fun onResume() { super.onResume(); if (locked.value) authenticate() }
 
   private fun authenticate() {

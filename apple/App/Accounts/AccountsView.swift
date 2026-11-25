@@ -20,7 +20,7 @@ struct AccountsView: View {
       VStack(alignment: .leading, spacing: 18) {
         VStack(alignment: .leading, spacing: 4) {
           Text("Net worth").font(.subheadline).foregroundStyle(.secondary)
-          Text(Money.format(net, hidden: hidden)).font(.system(size: 36, weight: .bold, design: .rounded)).monospacedDigit()
+          Text(Money.format(net, hidden: hidden)).font(.system(size: 36, weight: .bold, design: .rounded)).monospacedDigit().rolling(net)
             .foregroundStyle(net < 0 ? Color.expense : .primary)
           NavigationLink { NetWorthView() } label: {
             Label("Net worth over time", systemImage: "chart.line.uptrend.xyaxis").font(.subheadline.weight(.medium))
@@ -40,7 +40,7 @@ struct AccountsView: View {
               WalletCard(account: a, balance: balances[a.id] ?? 0, cards: cards.filter { $0.accountId == a.id })
                 .shadow(color: .black.opacity(0.18), radius: 10, y: -4)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.pressable)
             .modifier(ZoomSource(id: a.id, ns: ns))
             .zIndex(Double(i))
           }
@@ -55,7 +55,7 @@ struct AccountsView: View {
               AccountRow(account: a, balance: balances[a.id] ?? 0).padding(12)
                 .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 18))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.pressable)
           }
         }
       }
@@ -140,7 +140,7 @@ struct WalletCard: View {
         }
         Spacer(minLength: 0)
         Text(balance < 0 ? (account.type == .card ? "Due" : "Overdrawn") : "Balance").font(.caption).opacity(0.75)
-        Text(Money.format(balance, hidden: hidden)).font(.system(size: 28, weight: .bold, design: .rounded)).monospacedDigit()
+        Text(Money.format(balance, hidden: hidden)).font(.system(size: 28, weight: .bold, design: .rounded)).monospacedDigit().rolling(balance)
         HStack {
           if let l = account.last4 ?? primary?.last4 {
             Text("•••• \(l)").font(.system(.subheadline, design: .monospaced).weight(.medium)).opacity(0.85)
@@ -232,7 +232,7 @@ struct CardStack: View {
           .scaleEffect(spread ? 1 : 1 - CGFloat(cards.count - 1 - i) * 0.04)
           .shadow(color: .black.opacity(0.2), radius: 8, y: 4)
           .zIndex(Double(i))
-          .onTapGesture { withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { if spread { editing = c } else { spread = true } } }
+          .onTapGesture { withAnimation(.quick) { if spread { editing = c } else { spread = true } } }
           .contextMenu {
             Button { editing = c } label: { Label("Edit", systemImage: "pencil") }
             Button(role: .destructive) { c.archivedAt = .now; try? context.save() } label: { Label("Remove Card", systemImage: "trash") }
@@ -243,7 +243,7 @@ struct CardStack: View {
     .sensoryFeedback(.impact(weight: .light), trigger: spread)
     .overlay(alignment: .topTrailing) {
       if spread, cards.count > 1 {
-        Button { withAnimation(.spring) { spread = false } } label: { Image(systemName: "rectangle.stack.fill") }
+        Button { withAnimation(.quick) { spread = false } } label: { Image(systemName: "rectangle.stack.fill") }
           .buttonStyle(.bordered).clipShape(Circle()).offset(x: 6, y: -14)
       }
     }

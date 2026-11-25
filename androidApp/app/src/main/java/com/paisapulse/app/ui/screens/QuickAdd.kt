@@ -328,7 +328,7 @@ import kotlinx.coroutines.launch
   Column(Modifier.padding(horizontal = 16.dp).padding(bottom = 12.dp).navigationBarsPadding(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
       listOf("+", "−", "×", "÷").forEach { k ->
-        Box(Modifier.weight(1f).height(36.dp).clip(RoundedCornerShape(14.dp)).background(C.accent.copy(alpha = 0.12f)).clickable { append(k) }, contentAlignment = Alignment.Center) {
+        Box(Modifier.weight(1f).height(36.dp).pressScale().clip(RoundedCornerShape(14.dp)).background(C.accent.copy(alpha = 0.12f)).clickable { append(k) }, contentAlignment = Alignment.Center) {
           Text(k, style = T.amount(20), color = C.accent)
         }
       }
@@ -336,7 +336,7 @@ import kotlinx.coroutines.launch
     listOf(listOf("1", "2", "3"), listOf("4", "5", "6"), listOf("7", "8", "9"), listOf(".", "0", "⌫")).forEach { row ->
       Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         row.forEach { k ->
-          Box(Modifier.weight(1f).height(52.dp).clip(RoundedCornerShape(14.dp)).background(C.card).clickable { append(k) }, contentAlignment = Alignment.Center) {
+          Box(Modifier.weight(1f).height(52.dp).pressScale().clip(RoundedCornerShape(14.dp)).background(C.card).clickable { append(k) }, contentAlignment = Alignment.Center) {
             if (k == "⌫") Icon(Sym.of("delete.left"), "Delete", tint = C.label) else Text(k, style = T.amount(26, FontWeight.Normal), color = C.label)
           }
         }
