@@ -103,9 +103,10 @@ object Ui {
   fun select(t: Tab) { if (tab == t) { val s = stacks.getValue(t); while (s.size > 1) s.removeAt(s.lastIndex) }; tab = t }
 
   /** A problem message: shows like a toast, with an error tap. */
-  fun showError(text: String) = show(text, error = true)
+  fun showError(text: String) = show(text, error = true, undo = null)
 
-  fun show(text: String, undo: (() -> Unit)? = null, error: Boolean = false) {
+  // `undo` stays last so `show("…") { undo }` keeps working.
+  fun show(text: String, error: Boolean = false, undo: (() -> Unit)? = null) {
     val t = Toast(text, undo, error = error); toast = t
     toastJob?.cancel(); toastJob = scope.launch { delay(5000); if (toast?.id == t.id) toast = null }
   }
