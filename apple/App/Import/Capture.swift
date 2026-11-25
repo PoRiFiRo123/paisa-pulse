@@ -156,7 +156,7 @@ enum ScreenshotParser {
       if let m = money.first(line), let p = paise(m[1]) { return p }
     }
     // OCR often reads the ₹ sign as Z, %, ?, a dot or 2 on a line of its own amount ("Z349", "% 1,245.00", "·1,000" from CRED).
-    for line in lines { if let m = Rx("^[z%?·•*~]\\s?(\\d[\\d,]*(?:\\.\\d{1,2})?)$").first(line), let p = paise(m[1]) { return p } }
+    for line in lines { if let m = Rx("^[z%?·•*~₴₸₺]\\s?(\\d[\\d,]*(?:\\.\\d{1,2})?)$").first(line), let p = paise(m[1]) { return p } }
     for line in lines {
       guard let m = Rx("^([\\d,]{1,9}(?:\\.\\d{2})?)$").first(line) else { continue }
       if !Rx("^\\d{10,}$").test(m[1].replacingOccurrences(of: ",", with: "")), let p = paise(m[1]) { return p }
@@ -167,8 +167,8 @@ enum ScreenshotParser {
   static func findReceiptDate(_ lines: [String], now: Date, calendar: Calendar = .current) -> Date? {
     let text = lines.joined(separator: " \n ")
     var day: Int?, month: Int?, year: Int?
-    if let a = Rx("\\b(\\d{1,2})(?:st|nd|rd|th)?[\\s-]+(jan|feb|mar|apr|may|jun|jul|aug|sept?|oct|nov|dec)[a-z]*[\\s,-]*(\\d{4})?").first(text) {
-      day = Int(a[1]); month = months[a[2].lowercased()]; year = Int(a[3])
+    if let a = Rx("\\b(\\d{1,2})(?:st|nd|rd|th)?[\\s-]+(jan|feb|mar|apr|may|jun|jul|aug|sept?|oct|nov|dec)[a-z]*[\\s,-]*(?:['’](\\d{2})|(\\d{4}))?").first(text) {
+      day = Int(a[1]); month = months[a[2].lowercased()]; year = Int(a[4]) ?? Int(a[3]).map { 2000 + $0 }
     } else if let b = Rx("\\b(jan|feb|mar|apr|may|jun|jul|aug|sept?|oct|nov|dec)[a-z]*\\s+(\\d{1,2}),?\\s*(\\d{4})?").first(text) {
       month = months[b[1].lowercased()]; day = Int(b[2]); year = Int(b[3])
     } else if let c = Rx("\\b(\\d{1,2})[/.-](\\d{1,2})[/.-](\\d{2,4})\\b").first(text) {
@@ -207,7 +207,13 @@ enum ScreenshotParser {
   private static let letter = Rx("[a-z]")
 
   private static func payeeFrom(_ lines: [String], received: Bool) -> (name: String?, upi: String?) {
-    let upi = lines.lazy.compactMap { Rx("\\b[\\w.-]{2,}@[a-z]{2,}\\b").first($0)?[0] }.first
+    // Skip your own UPI ID: masked ("******8787@yescred") or under "paid from UPI ID" (CRED).
+    let own = Rx("paid from|from upi|your upi|debited from")
+    let upi = lines.indices.lazy.compactMap { i -> String? in
+      let line = lines[i]
+      if line.contains("*") || own.test(line) || (i > 0 && own.test(lines[i - 1])) { return nil }
+      return Rx("\\b[\\w.-]{2,}@[a-z]{2,}\\b").first(line)?[0]
+    }.first
     let want = received ? Rx("^(received from|from|money received from|payment from|sender)\\b") : Rx("^(paid to|paid successfully to|money sent to|sent to|sent money to|payment to|transferred to|to|beneficiary|payee|merchant|recipient|receiver|paying)\\b")
     for (i, line) in lines.enumerated() {
       if payeeLabel.test(line) && want.test(line) {
@@ -231,7 +237,7 @@ enum ScreenshotParser {
     return (nil, upi)
   }
 
-  private static let amountLine = Rx("^(?:₹|rs\\.?|inr|[z%?·•*~])?\\s?\\d[\\d,]*(?:\\.\\d{1,2})?$")
+  private static let amountLine = Rx("^(?:₹|rs\\.?|inr|[z%?·•*~₴₸₺])?\\s?\\d[\\d,]*(?:\\.\\d{1,2})?$")
   private static func nameLike(_ s: String) -> Bool {
     Rx("^[a-z][a-z .'&-]{2,40}$").test(s) && !notAName.test(s) && !payeeLabel.test(s) &&
       !Rx("\\b(today|yesterday|payment|paid|bank|account|balance|amount|status|cred)\\b").test(s)
