@@ -25,10 +25,10 @@ struct LoansView: View {
         EmptyHint(title: "No loans", icon: "banknote", message: "Lent a friend ₹5,000 or borrowed for a deposit? Keep track of it here with a due date.")
       }
       if !open.isEmpty {
-        Section("Open") { ForEach(open) { l in NavigationLink { LoanDetailView(loan: l) } label: { LoanRow(loan: l, payments: payments, hidden: hidden) } } }
+        Section("Open") { ForEach(open) { l in NavigationLink(value: NavRoute.loan(l.id)) { LoanRow(loan: l, payments: payments, hidden: hidden) } } }
       }
       if !closed.isEmpty {
-        Section("Settled") { ForEach(closed) { l in NavigationLink { LoanDetailView(loan: l) } label: { LoanRow(loan: l, payments: payments, hidden: hidden) } } }
+        Section("Settled") { ForEach(closed) { l in NavigationLink(value: NavRoute.loan(l.id)) { LoanRow(loan: l, payments: payments, hidden: hidden) } } }
       }
     }
     .navigationTitle("Loans")

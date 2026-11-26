@@ -417,7 +417,7 @@ struct SplitsView: View {
       }
       Section("Groups") {
         ForEach(groups) { g in
-          NavigationLink { GroupDetailView(group: g) } label: {
+          NavigationLink(value: NavRoute.group(g.id)) {
             HStack(spacing: 12) {
               CategoryBadge(icon: "person.3.fill", color: "#5E5CE6", size: 34)
               VStack(alignment: .leading, spacing: 2) {
@@ -432,7 +432,7 @@ struct SplitsView: View {
       Section("People") {
         if friends.isEmpty { Text("Add the people you split with").foregroundStyle(.secondary) }
         ForEach(friends) { f in
-          NavigationLink { FriendDetailView(friend: f) } label: {
+          NavigationLink(value: NavRoute.friend(f.id)) {
             HStack {
               Avatar(name: f.name)
               Text(f.name)
@@ -631,12 +631,19 @@ struct GroupDetailView: View {
         }
         .frame(height: 52)
       }
-      Section("Members") {
+      Section {
         ForEach(members) { f in
-          NavigationLink { FriendDetailView(friend: f, groupId: group.id) } label: {
-            HStack { Avatar(name: f.name); Text(f.name); Spacer(); BalanceLabel(balance: balances[f.id] ?? 0) }
+          NavigationLink(value: NavRoute.friend(f.id, group: group.id)) {
+            HStack {
+              Avatar(name: f.name); Text(f.name)
+              if f.userId != nil { Image(systemName: "person.crop.circle.badge.checkmark").font(.caption).foregroundStyle(.secondary).accessibilityLabel("On Paisa Pulse") }
+              Spacer(); BalanceLabel(balance: balances[f.id] ?? 0)
+            }
           }
         }
+        Button { editing = true } label: { Label("Add People", systemImage: "person.badge.plus") }
+      } header: { Text("Members") } footer: {
+        Text("Add a friend, someone new, or someone already on Paisa Pulse (find them by @username, email or phone).")
       }
       if balances.values.contains(where: { $0 != 0 }) {
         Section {
@@ -680,29 +687,23 @@ struct GroupFormView: View {
   @Environment(\.dismiss) private var dismiss
   @State private var name = ""
   @State private var members: [String] = []
+  @State private var created: [Friend] = []
 
   var body: some View {
     Form {
       TextField("Name (Flatmates, Goa trip…)", text: $name)
-      Section("Members") {
-        if friends.isEmpty { Text("Add people in Splits first.").foregroundStyle(.secondary) }
-        ForEach(friends) { f in
-          Button {
-            if members.contains(f.id) { members.removeAll { $0 == f.id } } else { members.append(f.id) }
-          } label: {
-            HStack {
-              Image(systemName: members.contains(f.id) ? "checkmark.circle.fill" : "circle").foregroundStyle(members.contains(f.id) ? Color.accentColor : .secondary)
-              Avatar(name: f.name, size: 28)
-              Text(f.name).foregroundStyle(.primary)
-            }
-          }
-        }
+      Section {
+        MemberPicker(members: $members, created: $created)
+      } header: { Text("Members") } footer: {
+        Text("Someone already on Paisa Pulse? Find them by @username, email or phone, and the group's shared expenses show up on their phone too.")
       }
     }
     .navigationTitle(group == nil ? "New Group" : "Edit Group")
     .navigationBarTitleDisplayMode(.inline)
     .toolbar {
-      ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+      ToolbarItem(placement: .cancellationAction) {
+        Button("Cancel") { for f in created { context.delete(f) }; try? context.save(); dismiss() }
+      }
       ToolbarItem(placement: .confirmationAction) {
         Button("Save") {
           if let group { group.name = name; group.memberIds = members } else { context.insert(SplitGroup(name: name, memberIds: members)) }
@@ -712,5 +713,54 @@ struct GroupFormView: View {
       }
     }
     .onAppear { if let group { name = group.name; members = group.memberIds } }
+  }
+}
+
+/// Friends to tick for a group or plan, with "add by name" and "find on Paisa Pulse".
+/// Friends linked to an account carry a badge: they see the shared expenses on their phone.
+struct MemberPicker: View {
+  @Binding var members: [String]
+  /// Friends made here, so Cancel can remove them again.
+  @Binding var created: [Friend]
+  var onChange: () -> Void = {}
+  @Query(sort: \Friend.name) private var friends: [Friend]
+  @Environment(\.modelContext) private var context
+  @State private var newName = ""
+  @State private var finding = false
+
+  var body: some View {
+    ForEach(friends) { f in
+      Button {
+        if members.contains(f.id) { members.removeAll { $0 == f.id } } else { members.append(f.id) }
+        onChange()
+      } label: {
+        HStack {
+          Image(systemName: members.contains(f.id) ? "checkmark.circle.fill" : "circle").foregroundStyle(members.contains(f.id) ? Color.accentColor : .secondary)
+          Avatar(name: f.name, size: 28)
+          Text(f.name).foregroundStyle(.primary)
+          Spacer()
+          if f.userId != nil {
+            Image(systemName: "person.crop.circle.badge.checkmark").foregroundStyle(.secondary).accessibilityLabel("On Paisa Pulse")
+          }
+        }
+      }
+    }
+    HStack {
+      TextField("Add someone by name", text: $newName).onSubmit(add)
+      Button("Add", action: add).disabled(newName.trimmingCharacters(in: .whitespaces).isEmpty)
+    }
+    Button { finding = true } label: { Label("Find Someone on Paisa Pulse", systemImage: "person.crop.circle.badge.plus") }
+      .sheet(isPresented: $finding) {
+        NavigationStack {
+          PeopleView(onPick: { f in if !members.contains(f.id) { members.append(f.id) }; onChange() })
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Done") { finding = false } } }
+        }
+      }
+  }
+
+  private func add() {
+    let n = newName.trimmingCharacters(in: .whitespaces); guard !n.isEmpty else { return }
+    let f = Friend(name: n); context.insert(f); created.append(f); members.append(f.id); newName = ""
+    onChange()
   }
 }

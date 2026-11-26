@@ -81,7 +81,7 @@ struct SettingsView: View {
       }
 
       Section("See") {
-        NavigationLink { PlanningView() } label: { row("Planning", "airplane", "#2563EB") }
+        NavigationLink(value: NavRoute.planning) { row("Planning", "airplane", "#2563EB") }
         NavigationLink { InsightsView() } label: { row("Insights", "chart.bar.xaxis", "#AF52DE") }
         NavigationLink { CalendarView() } label: { row("Calendar", "calendar", "#FF2D55") }
         NavigationLink { NetWorthView() } label: { row("Net Worth", "chart.line.uptrend.xyaxis", "#34C759") }

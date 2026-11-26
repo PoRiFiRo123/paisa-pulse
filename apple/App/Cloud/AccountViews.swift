@@ -243,6 +243,8 @@ private struct PickUsernameView: View {
 struct PeopleView: View {
   var invite: String? = nil
   var linking: Friend? = nil
+  /// Pick mode (group and plan forms): connect if needed, then hand back their Friend.
+  var onPick: ((Friend) -> Void)? = nil
   @Environment(Router.self) private var router
   @Environment(\.modelContext) private var context
   @Environment(\.dismiss) private var dismiss
@@ -271,6 +273,9 @@ struct PeopleView: View {
     Form {
       if let f = linking {
         Section { Text("Pick \(f.name)'s Paisa Pulse account. Splits with them then show up on their phone too.").font(.subheadline).foregroundStyle(.secondary) }
+      } else if onPick != nil {
+        let mine = cloud.state.people.filter(\.connected).sorted { $0.label.lowercased() < $1.label.lowercased() }
+        if !mine.isEmpty { Section("Your people") { ForEach(mine) { personRow($0) } } }
       }
       Section {
         TextField("Username, email or phone", text: $q).textInputAutocapitalization(.never).autocorrectionDisabled()
@@ -290,7 +295,7 @@ struct PeopleView: View {
       } header: { Text("From your contacts") } footer: {
         Text("Phone numbers are turned into fingerprints on this phone before matching; the numbers themselves aren't sent.")
       }
-      if linking == nil {
+      if linking == nil && onPick == nil {
         let mine = cloud.state.people.filter(\.connected).sorted { $0.label.lowercased() < $1.label.lowercased() }
         if !mine.isEmpty { Section("Your people") { ForEach(mine) { personRow($0) } } }
         Section {
@@ -317,7 +322,7 @@ struct PeopleView: View {
         } header: { Text("Invite") } footer: { Text("Friends scan this with their camera, or open the link, to add you. Or type their code here.") }
       }
     }
-    .navigationTitle(linking.map { "Link \($0.name)" } ?? "People")
+    .navigationTitle(linking.map { "Link \($0.name)" } ?? (onPick != nil ? "Add from Paisa Pulse" : "People"))
     .navigationBarTitleDisplayMode(.inline)
     .task(id: q) {
       let t = q.trimmingCharacters(in: .whitespaces)
@@ -342,10 +347,11 @@ struct PeopleView: View {
       VStack(alignment: .leading) { Text(p.label); if !sub.isEmpty { Text(sub).font(.caption).foregroundStyle(.secondary) } }
       Spacer()
       if linking != nil { Text("Link").foregroundStyle(Color.accentColor) }
+      else if onPick != nil { Image(systemName: "plus.circle.fill").font(.title3).foregroundStyle(Color.accentColor) }
       else if !p.connected { Text("Add").font(.subheadline.weight(.semibold)).foregroundStyle(.white).padding(.horizontal, 14).padding(.vertical, 6)
         .background(Color.accentColor, in: .capsule) }
     }
-    if linking == nil, p.connected, let local {
+    if linking == nil, onPick == nil, p.connected, let local {
       NavigationLink { FriendDetailView(friend: local) } label: { label }
     } else {
       Button { choose(p) } label: { label }.foregroundStyle(.primary)
@@ -355,6 +361,18 @@ struct PeopleView: View {
   private func choose(_ p: CloudLogic.Person) {
     run(router, $busy) {
       if !p.connected { try await cloud.connect(p.id) }
+      if let onPick {
+        // The sync may already have made their friend (id = their user id); otherwise make it the same way.
+        let all = (try? context.fetch(FetchDescriptor<Friend>())) ?? []
+        let f = all.first { $0.userId == p.id } ?? {
+          let n = Friend(id: p.id, name: p.label, upiId: p.upiId, userId: p.id); context.insert(n); return n
+        }()
+        try? context.save()
+        onPick(f)
+        router.show("Added \(f.name)")
+        dismiss()
+        return
+      }
       guard let f = linking else { router.show("Added \(p.label)"); return }
       // The sync may already have made a friend for them: fold it into the one you picked.
       if let dup = friends.first(where: { $0.userId == p.id && $0.id != f.id }) {

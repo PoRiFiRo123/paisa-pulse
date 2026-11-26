@@ -92,7 +92,7 @@ struct PlanningView: View {
               Text("Nothing here with these filters.").font(.subheadline).foregroundStyle(.secondary).padding(.vertical, 20).frame(maxWidth: .infinity)
             }
             ForEach(shown, id: \.trip.id) { s in
-              NavigationLink { TripDetailView(trip: s.trip) } label: { TripCard(summary: s, hidden: hidden) }.buttonStyle(.pressable)
+              NavigationLink(value: NavRoute.trip(s.trip.id)) { TripCard(summary: s, hidden: hidden) }.buttonStyle(.pressable)
             }
           }
         } else {
@@ -129,7 +129,7 @@ struct PlanningView: View {
 struct ArchivedTripsView: View {
   @Query(filter: #Predicate<Trip> { $0.archivedAt != nil }, sort: \Trip.createdAt, order: .reverse) private var trips: [Trip]
   var body: some View {
-    List(trips) { t in NavigationLink(t.name) { TripDetailView(trip: t) } }.navigationTitle("Archived")
+    List(trips) { t in NavigationLink(t.name, value: NavRoute.trip(t.id)) }.navigationTitle("Archived")
   }
 }
 
@@ -215,7 +215,7 @@ struct TripFormView: View {
   @State private var end = Calendar.current.date(byAdding: .day, value: 3, to: Calendar.current.startOfDay(for: .now))!
   @State private var travellers = 1
   @State private var people: [String] = []
-  @State private var newPerson = ""
+  @State private var created: [Friend] = []
   @State private var budgetOn = true
   @State private var countInBudgets = true
   struct ItemRow: Identifiable { var id: String; var label: String; var budget: String }
@@ -234,12 +234,19 @@ struct TripFormView: View {
             .frame(width: 44, height: 44).background(Color(hex: k.color), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
           TextField(k.places ? "Name, e.g. Goa with college gang" : "Name, e.g. Ananya's wedding", text: $name).font(.headline)
         }
-        Picker("Type", selection: $kindId) { ForEach(TripKinds.all) { Label($0.label, systemImage: $0.icon).tag($0.id) } }
+        Picker("Type", selection: Binding(get: { kindId }, set: { v in
+          guard v != kindId else { return }
+          kindId = v; if trip == nil { resetItems() }
+        })) { ForEach(TripKinds.all) { Label($0.label, systemImage: $0.icon).tag($0.id) } }
       }
 
       if k.places {
         Section {
-          Picker("Where", selection: $international) { Text("In India").tag(false); Text("Abroad").tag(true) }.pickerStyle(.segmented)
+          // Set through the binding (not onChange) so loading an existing plan doesn't wipe its places.
+          Picker("Where", selection: Binding(get: { international }, set: { v in
+            guard v != international else { return }
+            international = v; places = []; if trip == nil { resetItems() }
+          })) { Text("In India").tag(false); Text("Abroad").tag(true) }.pickerStyle(.segmented)
           ForEach(places, id: \.self) { p in
             HStack {
               Image(systemName: international ? "globe" : "mappin.and.ellipse").foregroundStyle(.secondary)
@@ -272,24 +279,9 @@ struct TripFormView: View {
       } header: { Text("When") }
 
       Section {
-        ForEach(friends) { f in
-          Button {
-            if people.contains(f.id) { people.removeAll { $0 == f.id } } else { people.append(f.id) }
-            travellers = max(travellers, people.count + 1)
-          } label: {
-            HStack {
-              Image(systemName: people.contains(f.id) ? "checkmark.circle.fill" : "circle").foregroundStyle(people.contains(f.id) ? Color.accentColor : .secondary)
-              Avatar(name: f.name, size: 28)
-              Text(f.name).foregroundStyle(.primary)
-            }
-          }
-        }
-        HStack {
-          TextField("Add someone by name", text: $newPerson).onSubmit(addPerson)
-          Button("Add", action: addPerson).disabled(newPerson.trimmingCharacters(in: .whitespaces).isEmpty)
-        }
+        MemberPicker(members: $people, created: $created) { travellers = max(travellers, people.count + 1) }
       } header: { Text("Who's going") } footer: {
-        Text("They become a split group, so you can split expenses and settle up at the end. Friends linked to Paisa Pulse see the trip and its shared expenses on their phone.")
+        Text("They become a split group, so you can split expenses and settle up at the end. People on Paisa Pulse (with the badge) see the plan and its shared expenses on their phone.")
       }
 
       Section {
@@ -320,13 +312,13 @@ struct TripFormView: View {
     .navigationTitle(trip == nil ? "New \(k.label)" : "Edit")
     .navigationBarTitleDisplayMode(.inline)
     .toolbar {
-      ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+      ToolbarItem(placement: .cancellationAction) {
+        Button("Cancel") { for f in created { context.delete(f) }; if !created.isEmpty { try? context.save() }; dismiss() }
+      }
       ToolbarItem(placement: .confirmationAction) { Button("Save", action: save).fontWeight(.semibold).disabled(name.trimmingCharacters(in: .whitespaces).isEmpty) }
     }
     .sheet(isPresented: $pickingCountry) { CountryPickerSheet { c in places.append(TripPlace(name: c.name, country: c.name, currency: c.currency)) } }
     .onAppear(perform: load)
-    .onChange(of: kindId) { _, _ in if trip == nil { resetItems() } }
-    .onChange(of: international) { _, _ in if trip == nil { resetItems() }; places = [] }
   }
 
   private func resetItems() {
@@ -339,11 +331,6 @@ struct TripFormView: View {
   private func addItem() {
     let n = newItem.trimmingCharacters(in: .whitespaces); guard !n.isEmpty else { return }
     items.append(ItemRow(id: UUID().uuidString.lowercased(), label: n, budget: "")); newItem = ""
-  }
-  private func addPerson() {
-    let n = newPerson.trimmingCharacters(in: .whitespaces); guard !n.isEmpty else { return }
-    let f = Friend(name: n); context.insert(f); people.append(f.id); newPerson = ""
-    travellers = max(travellers, people.count + 1)
   }
 
   private func load() {
@@ -505,11 +492,11 @@ struct TripDetailView: View {
         let balances = Splits.balances(entries.filter { $0.groupId == group.id })
         Section {
           ForEach(friends.filter { group.memberIds.contains($0.id) }) { f in
-            NavigationLink { FriendDetailView(friend: f, groupId: group.id) } label: {
+            NavigationLink(value: NavRoute.friend(f.id, group: group.id)) {
               HStack { Avatar(name: f.name); Text(f.name); Spacer(); BalanceLabel(balance: balances[f.id] ?? 0) }
             }
           }
-          NavigationLink { GroupDetailView(group: group) } label: { Label("Settle Up", systemImage: "checkmark.circle") }
+          NavigationLink(value: NavRoute.group(group.id)) { Label("Settle Up", systemImage: "checkmark.circle") }
         } header: { Text("People") } footer: {
           Text("Split an expense with \"\(group.name)\" in Quick Add › Split.")
         }
@@ -694,17 +681,17 @@ struct HomeTripsSection: View {
     let shown = (live.filter { $0.status == .ongoing } + live.filter { $0.status == .upcoming }.sorted { ($0.trip.startAt ?? .distantFuture) < ($1.trip.startAt ?? .distantFuture) }).prefix(2)
     Section {
       if shown.isEmpty {
-        NavigationLink { PlanningView() } label: {
+        NavigationLink(value: NavRoute.planning) {
           Label { VStack(alignment: .leading) { Text("Plan a trip or event"); Text("Budgets, forex and splits in one place").font(.caption).foregroundStyle(.secondary) } }
           icon: { CategoryBadge(icon: "airplane", color: "#2563EB", size: 32) }
         }
       }
       ForEach(Array(shown), id: \.trip.id) { s in
-        NavigationLink { TripDetailView(trip: s.trip) } label: { TripCard(summary: s, hidden: hidden) }
+        NavigationLink(value: NavRoute.trip(s.trip.id)) { TripCard(summary: s, hidden: hidden) }
           .listRowInsets(EdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 12))
       }
     } header: {
-      HStack { Text("Planning"); Spacer(); NavigationLink("All") { PlanningView() }.font(.subheadline).textCase(nil) }
+      HStack { Text("Planning"); Spacer(); NavigationLink("All", value: NavRoute.planning).font(.subheadline).textCase(nil) }
     }
   }
 }

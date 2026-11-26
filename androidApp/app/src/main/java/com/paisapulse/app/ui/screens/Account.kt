@@ -432,3 +432,93 @@ private fun CoroutineScopeRun(scope: kotlinx.coroutines.CoroutineScope, busy: Mu
     })
   }
 }
+
+/**
+ * Pick someone already on Paisa Pulse (group and plan forms): search by @username, email or phone, or
+ * pick from your people. Connects if needed and hands back their Friend (id = their user id, the same
+ * one the sync would make), so shared expenses reach their phone. Same as iPhone's PeopleView(onPick:).
+ */
+@Composable fun FindOnPaisaPulseDialog(onPick: (Friend) -> Unit, onDismiss: () -> Unit) {
+  val scope = rememberCoroutineScope()
+  val busy = remember { mutableStateOf(false) }
+  var q by remember { mutableStateOf("") }
+  var results by remember { mutableStateOf<List<CloudLogic.Person>>(emptyList()) }
+  var searching by remember { mutableStateOf(false) }
+  LaunchedEffect(q) {
+    delay(350); searching = q.trim().length >= 2
+    results = if (q.trim().length >= 2) runCatching { Cloud.find(q.trim()) }.getOrDefault(emptyList()) else emptyList()
+    searching = false
+  }
+  fun pick(p: CloudLogic.Person) = CoroutineScopeRun(scope, busy) {
+    if (!p.connected) Cloud.connect(p.id)
+    val existing = Store.value.friends.firstOrNull { it.userId == p.id }
+    val f = existing ?: Friend(id = p.id, name = p.label, upiId = p.upiId, userId = p.id)
+    if (existing == null) Store.update { d -> if (d.friends.any { it.id == f.id }) d else d.copy(friends = d.friends + f) }
+    onPick(f); Ui.show("Added ${f.name}"); onDismiss()
+  }
+  androidx.compose.ui.window.Dialog(onDismiss, androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)) {
+    Column(Modifier.fillMaxSize().background(C.background)) {
+      Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        TextButton(onDismiss) { Text("Done", color = C.accent, style = T.body) }
+        Text("Add from Paisa Pulse", style = T.headline, color = C.label, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
+        Spacer(Modifier.width(72.dp))
+      }
+      if (!Cloud.signedIn) {
+        Text("Sign in under Settings › Account first. Then you can find people by @username, email or phone and add them here.",
+          style = T.body, color = C.secondary, modifier = Modifier.padding(24.dp))
+        return@Column
+      }
+      androidx.compose.foundation.lazy.LazyColumn(Modifier.fillMaxSize()) {
+        group(footer = "Search by @username, email or phone number.") {
+          FieldRow(q, { q = it }, "Username, email or phone")
+          if (searching && results.isEmpty()) { Divider(); SkeletonRows(2) }
+          results.forEach { p -> Divider(56.dp); PersonPickRow(p) { pick(p) } }
+          if (!searching && q.trim().length >= 2 && results.isEmpty()) {
+            Divider(); Text("No one found. Invite them from Settings › Account › People.", style = T.subhead, color = C.secondary, modifier = Modifier.padding(16.dp))
+          }
+        }
+        val mine = Cloud.state.people.filter { it.connected }.sortedBy { it.label.lowercase() }
+        if (mine.isNotEmpty()) group("Your people") { mine.forEachIndexed { i, p -> if (i > 0) Divider(56.dp); PersonPickRow(p) { pick(p) } } }
+      }
+    }
+  }
+}
+
+@Composable private fun PersonPickRow(p: CloudLogic.Person, onClick: () -> Unit) {
+  PRow(p.label, subtitle = p.username?.let { "@$it" }, leading = { Avatar(p.label) }, onClick = onClick) {
+    Icon(Sym.of("plus.circle.fill"), "Add", tint = C.accent, modifier = Modifier.size(24.dp))
+  }
+}
+
+/**
+ * Friends to tick for a group or plan, plus "add by name" and "find on Paisa Pulse". New local friends go
+ * into [newFriends] (saved with the form); linked friends carry a badge. Same as iPhone's MemberPicker.
+ */
+@Composable fun ColumnScope.MemberPickerRows(members: List<String>, onMembers: (List<String>) -> Unit, newFriends: List<Friend>, onNewFriends: (List<Friend>) -> Unit) {
+  val db by Store.db.collectAsState()
+  val friends = (db.friends + newFriends.filter { n -> db.friends.none { it.id == n.id } }).sortedBy { it.name.lowercase() }
+  var name by remember { mutableStateOf("") }
+  var finding by remember { mutableStateOf(false) }
+  friends.forEachIndexed { i, f ->
+    if (i > 0) Divider(64.dp)
+    val on = f.id in members
+    PRow(f.name, leading = {
+      Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(Sym.of(if (on) "checkmark.circle.fill" else "circle"), null, tint = if (on) C.accent else C.tertiary, modifier = Modifier.size(24.dp))
+        Spacer(Modifier.width(10.dp)); Avatar(f.name, 28.dp)
+      }
+    }, onClick = { onMembers(if (on) members - f.id else members + f.id) }) {
+      if (f.userId != null) Icon(Sym.of("person.crop.circle.badge.checkmark"), "On Paisa Pulse", tint = C.secondary, modifier = Modifier.size(20.dp))
+    }
+  }
+  if (friends.isNotEmpty()) Divider()
+  Row(verticalAlignment = Alignment.CenterVertically) {
+    FieldRow(name, { name = it }, "Add someone by name", modifier = Modifier.weight(1f))
+    Text("Add", style = T.body, color = if (name.isNotBlank()) C.accent else C.tertiary, modifier = Modifier.clickable {
+      if (name.isNotBlank()) { val f = Friend(name = name.trim()); onNewFriends(newFriends + f); onMembers(members + f.id); name = "" }
+    }.padding(16.dp))
+  }
+  Divider()
+  PRow("Find Someone on Paisa Pulse", titleColor = C.accent, leading = { Icon2("person.crop.circle.badge.plus") }, onClick = { finding = true })
+  if (finding) FindOnPaisaPulseDialog(onPick = { f -> if (f.id !in members) onMembers(members + f.id) }, onDismiss = { finding = false })
+}

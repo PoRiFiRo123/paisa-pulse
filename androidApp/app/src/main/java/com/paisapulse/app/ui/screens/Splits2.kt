@@ -428,11 +428,16 @@ fun shareBitmap(ctx: Context, bmp: Bitmap, title: String, name: String = "upi-qr
     }
   }) {
     group { SummaryCells("Owed to you" to (b.values.filter { it > 0 }.sum() to C.income), "You owe" to (-b.values.filter { it < 0 }.sum() to C.expense)) }
-    group("Members") {
+    group("Members", footer = "Add a friend, someone new, or someone already on Paisa Pulse (find them by @username, email or phone).") {
       db.friends.filter { it.id in g.memberIds }.forEachIndexed { i, f ->
         if (i > 0) Divider(64.dp)
-        PRow(f.name, leading = { Avatar(f.name) }, chevron = true, onClick = { Ui.push(Route.Friend(f.id, id)) }) { BalanceLabel(b[f.id] ?: 0) }
+        PRow(f.name, leading = { Avatar(f.name) }, chevron = true, onClick = { Ui.push(Route.Friend(f.id, id)) }) {
+          if (f.userId != null) Icon(Sym.of("person.crop.circle.badge.checkmark"), "On Paisa Pulse", tint = C.secondary, modifier = Modifier.padding(end = 8.dp).size(18.dp))
+          BalanceLabel(b[f.id] ?: 0)
+        }
       }
+      Divider()
+      PRow("Add People", titleColor = C.accent, leading = { Icon2("person.badge.plus") }, onClick = { Ui.sheet = Sheet.GroupForm(id) })
     }
     if (b.values.any { it != 0L }) group(footer = "Marks every balance in this group as paid.") {
       PRow("Settle Up Everyone", titleColor = C.accent, leading = { Icon2("checkmark.circle") }, onClick = {
@@ -456,27 +461,20 @@ fun shareBitmap(ctx: Context, bmp: Bitmap, title: String, name: String = "upi-qr
   val existing = id?.let { gid -> db.splitGroups.firstOrNull { it.id == gid } }
   var name by remember { mutableStateOf(existing?.name ?: "") }
   var members by remember { mutableStateOf(existing?.memberIds ?: emptyList()) }
+  var newFriends by remember { mutableStateOf(listOf<Friend>()) }
   PSheet({ Ui.sheet = null }) {
     SheetHeader(if (existing == null) "New Group" else "Edit Group", canSave = name.isNotBlank() && members.isNotEmpty(), onCancel = { Ui.sheet = null }) {
       Store.update { d ->
-        if (existing != null) d.copy(splitGroups = d.splitGroups.map { if (it.id == existing.id) it.copy(name = name.trim(), memberIds = members) else it })
-        else d.copy(splitGroups = d.splitGroups + SplitGroup(name = name.trim(), memberIds = members))
+        val withFriends = d.copy(friends = d.friends + newFriends.filter { f -> f.id in members && d.friends.none { it.id == f.id } })
+        if (existing != null) withFriends.copy(splitGroups = d.splitGroups.map { if (it.id == existing.id) it.copy(name = name.trim(), memberIds = members) else it })
+        else withFriends.copy(splitGroups = d.splitGroups + SplitGroup(name = name.trim(), memberIds = members))
       }
       Ui.sheet = null
     }
     androidx.compose.foundation.lazy.LazyColumn(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
       group { FieldRow(name, { name = it }, "Name (Flatmates, Goa trip…)") }
-      group("Members", footer = if (db.friends.isEmpty()) "Add people in Splits first." else null) {
-        db.friends.sortedBy { it.name }.forEachIndexed { i, f ->
-          if (i > 0) Divider(64.dp)
-          val on = f.id in members
-          PRow(f.name, leading = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-              Icon(Sym.of(if (on) "checkmark.circle.fill" else "circle"), null, tint = if (on) C.accent else C.tertiary, modifier = Modifier.size(24.dp))
-              Spacer(Modifier.width(10.dp)); Avatar(f.name, 28.dp)
-            }
-          }, onClick = { members = if (on) members - f.id else members + f.id })
-        }
+      group("Members", footer = "Someone already on Paisa Pulse? Find them by @username, email or phone, and the group's shared expenses show up on their phone too.") {
+        MemberPickerRows(members, { members = it }, newFriends, { newFriends = it })
       }
     }
   }
