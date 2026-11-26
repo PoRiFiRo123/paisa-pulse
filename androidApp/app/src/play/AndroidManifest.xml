@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Google Play build: no SMS permission or receiver (Play restricts SMS); auto-capture reads notifications only. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+  <uses-permission android:name="android.permission.RECEIVE_SMS" tools:node="remove" />
+  <application>
+    <receiver android:name=".work.SmsAlertReceiver" tools:node="remove" />
+  </application>
+</manifest>

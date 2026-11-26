@@ -80,11 +80,15 @@ jobs:
       - name: Unit tests and release APK
         working-directory: androidApp
         run: |
-          gradle --no-daemon :app:testReleaseUnitTest :app:assembleRelease
-          cp app/build/outputs/apk/release/app-release.apk ../PaisaPulse.apk
-          ls -la ../PaisaPulse.apk
+          gradle --no-daemon :app:testGithubReleaseUnitTest :app:assembleGithubRelease :app:bundlePlayRelease
+          cp app/build/outputs/apk/github/release/app-github-release.apk ../PaisaPulse.apk
+          cp app/build/outputs/bundle/playRelease/app-play-release.aab ../PaisaPulse-play.aab
+          ls -la ../PaisaPulse.apk ../PaisaPulse-play.aab
       - uses: actions/upload-artifact@v4
         with: { name: android, path: PaisaPulse.apk, retention-days: 14 }
+      # The Google Play bundle (no self-update, no SMS permission). Not attached to GitHub releases.
+      - uses: actions/upload-artifact@v4
+        with: { name: android-play, path: PaisaPulse-play.aab, retention-days: 14 }
 
       - name: Enable KVM for the emulator
         run: |

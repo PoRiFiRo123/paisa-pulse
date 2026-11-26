@@ -39,10 +39,10 @@ import java.io.File
   }
   var checking by remember { mutableStateOf(false) }
   var upToDate by remember { mutableStateOf(false) }
-  LaunchedEffect(Unit) { Updates.check() }
+  LaunchedEffect(Unit) { if (!BuildConfig.STORE_BUILD) Updates.check() }
   PScreen("Settings") {
     group { AccountRow() }
-    Updates.available?.let { u ->
+    Updates.available?.takeIf { !BuildConfig.STORE_BUILD }?.let { u ->
       group(footer = "Downloads the new APK. Open it to install over this one. Your data stays.") {
         PRow("Software Update", leading = { Badge("arrow.down.circle.fill", "#34C759") }, value = "Build ${u.build}", chevron = true,
           onClick = { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(u.apk ?: u.page))) })
@@ -117,10 +117,13 @@ import java.io.File
     item {
       Column(Modifier.fillMaxWidth().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Text("Paisa Pulse ${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})", style = T.footnote, color = C.secondary)
-        if (BuildConfig.VERSION_CODE > 1) TextButton({ scope.launch { checking = true; upToDate = !Updates.check(); checking = false } }, enabled = !checking) {
+        if (BuildConfig.VERSION_CODE > 1 && !BuildConfig.STORE_BUILD) TextButton({ scope.launch { checking = true; upToDate = !Updates.check(); checking = false } }, enabled = !checking) {
           Text(if (checking) "Checking…" else if (upToDate) "You're up to date" else "Check for Updates", style = T.footnote, color = C.accent)
         }
-        Text("No account. No servers. Your data stays on this phone.", style = T.footnote, color = C.secondary)
+        Text("No account needed. Your data stays on this phone.", style = T.footnote, color = C.secondary)
+        TextButton({ ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://paisa-pulse-sigma.vercel.app/privacy"))) }) {
+          Text("Privacy Policy", style = T.footnote, color = C.accent)
+        }
       }
     }
   }

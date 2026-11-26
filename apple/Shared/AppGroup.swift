@@ -54,3 +54,8 @@ enum AppGroup {
   /// Preferences live here so the widget sees them too.
   static var defaults: UserDefaults { UserDefaults(suiteName: id) ?? .standard }
 }
+
+/// Where this build is installed from: "sideload" (GitHub / iloader, in-app update check) or "appstore".
+enum Distribution {
+  static let isAppStore = (Bundle.main.object(forInfoDictionaryKey: "PaisaDistribution") as? String) == "appstore"
+}

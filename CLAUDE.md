@@ -206,6 +206,13 @@ The user chose to rewrite iOS in SwiftUI; Android stays on this Expo app. Code i
 ### Website (Nov 2026)
 - `website/` (static: `index.html`, `styles.css`, `main.js`, `favicon.svg`, `vercel.json`; no build). Vercel project `paisa-pulse` with root directory `website`. Look: paper (#F3EEE4) + ink + forest (#1F4D3A) + marigold, Instrument Serif / Geist / Geist Mono, paper grain. Hero: SMS types in → highlighted → drops into the phone as a transaction (`main.js`); scroll: reveals (IntersectionObserver), sticky "How it works" phone, receipt that prints on scroll. Honours reduced motion. Pro is "coming soon" (mailto, no backend yet).
 
+### Store readiness (Nov 2026)
+- `docs/STORE.md`: build commands, review notes, privacy label / Data safety answers, monetisation rule (IAP on App Store, Play Billing on Play; website billing only for GitHub builds).
+- Android flavors `github` (default CI APK) and `play` (`:app:bundlePlayRelease`, CI artifact `android-play`): `BuildConfig.STORE_BUILD` hides self-update and the SMS row; `src/play/AndroidManifest.xml` removes `RECEIVE_SMS` + `SmsAlertReceiver`. Gradle tasks are now `testGithubReleaseUnitTest` / `assembleGithubRelease`.
+- iOS: `PaisaDistribution` Info.plist key from build setting `PAISA_DISTRIBUTION` (default `sideload`; `appstore` hides the updater via `Distribution.isAppStore`), `ITSAppUsesNonExemptEncryption = NO`, `Shared/PrivacyInfo.xcprivacy` (UserDefaults CA92.1 + 1C8F.1; collected data only for accounts). `sidestore` removed from LSApplicationQueriesSchemes (open() doesn't need it).
+- Android `DisclosureDialog` (Common.kt) before contacts, SMS and notification access. Backups exclude `paisa_secure`, `paisa-cloud`, `cloud-cache.json`.
+- Website: `/privacy`, `/delete-account`; both apps link the privacy policy at the bottom of Settings.
+
 ### Share a screenshot (Nov 2026, both apps)
 - iOS share extension `apple/Share` (target `PaisaShare`, bundle `com.paisapulse.app.share`, App Group): reads images with `ScreenText.read` (Vision, in `Capture.swift`), parses with `ScreenshotParser`, shows editable cards, Save writes `Txn(source: "screenshot")` into the shared SwiftData store. Its sources are `Share`, `Shared`, `App/Import/Capture.swift`, `App/Import/Narration.swift`; `Rx` moved to `Shared/Rx.swift` for that. The user installs over USB (iloader), no SideStore, so app + widget + share = the 3 free slots: ask before adding any other extension.
 - Android: `SEND`/`SEND_MULTIPLE image/*` intent filter on `MainActivity` → `Ui.handleShare` → `Route.Capture("screenshot")` reads `Ui.sharedImages`.

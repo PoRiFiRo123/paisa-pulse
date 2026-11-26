@@ -31,6 +31,12 @@ android {
       signingConfig = if (file(System.getenv("PAISA_KEYSTORE") ?: "none").exists()) signingConfigs.getByName("release") else signingConfigs.getByName("debug")
     }
   }
+  // github: the APK on GitHub Releases (self-update, SMS capture). play: Google Play (Play updates it; no SMS permission).
+  flavorDimensions += "store"
+  productFlavors {
+    create("github") { dimension = "store"; buildConfigField("boolean", "STORE_BUILD", "false") }
+    create("play") { dimension = "store"; buildConfigField("boolean", "STORE_BUILD", "true") }
+  }
   buildFeatures { compose = true; buildConfig = true }
   compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
   kotlinOptions { jvmTarget = "17" }
