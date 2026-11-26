@@ -55,6 +55,7 @@ struct SettingsView: View {
       Section("Money") {
         NavigationLink { CategoriesView() } label: { row("Categories", "square.grid.2x2.fill", "#FF9500") }
         NavigationLink { BudgetsView() } label: { row("Budgets", "gauge.with.dots.needle.33percent", "#5E5CE6") }
+        NavigationLink { BillsView() } label: { row("Bills", "calendar.badge.clock", "#FF3B30") }
         NavigationLink { RecurringView() } label: { row("Recurring", "repeat", "#30B0C7") }
         NavigationLink { SubscriptionsView() } label: { row("Subscriptions", "creditcard.and.123", "#32ADE6") }
         NavigationLink { TemplatesView() } label: { row("Templates", "bolt.fill", "#FFB800") }

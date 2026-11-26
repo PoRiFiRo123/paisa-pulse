@@ -5,6 +5,7 @@ Newest first. Every push to `main` becomes a GitHub Release `build-<number>` wit
 
 ## [Unreleased]
 
+- Both: **Bills** (Settings › Money › Bills): card bills and recurring bills due in the next month, soonest first, with the total; "Record Payment" adds the card payment from your bank in one tap (with Undo). Bill reminders now also cover recurring bills (2 days before).
 - Both: **Auto-capture.** Bank SMS and payment alerts become drafts to confirm (Home › "N bank messages to review"). Android reads notifications (bank apps, SMS app, GPay, PhonePe, Paytm) and/or SMS; iPhone uses a Shortcuts "Message" automation with the new **Log Bank Message** action. Read on the phone; OTPs, requests and due reminders are ignored; each alert is added once.
 - Both: CRED's payment details screen (₹ read as "₴", dates like "25th nov'26") is now read; your own UPI ID ("paid from UPI ID") is no longer taken as the payee.
 - iPhone: the share sheet showed no accounts or categories when the installer (iloader) didn't tell the extension its App Group. The group is now read from the signing profile too, and an old database or settings kept outside the group are moved in once.

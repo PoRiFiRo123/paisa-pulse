@@ -70,6 +70,7 @@ import java.io.File
     group("Money") {
       PRow("Categories", leading = { Badge("square.grid.2x2.fill", "#FF9500") }, chevron = true, onClick = { Ui.push(Route.Categories) })
       Divider(56.dp); PRow("Budgets", leading = { Badge("gauge.with.dots.needle.33percent", "#5E5CE6") }, chevron = true, onClick = { Ui.push(Route.Budgets) })
+      Divider(56.dp); PRow("Bills", leading = { Badge("calendar.badge.clock", "#FF3B30") }, chevron = true, onClick = { Ui.push(Route.Bills) })
       Divider(56.dp); PRow("Recurring", leading = { Badge("repeat", "#30B0C7") }, chevron = true, onClick = { Ui.push(Route.Recurring) })
       Divider(56.dp); PRow("Subscriptions", leading = { Badge("creditcard.and.123", "#32ADE6") }, chevron = true, onClick = { Ui.push(Route.Subscriptions) })
       Divider(56.dp); PRow("Templates", leading = { Badge("bolt.fill", "#FF9500") }, chevron = true, onClick = { Ui.push(Route.Templates) })

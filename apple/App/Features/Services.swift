@@ -52,6 +52,19 @@ enum Notifier {
         let comps = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: remind)
         center.add(UNNotificationRequest(identifier: "bill-\(a.id)", content: content, trigger: UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)))
       }
+      // Recurring bills (rent, phone, subscriptions): 2 days before, at 10:00.
+      let rules = (try? context.fetch(FetchDescriptor<RecurringRule>())) ?? []
+      for b in Bills.upcoming(accounts: accounts, txns: txns, rules: rules, balances: balances, days: 60) where !b.isCard {
+        guard var remind = Calendar.current.date(byAdding: .day, value: -2, to: Calendar.current.startOfDay(for: b.due)) else { continue }
+        remind = Calendar.current.date(bySettingHour: 10, minute: 0, second: 0, of: remind) ?? remind
+        guard remind > .now else { continue }
+        let content = UNMutableNotificationContent()
+        content.title = "\(b.title) due \(b.due.formatted(.dateTime.weekday(.wide)))"
+        content.body = "\(Money.format(b.amount)) on \(b.due.formatted(.dateTime.day().month())). It'll be added automatically."
+        content.sound = .default
+        let comps = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: remind)
+        center.add(UNNotificationRequest(identifier: b.id, content: content, trigger: UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)))
+      }
     }
     if d.bool(forKey: PrefKey.notifyWeekly) {
       let content = UNMutableNotificationContent()

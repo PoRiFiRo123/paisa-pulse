@@ -195,6 +195,9 @@ The user chose to rewrite iOS in SwiftUI; Android stays on this Expo app. Code i
 - Android: `work/AlertCapture.kt` — `AlertListener` (NotificationListenerService), `SmsAlertReceiver` (RECEIVE_SMS, optional), `AlertQueue` (prefs `paisa-alerts`, posts a "tap to add" notification → `paisapulse://capture?mode=alerts`). Pref `autoCapture`. Screen `ui/screens/AutoCapture.kt`.
 - iOS: no SMS access; `LogBankMessageIntent` (in `PaisaShortcuts`) queues text in the App Group (`PendingAlerts`, key `pendingAlerts`). Settings › Auto-capture explains the Shortcuts Message automation. Review = `CaptureView(mode: "alerts")`, Home banner when the queue isn't empty.
 
+### Bills (Nov 2026, both apps)
+- `Bills.upcoming` (Swift `Shared/Bills.swift`, Kotlin `logic/Bills.kt`; tests `BillsTest`/`BillsTests`): card bills (last statement's unpaid amount, else what's owed; next due day) + active recurring expenses within N days. Screens iOS `More/BillsView.swift`, Android `ui/screens/Bills.kt`. Reminders under `notifyBills`: cards 3 days before (existing), recurring 2 days before.
+
 ### Share a screenshot (Nov 2026, both apps)
 - iOS share extension `apple/Share` (target `PaisaShare`, bundle `com.paisapulse.app.share`, App Group): reads images with `ScreenText.read` (Vision, in `Capture.swift`), parses with `ScreenshotParser`, shows editable cards, Save writes `Txn(source: "screenshot")` into the shared SwiftData store. Its sources are `Share`, `Shared`, `App/Import/Capture.swift`, `App/Import/Narration.swift`; `Rx` moved to `Shared/Rx.swift` for that. The user installs over USB (iloader), no SideStore, so app + widget + share = the 3 free slots: ask before adding any other extension.
 - Android: `SEND`/`SEND_MULTIPLE image/*` intent filter on `MainActivity` → `Ui.handleShare` → `Route.Capture("screenshot")` reads `Ui.sharedImages`.

@@ -62,7 +62,7 @@ object Sym {
     "square.grid.2x2" to Icons.Rounded.GridView, "keyboard" to Icons.Rounded.Keyboard, "sparkles.rectangle.stack" to Icons.Rounded.AutoAwesome,
     "globe" to Icons.Rounded.Public, "photo.circle.fill" to Icons.Rounded.Image, "camera.viewfinder" to Icons.Rounded.CameraAlt,
     "banknote" to Icons.Rounded.Payments, "qrcode" to Icons.Rounded.QrCode2, "house" to Icons.Rounded.Home, "creditcard" to Icons.Rounded.CreditCard,
-    "beach.umbrella.fill" to Icons.Rounded.BeachAccess, "briefcase.fill" to Icons.Rounded.BusinessCenter, "calendar.badge.clock" to Icons.Rounded.Event,
+    "beach.umbrella.fill" to Icons.Rounded.BeachAccess, "briefcase.fill" to Icons.Rounded.BusinessCenter, "calendar.badge.clock" to Icons.Rounded.Event, "checkmark.seal" to Icons.Rounded.Verified,
     "doc.text" to Icons.Rounded.Description, "dollarsign.arrow.circlepath" to Icons.Rounded.CurrencyExchange, "ellipsis.circle" to Icons.Rounded.MoreHoriz,
     "location.fill" to Icons.Rounded.MyLocation, "mappin.and.ellipse" to Icons.Rounded.Place, "minus.circle.fill" to Icons.Rounded.RemoveCircle,
     "party.popper.fill" to Icons.Rounded.Celebration, "plus.circle" to Icons.Rounded.AddCircleOutline, "plus.circle.fill" to Icons.Rounded.AddCircle,
