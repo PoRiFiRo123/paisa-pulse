@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paisa Pulse: every rupee, accounted for</title>
+<meta name="description" content="A free, private money tracker for India. Reads your bank SMS, UPI screenshots and statements on your phone. No sign-up, no ads, no loans.">
+<meta property="og:title" content="Paisa Pulse: every rupee, accounted for">
+<meta property="og:description" content="Free, private money tracking for India. Your data never leaves your phone.">
+<meta name="theme-color" content="#F3EEE4">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav">
+  <a class="brand" href="#top" aria-label="Paisa Pulse home">
+    <svg width="28" height="28" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#1F4D3A"/><path d="M21 19h22M21 27h22M21 19c11 0 15 4 15 8.5S32 36 21 36l17 9" stroke="#F3EEE4" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Paisa Pulse
+  </a>
+  <nav aria-label="Main">
+    <a href="#how">How it works</a>
+    <a href="#index">Features</a>
+    <a href="#privacy">Privacy</a>
+    <a href="#pricing">Pricing</a>
+  </nav>
+  <a class="btn btn-ink btn-sm" href="#download">Get the app</a>
+</header>
+
+<main id="main">
+<section class="hero" id="top">
+  <div class="hero-copy">
+    <p class="eyebrow reveal-load" style="--d:0">Free · No sign-up · Made in Bengaluru</p>
+    <h1 class="headline" aria-label="Every rupee, accounted for.">
+      <span class="w" style="--d:1">Every</span> <span class="w" style="--d:2">rupee,</span><br>
+      <em class="w accent-word" style="--d:3">accounted for.<svg class="scribble" viewBox="0 0 300 20" preserveAspectRatio="none" aria-hidden="true"><path d="M3 14 C 60 4, 120 18, 180 9 S 270 6, 297 11"/></svg></em>
+    </h1>
+    <p class="lede reveal-load" style="--d:5">Paisa Pulse turns bank messages, UPI screenshots and statements into a calm, clear picture of your money. It all happens on your phone, so nobody else ever sees what you spend.</p>
+    <div class="cta reveal-load" style="--d:6" id="download">
+      <a class="btn btn-ink" href="https://github.com/PoRiFiRo123/paisa-pulse/releases/latest">
+        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M5 21h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+        Download for Android
+      </a>
+      <a class="btn btn-line" href="#faq-iphone">iPhone (early access)</a>
+    </div>
+    <p class="fine reveal-load" style="--d:7">Works offline. No account needed. Free, with no ads.</p>
+  </div>
+
+  <div class="hero-stage reveal-load" style="--d:3" aria-hidden="true">
+    <div class="sms" id="sms">
+      <div class="sms-head"><span class="sms-avatar">AX</span><span>AX-AXISBK</span><span class="sms-time">now</span></div>
+      <p class="sms-body" id="smsBody"></p>
+    </div>
+    <div class="phone">
+      <div class="phone-screen">
+        <div class="ph-top"><span class="ph-title">November</span><span class="ph-pill">Spent</span></div>
+        <div class="ph-total"><span class="rupee">₹</span><span id="total">24,860</span></div>
+        <div class="ph-bar"><i id="bar" style="width:62%"></i></div>
+        <p class="ph-sub"><span id="left">₹15,140</span> left of ₹40,000</p>
+        <ul class="ph-list" id="list">
+          <li><b class="mono-badge" style="background:#E85D3F">U</b><span>Uber<small>Transport · Card</small></span><em>₹212</em></li>
+          <li><b class="mono-badge" style="background:#2E7D5B">S</b><span>Salary<small>Axis Bank</small></span><em class="in">₹90,000</em></li>
+          <li><b class="mono-badge" style="background:#8A8377">B</b><span>Card bill<small>Transfer · MyZone</small></span><em class="tr">₹6,400</em></li>
+        </ul>
+      </div>
+    </div>
+    <div class="tag tag-1">Read on the phone</div>
+    <div class="tag tag-2">Never uploaded</div>
+  </div>
+</section>
+
+<section class="marquee" aria-label="Works with">
+  <p class="marquee-label">Understands messages, screenshots and statements from</p>
+  <div class="marquee-track">
+    <div class="marquee-row">
+      <span>Axis Bank</span><span>Bank of Baroda</span><span>HDFC</span><span>ICICI</span><span>SBI</span><span>Google Pay</span><span>PhonePe</span><span>Paytm</span><span>CRED</span><span>BHIM</span><span>Amazon Pay</span>
+    </div>
+    <div class="marquee-row" aria-hidden="true">
+      <span>Axis Bank</span><span>Bank of Baroda</span><span>HDFC</span><span>ICICI</span><span>SBI</span><span>Google Pay</span><span>PhonePe</span><span>Paytm</span><span>CRED</span><span>BHIM</span><span>Amazon Pay</span>
+    </div>
+  </div>
+</section>
+
+<section class="problem wrap">
+  <h2 class="display reveal">Three apps, two banks, one card.<br><em>Zero idea where it went.</em></h2>
+  <div class="problem-grid">
+    <article class="reveal">
+      <span class="num">01</span>
+      <h3>It's scattered</h3>
+      <p>Every UPI app and bank shows its own slice of the month. None of them shows you the whole thing.</p>
+    </article>
+    <article class="reveal">
+      <span class="num">02</span>
+      <h3>Your data is the price</h3>
+      <p>Many "free" trackers read your SMS, send your spending to a server, then offer you a loan.</p>
+    </article>
+    <article class="reveal">
+      <span class="num">03</span>
+      <h3>Typing it all fizzles out</h3>
+      <p>Logging every chai and auto works for a week. Then the gaps grow and the numbers stop meaning anything.</p>
+    </article>
+  </div>
+</section>
+
+<section class="story" id="how">
+  <div class="wrap story-grid">
+    <div class="story-steps">
+      <p class="eyebrow">How it works</p>
+      <article class="step" data-step="0">
+        <h3><span>1</span> Capture without typing</h3>
+        <p>Bank SMS and payment alerts turn into drafts you confirm with a tap. Share a GPay or PhonePe screenshot, or import a PDF statement. Duplicates are skipped.</p>
+      </article>
+      <article class="step" data-step="1">
+        <h3><span>2</span> See it clearly</h3>
+        <p>Budgets that fill up as you spend, where the money went by category, a calendar of your days, and a month-end forecast.</p>
+      </article>
+      <article class="step" data-step="2">
+        <h3><span>3</span> Stay a step ahead</h3>
+        <p>Card bills and rent on one timeline, a nudge before each is due, and a monthly report you can save as a PDF.</p>
+      </article>
+    </div>
+    <div class="story-stage" aria-hidden="true">
+      <div class="phone phone-lg">
+        <div class="phone-screen screens">
+          <div class="scr scr-0 on">
+            <p class="scr-h">Bank messages</p>
+            <div class="draft"><i class="tick"></i><span>Swiggy<small>Axis ••4321 · today 1:12 pm</small></span><em>₹450</em></div>
+            <div class="draft"><i class="tick"></i><span>Chai Point<small>BoB ••7556 · today 9:04 am</small></span><em>₹80</em></div>
+            <div class="draft off"><i></i><span>Myntra<small>Already added</small></span><em>₹2,499</em></div>
+            <div class="scr-btn">Add 2</div>
+          </div>
+          <div class="scr scr-1">
+            <p class="scr-h">Where it went</p>
+            <div class="ring"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="48" class="ring-bg"/><circle cx="60" cy="60" r="48" class="ring-fg"/></svg><b>62%</b><small>of budget</small></div>
+            <div class="cat"><span>Food</span><i style="--w:78%;--c:#E8A33D"></i><em>₹7,920</em></div>
+            <div class="cat"><span>Transport</span><i style="--w:44%;--c:#1F4D3A"></i><em>₹3,410</em></div>
+            <div class="cat"><span>Shopping</span><i style="--w:30%;--c:#D9583B"></i><em>₹2,640</em></div>
+          </div>
+          <div class="scr scr-2">
+            <p class="scr-h">Bills</p>
+            <div class="bill"><span>Gym<small>Due in 2 days</small></span><em>₹1,500</em></div>
+            <div class="bill"><span>Rent<small>Due 1 Dec</small></span><em>₹20,000</em></div>
+            <div class="bill hot"><span>MyZone card<small>Due 5 Dec</small></span><em>₹6,400</em></div>
+            <div class="scr-btn alt">Record payment</div>
+          </div>
+        </div>
+      </div>
+      <div class="dots"><i class="on"></i><i></i><i></i></div>
+    </div>
+  </div>
+</section>
+
+<section class="index wrap" id="index">
+  <div class="index-head">
+    <h2 class="display reveal">The index</h2>
+    <p class="reveal">Everything in the app today, on Android and iPhone.</p>
+  </div>
+  <ol class="index-list">
+    <li class="reveal"><span class="ix">01</span><b>Auto-capture</b><span class="ixd">Bank SMS and payment notifications on Android; a Shortcuts automation on iPhone.</span></li>
+    <li class="reveal"><span class="ix">02</span><b>Screenshots</b><span class="ixd">GPay, PhonePe, Paytm, CRED and bank apps, read on the device. Share straight from the app.</span></li>
+    <li class="reveal"><span class="ix">03</span><b>Statements</b><span class="ixd">PDF, CSV or Excel from Axis, BoB, HDFC, ICICI and SBI.</span></li>
+    <li class="reveal"><span class="ix">04</span><b>Budgets</b><span class="ixd">Monthly or weekly, overall or per category, with alerts at 80% and 100%.</span></li>
+    <li class="reveal"><span class="ix">05</span><b>Bills</b><span class="ixd">Card dues and recurring bills on one timeline, with reminders.</span></li>
+    <li class="reveal"><span class="ix">06</span><b>Splits</b><span class="ixd">Equal, by amount or by shares. Request with a UPI QR and settle up.</span></li>
+    <li class="reveal"><span class="ix">07</span><b>Trips</b><span class="ixd">Any currency, shown in rupees with your card's forex markup.</span></li>
+    <li class="reveal"><span class="ix">08</span><b>Net worth</b><span class="ixd">What you have and owe, month after month.</span></li>
+    <li class="reveal"><span class="ix">09</span><b>Reports</b><span class="ixd">A monthly recap and a full PDF report.</span></li>
+    <li class="reveal"><span class="ix">10</span><b>Widgets</b><span class="ixd">Home and Lock Screen widgets, Siri, and a Quick Settings tile.</span></li>
+  </ol>
+</section>
+
+<section class="privacy" id="privacy">
+  <div class="wrap privacy-grid">
+    <div>
+      <p class="eyebrow light">Private by design</p>
+      <h2 class="display light reveal">Your ledger lives on your phone. <em>Full stop.</em></h2>
+      <p class="privacy-lede reveal">There's no Paisa Pulse server holding your spending. An account exists only for what you choose to share, like a split with a friend.</p>
+    </div>
+    <div class="receipt-wrap">
+      <div class="receipt" id="receipt">
+        <p class="r-head">WHAT LEAVES YOUR PHONE</p>
+        <p class="r-dash">--------------------------------</p>
+        <p class="r-row"><span>Your transactions</span><span>NOTHING</span></p>
+        <p class="r-row"><span>Bank messages</span><span>NOTHING</span></p>
+        <p class="r-row"><span>Screenshots</span><span>NOTHING</span></p>
+        <p class="r-row"><span>Card numbers / CVV</span><span>NEVER KEPT</span></p>
+        <p class="r-row"><span>Backups</span><span>ENCRYPTED</span></p>
+        <p class="r-row"><span>Ads &amp; trackers</span><span>NONE</span></p>
+        <p class="r-dash">--------------------------------</p>
+        <p class="r-row r-total"><span>TOTAL SHARED</span><span>₹0.00</span></p>
+        <p class="r-foot">Thank you for keeping it yours.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="pricing wrap" id="pricing">
+  <h2 class="display reveal">Free. <em>Really.</em></h2>
+  <div class="plans">
+    <article class="plan reveal">
+      <p class="plan-name">Paisa Pulse</p>
+      <p class="plan-price">₹0</p>
+      <p>Everything on this page, on Android and iPhone. No limits, no ads, no account.</p>
+      <a class="btn btn-ink" href="#download">Get the app</a>
+    </article>
+    <article class="plan plan-pro reveal">
+      <p class="plan-name">Pro <span class="soon">Coming soon</span></p>
+      <p class="plan-price small">Pricing soon</p>
+      <p>Optional extras for people you share money with, billed on this website. Join the list to hear first.</p>
+      <a class="btn btn-ink" href="mailto:hello@nishitrk.tech?subject=Paisa%20Pulse%20Pro%20waitlist&body=Please%20tell%20me%20when%20Pro%20opens.">Tell me when it opens</a>
+      <p class="fine">Opens an email to us. That's the whole list for now.</p>
+    </article>
+  </div>
+</section>
+
+<section class="faq wrap" id="faq">
+  <h2 class="display reveal">Questions</h2>
+  <details class="reveal"><summary>Is it really free?</summary><p>Yes. Everything listed here is free, with no ads and no limits. A Pro plan for shared extras will come later, and it will be optional.</p></details>
+  <details class="reveal"><summary>Where is my data stored?</summary><p>On your phone. Backups go to iCloud Drive or your phone's storage, encrypted with your password if you set one.</p></details>
+  <details class="reveal"><summary>Does it read all my messages?</summary><p>Only messages that look like a debit or credit are kept, and only on your phone. OTPs, payment requests and due-date reminders are ignored. On iPhone, you choose which messages to pass along with a Shortcuts automation.</p></details>
+  <details class="reveal" id="faq-iphone"><summary>How do I get it on iPhone?</summary><p>The iPhone app is in early access and installed outside the App Store for now. The latest build is on the releases page; an App Store version is planned.</p></details>
+  <details class="reveal"><summary>Can I move between Android and iPhone?</summary><p>Yes. Both apps read and write the same backup file, so your data moves with you.</p></details>
+</section>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-row">
+    <span>© 2026 Paisa Pulse · Made in Bengaluru</span>
+    <span><a href="#privacy">Privacy</a> · <a href="mailto:hello@nishitrk.tech">Contact</a> · <a href="https://github.com/PoRiFiRo123/paisa-pulse/releases/latest">Releases</a></span>
+  </div>
+  <p class="wordmark" aria-hidden="true">paisa pulse</p>
+</footer>
+
+<script src="/main.js" defer></script>
+</body>
+</html>

@@ -203,6 +203,9 @@ The user chose to rewrite iOS in SwiftUI; Android stays on this Expo app. Code i
 - `Report.rows/movers/biggest` (Swift `Shared/Report.swift`, Kotlin `logic/Report.kt`; tests on both): Recap gains "What changed" and **Full Report (PDF)** (iOS `More/ReportPDF.swift` with UIGraphicsPDFRenderer, Android `ui/screens/ReportPdf.kt` with PdfDocument; A4, same layout).
 - Perf: core sums take ~1–35 ms on a desktop JVM with 20k transactions; Android remembers the net-worth history per (db, range).
 
+### Website (Nov 2026)
+- `website/` (static: `index.html`, `styles.css`, `main.js`, `favicon.svg`, `vercel.json`; no build). Vercel project `paisa-pulse` with root directory `website`. Look: paper (#F3EEE4) + ink + forest (#1F4D3A) + marigold, Instrument Serif / Geist / Geist Mono, paper grain. Hero: SMS types in → highlighted → drops into the phone as a transaction (`main.js`); scroll: reveals (IntersectionObserver), sticky "How it works" phone, receipt that prints on scroll. Honours reduced motion. Pro is "coming soon" (mailto, no backend yet).
+
 ### Share a screenshot (Nov 2026, both apps)
 - iOS share extension `apple/Share` (target `PaisaShare`, bundle `com.paisapulse.app.share`, App Group): reads images with `ScreenText.read` (Vision, in `Capture.swift`), parses with `ScreenshotParser`, shows editable cards, Save writes `Txn(source: "screenshot")` into the shared SwiftData store. Its sources are `Share`, `Shared`, `App/Import/Capture.swift`, `App/Import/Narration.swift`; `Rx` moved to `Shared/Rx.swift` for that. The user installs over USB (iloader), no SideStore, so app + widget + share = the 3 free slots: ask before adding any other extension.
 - Android: `SEND`/`SEND_MULTIPLE image/*` intent filter on `MainActivity` → `Ui.handleShare` → `Route.Capture("screenshot")` reads `Ui.sharedImages`.
