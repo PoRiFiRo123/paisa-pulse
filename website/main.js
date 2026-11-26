@@ -236,6 +236,42 @@
     if (shown) requestAnimationFrame(() => shown._centre(1));
   }));
 
+  // Screenshot dots + arrows (for whichever platform is showing), and a one-time nudge so phones show it swipes.
+  const dotsEl = document.querySelector('.car-dots');
+  const shown = () => carousels.find((c) => !c.hidden);
+  const buildDots = () => {
+    const car = shown(); if (!car || !dotsEl) return;
+    const shots = [...car.querySelectorAll('.shot')];
+    dotsEl.innerHTML = shots.map((s, i) => `<button type="button" role="tab" aria-label="${s.querySelector('b').textContent}" data-i="${i}"></button>`).join('');
+    dotsEl.querySelectorAll('button').forEach((d) => d.addEventListener('click', () => {
+      const s = shots[+d.dataset.i];
+      car.scrollTo({ left: s.offsetLeft - (car.clientWidth - s.offsetWidth) / 2, behavior: reduce ? 'auto' : 'smooth' });
+    }));
+    syncDots();
+  };
+  const syncDots = () => {
+    const car = shown(); if (!car || !dotsEl) return;
+    const shots = [...car.querySelectorAll('.shot')];
+    const mid = car.scrollLeft + car.clientWidth / 2;
+    let best = 0, bd = Infinity;
+    shots.forEach((s, i) => { const d = Math.abs(s.offsetLeft + s.offsetWidth / 2 - mid); if (d < bd) { bd = d; best = i; } });
+    dotsEl.querySelectorAll('button').forEach((d, i) => { d.classList.toggle('on', i === best); d.setAttribute('aria-selected', String(i === best)); });
+    document.querySelectorAll('[data-car-step]').forEach((b) => { b.disabled = (+b.dataset.carStep < 0 && best === 0) || (+b.dataset.carStep > 0 && best === shots.length - 1); });
+  };
+  carousels.forEach((c) => c.addEventListener('scroll', () => requestAnimationFrame(syncDots), { passive: true }));
+  document.querySelectorAll('[data-car-step]').forEach((b) => b.addEventListener('click', () => { const c = shown(); if (c) step(c, +b.dataset.carStep); }));
+  document.querySelectorAll('[data-platform]').forEach((t) => t.addEventListener('click', () => requestAnimationFrame(() => requestAnimationFrame(buildDots))));
+  requestAnimationFrame(() => requestAnimationFrame(buildDots));
+  if (!reduce && matchMedia('(pointer: coarse)').matches) {
+    const nudge = new IntersectionObserver((es) => es.forEach((e) => {
+      if (!e.isIntersecting) return;
+      nudge.disconnect();
+      const c = e.target, x = c.scrollLeft;
+      setTimeout(() => { c.scrollTo({ left: x + 70, behavior: 'smooth' }); setTimeout(() => c.scrollTo({ left: x, behavior: 'smooth' }), 550); }, 400);
+    }), { threshold: 0.6 });
+    const first = shown(); if (first) nudge.observe(first);
+  }
+
   // Feature rail: buttons, keyboard, drag and a progress bar.
   document.querySelectorAll('.rail').forEach((rail) => {
     draggable(rail);

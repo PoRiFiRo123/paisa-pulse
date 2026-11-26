@@ -91,7 +91,7 @@ em { font-style: italic; }
 .fine { font-size: 14px; color: var(--muted); margin: 14px 0 0; }
 
 /* Hero */
-.hero { max-width: var(--maxw); margin: 0 auto; padding: 72px 24px 64px; display: grid; grid-template-columns: 1.1fr .9fr; gap: 48px; align-items: center; min-height: calc(100svh - 64px); }
+.hero { max-width: var(--maxw); margin: 0 auto; padding: 72px 24px 64px; display: grid; grid-template-columns: 1.1fr .9fr; gap: 48px; align-items: center; min-height: min(calc(100svh - 64px), 860px); }
 @media (max-width: 760px) { .hero { grid-template-columns: minmax(0, 1fr); min-height: 0; padding-top: 40px; } }
 .headline { font: 400 clamp(52px, 7.6vw, 112px)/.95 var(--serif); letter-spacing: -.035em; margin: 0; }
 .headline .w { display: inline-block; opacity: 0; transform: translateY(.45em) rotate(2deg); filter: blur(6px); animation: word .9s var(--ease) forwards; animation-delay: calc(var(--d) * 110ms + 100ms); }
@@ -713,3 +713,15 @@ em { font-style: italic; }
 .d-clean.st2 .dc-open { opacity: 1; transform: translateY(0) scale(.98); }
 .d-clean.st3 .dc-open { transform: none; }
 @media (prefers-reduced-motion: reduce) { .dv-mic { animation: none; } }
+
+/* Screenshot dots + arrows */
+.car-ctrl { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 4px; }
+.car-dots { display: flex; gap: 8px; }
+.car-dots button { width: 8px; height: 8px; padding: 0; border: 0; border-radius: 8px; background: var(--line); cursor: pointer; transition: width .3s var(--ease), background .3s; }
+.car-dots button.on { width: 26px; background: var(--ink); }
+.car-dots button:focus-visible { outline: 2px solid var(--green); outline-offset: 3px; }
+@media (max-width: 600px) {
+  .shot { width: 62vw; transform: rotateY(calc(var(--off) * -16deg)) scale(calc(1 - .08 * min(1, abs(var(--off))))); opacity: calc(1 - .25 * min(1, abs(var(--off)))); }
+  .carousel { padding-inline: 19vw; gap: 4px; padding-top: 36px; }
+  .car-ctrl .rail-btn { width: 40px; height: 40px; }
+}

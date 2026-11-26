@@ -5,6 +5,7 @@ Newest first. Every push to `main` becomes a GitHub Release `build-<number>` wit
 
 ## [Unreleased]
 
+- Website: no gap above the hero on tall screens; the screenshot carousel shows the next phones on mobile, has dots and arrows, and nudges once so it's clear you can swipe.
 - Website: the hero's phone animation now comes in first (and leads on phones), and every "Only in Paisa Pulse" tile plays its own short animation of the feature.
 - Website: leads with what other money apps don't do ("Only in Paisa Pulse"), a comparison against SMS trackers, bank-linking apps, split apps and manual trackers, and the full list of 26 features.
 - Both apps + website: salary and other credits "by NEFT from <company>" now name the company (without "Pvt Ltd") instead of no payee. Website: a feature tour you can swipe through (ten features with what each does), Android screenshots next to the iPhone ones, and a back-to-top button.
