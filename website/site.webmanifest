@@ -1,0 +1,14 @@
+{
+  "name": "Paisa Pulse",
+  "short_name": "Paisa Pulse",
+  "description": "Free, private expense tracker for India.",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#F3EEE4",
+  "theme_color": "#1F4D3A",
+  "icons": [
+    { "src": "/img/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/img/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

@@ -1,0 +1,22 @@
+# Paisa Pulse
+
+> Paisa Pulse is a free, private expense and money tracker for India, for Android and iPhone. It reads bank SMS, UPI payment screenshots and bank statements on the phone and turns them into transactions, with budgets, bills, splits, trips, net worth and monthly reports. There is no sign-up, no ads and no lending. The personal ledger never leaves the phone.
+
+Key facts:
+
+- Price: free (₹0), no ads, no limits. An optional "Pro" plan for shared extras is planned and will be billed on this website; pricing is not announced.
+- Platforms: Android 8+ (APK from GitHub releases; Google Play listing coming) and iPhone on iOS 18+ (early access, installed with a free Apple ID; App Store version planned).
+- Privacy: transactions, bank messages and screenshots are processed on the device and not uploaded. Full card numbers and CVVs are never stored. Backups can be encrypted with a password. An account (email + password) is only needed to share splits with friends.
+- Made in Bengaluru, India. Contact: hello@nishitrk.tech
+
+## Pages
+
+- [Home](https://paisa-pulse-sigma.vercel.app/): what the app does, a live in-browser SMS demo, screenshots, features, privacy, pricing and FAQ
+- [Download](https://paisa-pulse-sigma.vercel.app/download): Android APK and iPhone early-access steps
+- [Privacy Policy](https://paisa-pulse-sigma.vercel.app/privacy): what data is processed and where
+- [Delete your account](https://paisa-pulse-sigma.vercel.app/delete-account): how to delete an account and what is deleted
+
+## More detail
+
+- [Full text for AI assistants](https://paisa-pulse-sigma.vercel.app/llms-full.txt): every feature, supported banks and apps, and the FAQ in one file
+- [Source code and releases](https://github.com/PoRiFiRo123/paisa-pulse)

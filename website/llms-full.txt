@@ -1,0 +1,79 @@
+# Paisa Pulse: full description
+
+> Paisa Pulse is a free, private expense and money tracker for India, for Android and iPhone. It turns bank SMS, UPI payment screenshots and bank statements into transactions on the phone. No sign-up, no ads, no loans. Website: https://paisa-pulse-sigma.vercel.app/
+
+## The problem it solves
+
+- Money in India is scattered: each UPI app (Google Pay, PhonePe, Paytm, CRED) and each bank shows only its own slice of the month.
+- Many "free" money trackers read SMS, upload spending to a server and then sell loans or credit cards.
+- Typing every expense by hand stops working after a week or two.
+
+## How it works
+
+1. Capture without typing. On Android, bank SMS and payment notifications become drafts you confirm with one tap. On iPhone, a Shortcuts "Message" automation passes bank messages to the app. Payment screenshots and PDF/CSV/Excel statements can be imported too. Duplicates are skipped using the UPI reference number.
+2. See it clearly. Budgets fill up as you spend; spending by category; a calendar of daily spending; a month-end forecast.
+3. Stay ahead. Credit card bills and recurring bills on one timeline, reminders before each is due, and a monthly report you can save as a PDF.
+
+## Features (Android and iPhone)
+
+- Auto-capture: bank SMS and payment notifications on Android; a Shortcuts automation on iPhone. OTPs, payment requests, failed payments, due-date reminders and offers are ignored.
+- Screenshots: Google Pay, PhonePe, Paytm, CRED and bank app payment screenshots are read on the device (Apple Vision / Google ML Kit). Share a screenshot straight to the app.
+- Statements: PDF (including password-protected), CSV and Excel statements from Axis Bank, Bank of Baroda, HDFC Bank, ICICI Bank and SBI, including their credit cards. Other banks work through a column-matching step. Credit card bill payments and ATM withdrawals are recognised as transfers, not spending.
+- Budgets: monthly or weekly, overall or per category, with alerts at 80% and 100%.
+- Bills: card dues (from the last statement) and recurring bills on one timeline, with reminders.
+- Recurring transactions and subscription detection.
+- Splits: split equally, by amount or by shares; who paid; groups with settle-up; request money with a UPI QR code and a pay link.
+- Loans: money lent and borrowed, part repayments and due-date reminders.
+- Trips: any currency, converted to rupees including the card's forex markup (default 3.5% + 18% GST).
+- Net worth: what you have and owe by account type, month after month; manual values for investments.
+- Reports: a monthly recap ("what changed") and a full A4 PDF report.
+- Payment cards: network, last 4 digits, expiry and nickname only. Full card numbers and CVV are never stored.
+- Widgets and shortcuts: Home Screen and Lock Screen widgets, Siri / App Shortcuts on iPhone, a Quick Settings tile on Android.
+- Customisation: themes, accent colours, alternate app icons, home section order.
+- Backups: daily automatic backups, optionally encrypted (AES-GCM with a password). The same backup file works on both Android and iPhone.
+- Voice entry (Android only): say "spent 250 on lunch".
+
+## Supported banks and apps
+
+- Bank SMS: Axis Bank, Bank of Baroda, HDFC Bank, ICICI Bank, SBI, Kotak and most other Indian banks' debit/credit alerts.
+- Payment apps (screenshots): Google Pay, PhonePe, Paytm, CRED, BHIM, Amazon Pay and bank apps.
+- Merchants recognised by name: 69, including Swiggy, Zomato, Blinkit, Zepto, BigBasket, Uber, Ola, Rapido, Amazon, Flipkart, Myntra, Netflix, Spotify, Airtel and Jio.
+
+## Privacy
+
+- The personal ledger (transactions, accounts, budgets) is stored only on the phone. There is no Paisa Pulse server holding spending data.
+- Bank messages and screenshots are read on the device and not uploaded.
+- An account (email + password) exists only for sharing splits, groups and trips with friends; only that shared data is stored online.
+- No ads, no trackers, no selling of data, no loans.
+- Privacy policy: https://paisa-pulse-sigma.vercel.app/privacy
+
+## Pricing
+
+- Free: everything listed above, on Android and iPhone, with no ads and no limits.
+- Pro: coming later, optional, for shared extras; billed on the website. Pricing not announced.
+
+## Download
+
+- Android 8 or newer: https://github.com/PoRiFiRo123/paisa-pulse/releases/latest/download/PaisaPulse.apk (Google Play listing coming).
+- iPhone, iOS 18 or newer: early access, installed outside the App Store with a free Apple ID (for example with SideStore or AltStore). App Store version planned.
+- Download page: https://paisa-pulse-sigma.vercel.app/download
+
+## FAQ
+
+**Is Paisa Pulse really free?** Yes. Everything listed here is free, with no ads and no limits. A Pro plan for shared extras will come later, and it will be optional.
+
+**Where is my data stored?** On your phone. Backups go to iCloud Drive or your phone's storage, encrypted with your password if you set one.
+
+**Does it read all my messages?** Only messages that look like a debit or credit are kept, and only on your phone. OTPs, payment requests and due-date reminders are ignored. On iPhone, you choose which messages to pass along with a Shortcuts automation.
+
+**Which banks and apps does it understand?** Bank SMS from Axis, Bank of Baroda, HDFC, ICICI, SBI, Kotak and most other Indian banks; screenshots from Google Pay, PhonePe, Paytm, CRED and bank apps; and statements from Axis, Bank of Baroda, HDFC, ICICI and SBI. Other statements work through a column-matching step.
+
+**Does it work offline?** Yes. Reading messages, screenshots and statements all happens on the phone. Internet is only used for optional things: currency rates, merchant logos and splits shared with friends.
+
+**How do I get it on iPhone?** The iPhone app is in early access and installed outside the App Store for now. The download page has the steps; an App Store version is planned.
+
+**Can I move between Android and iPhone?** Yes. Both apps read and write the same backup file, so your data moves with you.
+
+## Contact
+
+hello@nishitrk.tech · Made in Bengaluru, India
