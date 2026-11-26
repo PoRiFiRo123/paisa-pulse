@@ -36,7 +36,7 @@
     nav.querySelectorAll('nav a').forEach((a) => a.addEventListener('click', () => setOpen(false)));
     addEventListener('keydown', (e) => { if (e.key === 'Escape' && nav.classList.contains('open')) { setOpen(false); menuBtn.focus(); } });
     document.addEventListener('click', (e) => { if (!nav.contains(e.target)) setOpen(false); });
-    matchMedia('(min-width: 861px)').addEventListener('change', () => setOpen(false));
+    matchMedia('(min-width: 1001px)').addEventListener('change', () => setOpen(false));
     addEventListener('scroll', () => { if (nav.classList.contains('open') && Math.abs(scrollY - (nav._y ?? scrollY)) > 60) setOpen(false); nav._y = nav.classList.contains('open') ? (nav._y ?? scrollY) : undefined; }, { passive: true });
   }
 
@@ -77,6 +77,26 @@
       el.addEventListener('pointerleave', () => { el.style.transform = ''; });
     });
   }
+
+  // Back to top: appears after a screen of scrolling; its ring fills as you read.
+  const top = document.createElement('button');
+  top.type = 'button'; top.className = 'to-top'; top.setAttribute('aria-label', 'Back to top');
+  top.innerHTML = '<svg class="ring" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22"/></svg><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  document.body.appendChild(top);
+  const ring = top.querySelector('.ring circle');
+  let topRaf = 0;
+  const syncTop = () => {
+    topRaf = 0;
+    const max = document.documentElement.scrollHeight - innerHeight;
+    top.classList.toggle('show', scrollY > innerHeight * 0.9);
+    ring.style.strokeDashoffset = String(138.2 * (1 - (max > 0 ? Math.min(1, scrollY / max) : 0)));
+  };
+  addEventListener('scroll', () => { if (!topRaf) topRaf = requestAnimationFrame(syncTop); }, { passive: true });
+  syncTop();
+  top.addEventListener('click', () => {
+    scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+    const first = document.querySelector('.brand'); if (first) first.focus({ preventScroll: true });
+  });
 
   // Reveal on scroll
   const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -10% 0px' });

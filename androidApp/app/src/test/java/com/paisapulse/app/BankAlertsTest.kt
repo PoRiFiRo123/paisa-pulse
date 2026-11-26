@@ -52,7 +52,7 @@ class BankAlertsTest {
 
   @Test fun salaryCredit() {
     val d = p("INR 90,000.00 credited to A/c no. XX4321 on 01-11-26 by NEFT from BOOMI SOFTWARE PVT LTD. Avl Bal INR 1,02,345.00 - Axis Bank")!!
-    assertEquals(9_000_000L, d.amount); assertEquals("income", d.type); assertEquals("axis", d.accountId)
+    assertEquals(9_000_000L, d.amount); assertEquals("income", d.type); assertEquals("axis", d.accountId); assertEquals("Boomi Software", d.payee)
   }
 
   @Test fun balanceIsNotTheAmount() {
