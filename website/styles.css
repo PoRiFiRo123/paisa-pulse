@@ -218,7 +218,7 @@ em { font-style: italic; }
 .index-head p { color: var(--muted); margin: 0; max-width: 320px; }
 .index-list { list-style: none; margin: 0; padding: 0; }
 .index-list li { display: grid; grid-template-columns: 60px minmax(0, 1fr) minmax(0, 1.4fr); gap: 20px; align-items: baseline; padding: 22px 0; border-bottom: 1px solid var(--line); transition: padding .3s var(--ease), background .3s; }
-.index-list li:hover { padding-left: 14px; background: linear-gradient(90deg, #FCE9C6 0, transparent 70%); }
+.index-list li:hover { padding-left: 14px; background: linear-gradient(90deg, var(--hl) 0, transparent 70%); }
 .ix { font: 500 13px var(--mono); color: var(--muted); }
 .index-list b { font: 400 36px var(--serif); font-weight: 400; }
 .ixd { color: var(--ink-2); }
@@ -518,3 +518,50 @@ em { font-style: italic; }
 .to-top .ring { position: absolute; inset: -1px; width: calc(100% + 2px); height: calc(100% + 2px); transform: rotate(-90deg); }
 .to-top .ring circle { fill: none; stroke: var(--green); stroke-width: 2.5; stroke-linecap: round; stroke-dasharray: 138.2; stroke-dashoffset: 138.2; transition: stroke-dashoffset .1s linear; }
 @media (prefers-reduced-motion: reduce) { .tcard, .to-top { transition: none; } }
+
+/* Only in Paisa Pulse: bento grid */
+.only { padding: 110px 24px 40px; }
+.bento { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-flow: dense; gap: 16px; margin-top: 48px; }
+.bx { position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 28px; padding: 26px; display: flex; flex-direction: column; gap: 10px; overflow: hidden;
+  transition: transform .35s var(--ease), border-color .3s, box-shadow .35s var(--ease); }
+@media (hover: hover) { .bx:hover { transform: translateY(-4px); border-color: var(--ink); box-shadow: 8px 8px 0 var(--paper-2); } }
+.bx-lg { grid-column: span 2; }
+.bx h3 { font: 400 clamp(26px, 2.4vw, 34px)/1.05 var(--serif); margin: 4px 0 0; letter-spacing: -.01em; }
+.bx p { margin: 0; color: var(--ink-2); font-size: 16px; max-width: 560px; }
+.bx-tag { align-self: flex-start; font: 500 11px var(--mono); text-transform: uppercase; letter-spacing: .08em; padding: 5px 10px; border-radius: 999px; background: var(--paper-2); color: var(--muted); }
+.bx-ink { background: #16140F; color: #F3EEE4; border-color: #16140F; } .bx-ink p { color: #CFC7B8; } .bx-ink .bx-tag { background: #2B2822; color: #E8A33D; }
+.bx-green { background: var(--forest); color: #F3EEE4; border-color: var(--forest); } .bx-green p { color: #CFDBD3; } .bx-green .bx-tag { background: rgba(255,255,255,.12); color: #F3EEE4; }
+.bx-gold { background: color-mix(in srgb, var(--marigold) 22%, var(--card)); }
+.bx-sms { margin-top: auto; align-self: flex-start; max-width: 420px; background: #F7F3EA; color: #16140F; border-radius: 18px; padding: 12px 14px; font: 400 13px/1.45 var(--mono); }
+.bx-sms b { display: block; font-weight: 500; font-size: 11px; color: #6B6457; margin-bottom: 2px; }
+.bx-ok { display: block; margin-top: 8px; font-family: var(--sans); font-weight: 500; color: #1F4D3A; }
+.bx-fx { margin-top: auto; display: flex; align-items: center; justify-content: space-between; background: var(--card-2); border-radius: 16px; padding: 12px 16px; }
+.bx-fx b { font: 500 22px var(--mono); letter-spacing: -.03em; } .bx-fx span { color: var(--muted); }
+.bx-stats { margin-top: auto; display: flex; gap: 10px; flex-wrap: wrap; }
+.bx-stats span { background: rgba(255,255,255,.1); border-radius: 16px; padding: 10px 14px; font-size: 13px; color: #CFDBD3; }
+.bx-stats b { display: block; font: 400 30px/1 var(--serif); color: #F3EEE4; }
+@media (max-width: 900px) { .bento { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .bento { grid-template-columns: minmax(0, 1fr); } .bx-lg { grid-column: auto; } .only { padding-top: 80px; } .bx { padding: 22px; } }
+
+/* Comparison table: scrolls sideways on small screens, feature names stay put */
+.compare { padding: 100px 0 40px; }
+.compare-lede { color: var(--muted); margin: 16px 0 0; }
+.table-scroll { margin: 36px auto 0; max-width: var(--maxw); padding: 0 24px; overflow-x: auto; overscroll-behavior-x: contain; outline: none; }
+.table-scroll:focus-visible { outline: 2px solid var(--green); outline-offset: 4px; border-radius: 8px; }
+.ctable { width: 100%; min-width: 760px; border-collapse: separate; border-spacing: 0; font-size: 15px; }
+.ctable th, .ctable td { padding: 14px 12px; border-bottom: 1px solid var(--line); text-align: center; vertical-align: middle; }
+.ctable thead th { font: 500 12px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); border-bottom: 1.5px solid var(--ink); position: sticky; top: 0; }
+.ctable tbody th { text-align: left; font-weight: 500; color: var(--ink); position: sticky; left: 0; background: var(--paper); z-index: 1; min-width: 210px; box-shadow: 1px 0 0 var(--line); }
+.ctable thead th:first-child { position: sticky; left: 0; background: var(--paper); z-index: 2; }
+.ctable .us { color: var(--paper); background: var(--ink); border-radius: 16px 16px 0 0; border-bottom-color: var(--ink); }
+.ctable tbody td:nth-child(2) { background: color-mix(in srgb, var(--green) 10%, var(--card)); font-weight: 600; }
+.ctable tbody tr:last-child td:nth-child(2) { border-radius: 0 0 16px 16px; }
+.ctable .y { color: var(--green); font-size: 18px; } .ctable .n { color: var(--muted); opacity: .7; font-size: 16px; }
+.ctable .p { color: var(--ink-2); font-size: 13px; }
+.compare-note { color: var(--muted); font-size: 13px; margin-top: 16px; }
+@media (max-width: 600px) { .ctable { font-size: 14px; min-width: 640px; } .ctable tbody th { min-width: 160px; } .compare { padding-top: 72px; } }
+
+/* Index: more items, two columns on wide screens */
+@media (min-width: 1100px) { .index-list { columns: 2; column-gap: 48px; } .index-list li { break-inside: avoid; } }
+.compare-hint { display: none; font: 500 12px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 14px 0 0; }
+@media (max-width: 900px) { .compare-hint { display: block; } }

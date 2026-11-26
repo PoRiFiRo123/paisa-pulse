@@ -4,6 +4,8 @@
 
 Key facts:
 
+- Different from other Indian money apps: bank SMS capture on iPhone as well as Android, payment-screenshot capture, server-free statement import, unlimited UPI splits, trips priced with each card's forex markup, loans, one backup file for both platforms.
+
 - Price: free (₹0), no ads, no limits. An optional "Pro" plan for shared extras is planned and will be billed on this website; pricing is not announced.
 - Platforms: Android 8+ (APK from GitHub releases; Google Play listing coming) and iPhone on iOS 18+ (early access, installed with a free Apple ID; App Store version planned).
 - Privacy: transactions, bank messages and screenshots are processed on the device and not uploaded. Full card numbers and CVVs are never stored. Backups can be encrypted with a password. An account (email + password) is only needed to share splits with friends.
