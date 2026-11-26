@@ -215,7 +215,6 @@ private data class ItemRow(val id: String, val label: String, val budget: String
   var travellers by remember { mutableIntStateOf(trip?.travellers ?: 1) }
   var people by remember { mutableStateOf(trip?.groupId?.let { g -> db.splitGroups.firstOrNull { it.id == g } }?.memberIds ?: emptyList()) }
   var newFriends by remember { mutableStateOf(listOf<Friend>()) }
-  var newPerson by remember { mutableStateOf("") }
   var budgetOn by remember { mutableStateOf(trip?.budgetEnabled != false) }
   var countIn by remember { mutableStateOf(trip?.countInBudgets != false) }
   var items by remember {
@@ -229,7 +228,6 @@ private data class ItemRow(val id: String, val label: String, val budget: String
   var pickEnd by remember { mutableStateOf(false) }
   val k = TripKinds.of(kindId)
   fun resetItems(kid: String, intl: Boolean) { if (trip == null) items = TripKinds.items(kid, intl).map { ItemRow(newId(), it, "") } }
-  val friends = db.friends.sortedBy { it.name } + newFriends
 
   fun save() {
     val dated = k.dated || hasDates
@@ -295,21 +293,8 @@ private data class ItemRow(val id: String, val label: String, val budget: String
           }
         })
       }
-      group("Who's going", footer = "They become a split group, so you can split expenses and settle up at the end. Friends linked to Paisa Pulse see the trip and its shared expenses on their phone.") {
-        friends.forEachIndexed { i, f ->
-          if (i > 0) Divider(56.dp)
-          val on = f.id in people
-          PRow(f.name, leading = { Avatar(f.name, 28.dp) }, onClick = {
-            people = if (on) people - f.id else people + f.id; travellers = maxOf(travellers, people.size + 1)
-          }) { Icon(Sym.of(if (on) "checkmark.circle.fill" else "circle"), null, tint = if (on) C.accent else C.tertiary) }
-        }
-        if (friends.isNotEmpty()) Divider()
-        Row(verticalAlignment = Alignment.CenterVertically) {
-          FieldRow(newPerson, { newPerson = it }, "Add someone by name", modifier = Modifier.weight(1f))
-          Text("Add", style = T.body, color = C.accent, modifier = Modifier.clickable {
-            if (newPerson.isNotBlank()) { val f = Friend(name = newPerson.trim()); newFriends = newFriends + f; people = people + f.id; newPerson = ""; travellers = maxOf(travellers, people.size + 1) }
-          }.padding(16.dp))
-        }
+      group("Who's going", footer = "They become a split group, so you can split expenses and settle up at the end. People on Paisa Pulse (with the badge) see the plan and its shared expenses on their phone.") {
+        MemberPickerRows(people, { people = it; travellers = maxOf(travellers, it.size + 1) }, newFriends, { newFriends = it })
       }
       group("Budget", footer = "Switch off \"Count in monthly budgets\" to keep this trip's spending out of your monthly budgets (it still counts in totals and Insights). Hold an item to remove it.") {
         ToggleRow("Plan a budget", budgetOn) { budgetOn = it }

@@ -203,6 +203,11 @@ The user chose to rewrite iOS in SwiftUI; Android stays on this Expo app. Code i
 - `Report.rows/movers/biggest` (Swift `Shared/Report.swift`, Kotlin `logic/Report.kt`; tests on both): Recap gains "What changed" and **Full Report (PDF)** (iOS `More/ReportPDF.swift` with UIGraphicsPDFRenderer, Android `ui/screens/ReportPdf.kt` with PdfDocument; A4, same layout).
 - Perf: core sums take ~1–35 ms on a desktop JVM with 20k transactions; Android remembers the net-worth history per (db, range).
 
+### Navigation and members (Nov 2026, both apps)
+- **iOS: list → detail links that can leave their list use value navigation** (`NavigationLink(value: NavRoute…)`, `apple/App/Core/NavRoutes.swift`; every tab stack calls `navDestinations()`; screens resolve by id and show "was deleted" if gone). A destination-style `NavigationLink { Detail() }` freezes the app when its row disappears while the detail is open (first plan hid Home's "Plan a trip" row; archiving a trip/account; a loan moving Open → Settled). Accounts' wallet keeps its zoom via a local `WalletRoute`. Android's `Route` stack is id-based already.
+- **Members:** group and plan forms share `MemberPicker` (iOS, SplitsV2.swift) / `MemberPickerRows` (Android, Account.kt): tick friends, add by name (removed again on Cancel), or **Find Someone on Paisa Pulse** (`PeopleView(onPick:)` / `FindOnPaisaPulseDialog`: search @username/email/phone or your people, connects, returns the Friend with id = their user id like the sync). Linked friends show a badge; group screens have **Add People**.
+- iOS plan form sets Type/Where through bindings, not onChange (loading an existing plan used to wipe its places).
+
 ### Website (Nov 2026)
 - `website/` (static, no build). Vercel project `paisa-pulse` with root directory `website`, live at https://paisa-pulse-sigma.vercel.app (canonical URL used in every page, `sitemap.xml`, `robots.txt`, `llms*.txt`; change them all together when a custom domain is attached). Look: paper (#F3EEE4) + ink + forest (#1F4D3A) + marigold, Instrument Serif / Geist / Geist Mono, paper grain. Honours reduced motion.
 - Pages: `/` (home), `/download` (device-aware: Android APK `releases/latest/download/PaisaPulse.apk`, iPhone steps, QR on desktop via vendored `js/qrcode.js`), `/privacy`, `/delete-account`, `404.html`.

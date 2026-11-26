@@ -69,7 +69,7 @@ struct TransactionDetailView: View {
           LabeledContent("Paid by") { Label(m.label, systemImage: m.icon) }
         }
         if let tid = txn.tripId, let trip = trips.first(where: { $0.id == tid }) {
-          NavigationLink { TripDetailView(trip: trip) } label: {
+          NavigationLink(value: NavRoute.trip(trip.id)) {
             LabeledContent("Trip") {
               Text([trip.name, txn.tripItemId.flatMap { id in tripItems.first { $0.id == id }?.label }].compactMap { $0 }.joined(separator: " · "))
             }

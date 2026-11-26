@@ -5,6 +5,7 @@ Newest first. Every push to `main` becomes a GitHub Release `build-<number>` wit
 
 ## [Unreleased]
 
+- Both apps: add someone already on Paisa Pulse straight from a group or plan ("Find Someone on Paisa Pulse": @username, email or phone), add new people by name there too, a badge on people who are on Paisa Pulse, and "Add People" on a group. iPhone: no more freeze after creating your first plan (or archiving a plan/account, or finishing a loan) while its screen is open; editing a plan no longer clears its destinations.
 - Website: no gap above the hero on tall screens; the screenshot carousel shows the next phones on mobile, has dots and arrows, and nudges once so it's clear you can swipe.
 - Website: the hero's phone animation now comes in first (and leads on phones), and every "Only in Paisa Pulse" tile plays its own short animation of the feature.
 - Website: leads with what other money apps don't do ("Only in Paisa Pulse"), a comparison against SMS trackers, bank-linking apps, split apps and manual trackers, and the full list of 26 features.

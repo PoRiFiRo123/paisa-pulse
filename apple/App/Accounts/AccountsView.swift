@@ -1,6 +1,9 @@
 import SwiftData
 import SwiftUI
 
+/// A wallet card opening its account with the zoom transition (a value link, see NavRoute).
+struct WalletRoute: Hashable { let id: String }
+
 struct AccountsView: View {
   @Query(sort: \Account.sortOrder) private var accounts: [Account]
   @Query(filter: #Predicate<Txn> { $0.deletedAt == nil }) private var txns: [Txn]
@@ -34,9 +37,7 @@ struct AccountsView: View {
         // Wallet: cards overlap like Apple Wallet; tap one to open it.
         VStack(spacing: -128) {
           ForEach(Array(active.enumerated()), id: \.element.id) { i, a in
-            NavigationLink {
-              AccountDetailView(account: a).modifier(ZoomDestination(id: a.id, ns: ns))
-            } label: {
+            NavigationLink(value: WalletRoute(id: a.id)) {
               WalletCard(account: a, balance: balances[a.id] ?? 0, cards: cards.filter { $0.accountId == a.id })
                 .shadow(color: .black.opacity(0.18), radius: 10, y: -4)
             }
@@ -51,7 +52,7 @@ struct AccountsView: View {
         if !archived.isEmpty {
           Text("Archived").font(.headline).foregroundStyle(.secondary).padding(.top, 8)
           ForEach(archived) { a in
-            NavigationLink { AccountDetailView(account: a) } label: {
+            NavigationLink(value: NavRoute.account(a.id)) {
               AccountRow(account: a, balance: balances[a.id] ?? 0).padding(12)
                 .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 18))
             }
@@ -64,6 +65,7 @@ struct AccountsView: View {
     }
     .background(Color(.systemGroupedBackground))
     .navigationTitle("Accounts")
+    .navigationDestination(for: WalletRoute.self) { r in NavRouteView(route: .account(r.id)).modifier(ZoomDestination(id: r.id, ns: ns)) }
     .toolbar {
       ToolbarItem(placement: .topBarTrailing) {
         Menu {

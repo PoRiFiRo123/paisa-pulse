@@ -90,7 +90,7 @@ private struct TabStack<V: View>: View {
   let content: V
   @State private var path = NavigationPath()
   var body: some View {
-    NavigationStack(path: $path) { content }
+    NavigationStack(path: $path) { content.navDestinations() }
       .toolbar(router.hideTabBar && router.tab == tab ? .hidden : .automatic, for: .tabBar)
       .onChange(of: router.popToRoot) { if router.tab == tab { path = NavigationPath() } }
   }
