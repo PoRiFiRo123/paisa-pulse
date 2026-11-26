@@ -5,6 +5,7 @@ Newest first. Every push to `main` becomes a GitHub Release `build-<number>` wit
 
 ## [Unreleased]
 
+- Store readiness: privacy policy (website /privacy, linked from Settings on both apps) and an account deletion page (/delete-account); iOS privacy manifest and encryption declaration; App Store build switch (`PAISA_DISTRIBUTION=appstore`) and a Google Play build (`PaisaPulse-play.aab`) without self-update, SideStore links or the SMS permission; "why we ask" screens before contacts, SMS and notification access on Android; sign-in data left out of Android backups. Submission notes in `docs/STORE.md`.
 - Both: **Net Worth** shows today's total and the change since last month, a 6M / 1Y / 2Y chart, and what you have vs owe by account type.
 - Both: **Monthly Recap** adds "What changed" (categories that went up or down most vs last month) and **Full Report (PDF)**: totals, every category against last month, and the biggest expenses, ready to share or print.
 - Both: **Bills** (Settings › Money › Bills): card bills and recurring bills due in the next month, soonest first, with the total; "Record Payment" adds the card payment from your bank in one tap (with Undo). Bill reminders now also cover recurring bills (2 days before).

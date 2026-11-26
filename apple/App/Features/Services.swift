@@ -116,7 +116,7 @@ enum Notifier {
   static var currentBuild: Int { Int(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "0") ?? 0 }
 
   @MainActor func check() async -> Bool {
-    guard Self.currentBuild > 1, let url = URL(string: "https://api.github.com/repos/\(Self.repo)/releases/latest") else { return false }
+    guard !Distribution.isAppStore, Self.currentBuild > 1, let url = URL(string: "https://api.github.com/repos/\(Self.repo)/releases/latest") else { return false }
     guard let (data, _) = try? await URLSession.shared.data(from: url),
           let r = try? JSONDecoder().decode(Release.self, from: data),
           r.tag_name.hasPrefix("build-"), let n = Int(r.tag_name.dropFirst(6)), n > Self.currentBuild,

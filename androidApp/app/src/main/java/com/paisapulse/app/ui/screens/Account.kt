@@ -264,6 +264,7 @@ private fun CoroutineScopeRun(scope: kotlinx.coroutines.CoroutineScope, busy: Mu
       contacts = Cloud.matchContacts(phones.distinct())
     }
   }
+  var explainContacts by remember { mutableStateOf(false) }
   val askContacts = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok -> if (ok) readContacts() else Ui.show("Contacts permission is off") }
 
   fun choose(p: CloudLogic.Person) = CoroutineScopeRun(scope, busy) {
@@ -301,10 +302,15 @@ private fun CoroutineScopeRun(scope: kotlinx.coroutines.CoroutineScope, busy: Mu
       results.forEach { Divider(56.dp); PersonRow(it) }
       if (!searching && q.trim().length >= 2 && results.isEmpty()) { Divider(); Text("No one found. Send them your invite below.", style = T.subhead, color = C.secondary, modifier = Modifier.padding(16.dp)) }
     }
+    if (explainContacts) item {
+      DisclosureDialog("Find friends from contacts",
+        "Paisa Pulse reads the phone numbers in your contacts, turns each into a fingerprint (a hash of the last 10 digits) on this phone, and sends only those fingerprints to find friends who use Paisa Pulse. Names and numbers never leave your phone. You can skip this and search by username instead.",
+        onAllow = { askContacts.launch(Manifest.permission.READ_CONTACTS) }, onDismiss = { explainContacts = false })
+    }
     group("From your contacts", footer = "Phone numbers are turned into fingerprints on this phone before matching; the numbers themselves aren't sent.") {
       if (contacts == null) PRow("Find Friends from Contacts", titleColor = C.accent, leading = { Icon2("person.crop.circle.badge.plus") }, onClick = {
         if (ContextCompat.checkSelfPermission(ctx, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) readContacts()
-        else askContacts.launch(Manifest.permission.READ_CONTACTS)
+        else explainContacts = true
       })
       else if (contacts!!.isEmpty()) Text("None of your contacts are on Paisa Pulse yet.", style = T.subhead, color = C.secondary, modifier = Modifier.padding(16.dp))
       else contacts!!.forEachIndexed { i, (p, phone) -> if (i > 0) Divider(56.dp); PersonRow(p, phone) }

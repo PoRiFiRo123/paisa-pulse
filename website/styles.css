@@ -235,3 +235,12 @@ em { font-style: italic; }
   .reveal, .reveal-load, .headline .w { opacity: 1 !important; transform: none !important; filter: none !important; }
   .receipt { clip-path: none; }
 }
+
+/* Legal pages */
+.legal { max-width: 760px; padding: 64px 24px 100px; }
+.legal .display { margin-bottom: 20px; }
+.legal-lede { font-size: 20px; color: var(--ink-2); }
+.legal h2 { font: 400 32px var(--serif); margin: 48px 0 10px; }
+.legal p, .legal li { color: var(--ink-2); }
+.legal ul { padding-left: 20px; } .legal li { margin: 8px 0; }
+.legal a { color: var(--forest); }

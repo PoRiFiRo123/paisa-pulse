@@ -169,3 +169,13 @@ fun Modifier.combinedClickableCompat(onClick: () -> Unit, onLongClick: () -> Uni
     }
   }
 }
+
+
+/** Explains a sensitive permission before Android asks for it (Google Play "prominent disclosure"). Declining keeps the app working. */
+@Composable fun DisclosureDialog(title: String, text: String, onAllow: () -> Unit, onDismiss: () -> Unit) {
+  androidx.compose.material3.AlertDialog(onDismissRequest = onDismiss, containerColor = C.card,
+    title = { androidx.compose.material3.Text(title, style = T.headline, color = C.label) },
+    text = { androidx.compose.material3.Text(text, style = T.body, color = C.secondary) },
+    confirmButton = { androidx.compose.material3.TextButton({ onDismiss(); onAllow() }) { androidx.compose.material3.Text("Continue", color = C.accent) } },
+    dismissButton = { androidx.compose.material3.TextButton(onDismiss) { androidx.compose.material3.Text("Not now", color = C.secondary) } })
+}

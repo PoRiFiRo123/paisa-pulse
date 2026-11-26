@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+: back up the ledger and settings, but never sign-in sessions or Keystore-wrapped secrets
+     (they can't be decrypted on another phone anyway). -->
+<data-extraction-rules>
+  <cloud-backup>
+    <exclude domain="sharedpref" path="paisa_secure.xml" />
+    <exclude domain="sharedpref" path="paisa-cloud.xml" />
+    <exclude domain="file" path="cloud-cache.json" />
+  </cloud-backup>
+  <device-transfer>
+    <exclude domain="sharedpref" path="paisa_secure.xml" />
+    <exclude domain="sharedpref" path="paisa-cloud.xml" />
+  </device-transfer>
+</data-extraction-rules>

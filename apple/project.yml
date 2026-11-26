@@ -23,6 +23,10 @@ targets:
         CFBundleDisplayName: Paisa Pulse
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        # "sideload" (GitHub/iloader builds: in-app update check) or "appstore" (pass PAISA_DISTRIBUTION=appstore to xcodebuild).
+        PaisaDistribution: $(PAISA_DISTRIBUTION)
+        # Backups use AES-GCM from CryptoKit to protect the user's own data, and the network uses HTTPS: exempt encryption.
+        ITSAppUsesNonExemptEncryption: false
         UILaunchScreen:
           UIColorName: LaunchBackground
           UIImageName: AppLogo
@@ -36,7 +40,7 @@ targets:
         NSContactsUsageDescription: Find friends from your contacts who use Paisa Pulse. Numbers are turned into fingerprints on your phone; the numbers aren't sent.
         UIBackgroundModes: [fetch]
         BGTaskSchedulerPermittedIdentifiers: [com.paisapulse.app.sync]
-        LSApplicationQueriesSchemes: [sidestore, upi, gpay, tez, phonepe, paytmmp, bhim, credpay]
+        LSApplicationQueriesSchemes: [upi, gpay, tez, phonepe, paytmmp, bhim, credpay]
         CFBundleURLTypes:
           - CFBundleURLName: com.paisapulse.app
             CFBundleURLSchemes: [paisapulse]
@@ -47,6 +51,7 @@ targets:
         com.apple.security.application-groups: [group.com.paisapulse.app]
     settings:
       base:
+        PAISA_DISTRIBUTION: sideload
         PRODUCT_BUNDLE_IDENTIFIER: com.paisapulse.app
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: YES

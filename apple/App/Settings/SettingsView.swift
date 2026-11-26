@@ -136,13 +136,14 @@ struct SettingsView: View {
         VStack(spacing: 4) {
           Text("Paisa Pulse \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "") (build \(UpdateChecker.currentBuild))")
             .font(.footnote).foregroundStyle(.secondary)
-          if UpdateChecker.currentBuild > 1 {
+          if UpdateChecker.currentBuild > 1 && !Distribution.isAppStore {
             Button(checking ? "Checking…" : upToDate ? "You're up to date" : "Check for Updates") {
               Task { checking = true; upToDate = !(await updates.check()); checking = false }
             }
             .font(.footnote).disabled(checking)
           }
-          Text("No account. No servers. Your data stays on this phone.").font(.footnote).foregroundStyle(.secondary)
+          Text("No account needed. Your data stays on this phone.").font(.footnote).foregroundStyle(.secondary)
+          Link("Privacy Policy", destination: URL(string: "https://paisa-pulse-sigma.vercel.app/privacy")!).font(.footnote)
         }
         .frame(maxWidth: .infinity)
       }
