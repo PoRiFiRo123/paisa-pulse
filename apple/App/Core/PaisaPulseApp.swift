@@ -67,6 +67,8 @@ struct ToastMessage: Identifiable, Equatable {
   var toast: ToastMessage?
   /// Screenshot capture sheet (Add button menu, Settings).
   var capture = false
+  /// "screenshot" or "alerts" (bank messages from the Shortcuts automation).
+  var captureMode = "screenshot"
   /// After saving a split: ask the people who owe you (Messages, QR, link).
   var request: SplitRequest?
   /// Hides the floating tab bar (Activity select mode).
@@ -83,6 +85,7 @@ struct ToastMessage: Identifiable, Equatable {
       let type = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first(where: { $0.name == "type" })?.value
       add = AddRequest(type: TxnType(rawValue: type ?? "") ?? .expense)
     } else if url.host == "capture" {
+      captureMode = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "mode" }?.value == "alerts" ? "alerts" : "screenshot"
       capture = true
     } else if url.host == "invite" {
       invite = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first(where: { $0.name == "c" })?.value.map { InviteCode(code: $0) }
@@ -162,5 +165,7 @@ struct PaisaShortcuts: AppShortcutsProvider {
                 shortTitle: "Add Expense", systemImageName: "minus.circle")
     AppShortcut(intent: OpenAddIncomeIntent(), phrases: ["Add income in \(.applicationName)"],
                 shortTitle: "Add Income", systemImageName: "plus.circle")
+    AppShortcut(intent: LogBankMessageIntent(), phrases: ["Log a bank message in \(.applicationName)"],
+                shortTitle: "Log Bank Message", systemImageName: "message.badge")
   }
 }

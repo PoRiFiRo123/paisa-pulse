@@ -51,6 +51,10 @@ import java.io.File
     group {
       PRow("Home Screen", leading = { Badge("square.grid.2x2.fill", "#5E5CE6") }, chevron = true, onClick = { Ui.sheet = Sheet.HomeLayout })
     }
+    group(footer = "Turn bank SMS and payment notifications into transactions.") {
+      PRow("Auto-capture", value = if (Prefs.autoCapture) "On" else "Off", leading = { Badge("message.badge.filled.fill", "#34C759") }, chevron = true,
+        onClick = { Ui.push(Route.AutoCapture) })
+    }
     group("Appearance") {
       PickerRow("Theme", listOf("system" to "System", "light" to "Light", "dark" to "Dark"), Prefs.theme, leading = { Badge("circle.lefthalf.filled", "#5856D6") }) { Prefs.set("theme", it) }
       Divider(56.dp)

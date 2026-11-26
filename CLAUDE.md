@@ -190,6 +190,11 @@ The user chose to rewrite iOS in SwiftUI; Android stays on this Expo app. Code i
 - Toast errors: `router.showError` / `Ui.showError` (error haptic). Privacy: iOS covers the window when inactive; Android disables the recents screenshot (API 33+) when App Lock or hidden amounts are on.
 - Brand: the ₹ mark (`AppLogo` image set / `R.drawable.app_logo`); launch colour `LaunchBackground` / `@color/launch_background`.
 
+### Auto-capture (Nov 2026, both apps)
+- Parser: Kotlin `logic/BankAlerts.kt`, Swift `App/Import/BankAlerts.swift` (tests `BankAlertsTest` / `BankAlertsTests`, same cases). `PendingAlert(text, sender, receivedAt)` → `CaptureDraft`; key `alert:<UPI ref>` or `alert:<amount>:<java hashCode of normalised text>` stored in `Txn.externalId` (dedupe), `source = "sms"`.
+- Android: `work/AlertCapture.kt` — `AlertListener` (NotificationListenerService), `SmsAlertReceiver` (RECEIVE_SMS, optional), `AlertQueue` (prefs `paisa-alerts`, posts a "tap to add" notification → `paisapulse://capture?mode=alerts`). Pref `autoCapture`. Screen `ui/screens/AutoCapture.kt`.
+- iOS: no SMS access; `LogBankMessageIntent` (in `PaisaShortcuts`) queues text in the App Group (`PendingAlerts`, key `pendingAlerts`). Settings › Auto-capture explains the Shortcuts Message automation. Review = `CaptureView(mode: "alerts")`, Home banner when the queue isn't empty.
+
 ### Share a screenshot (Nov 2026, both apps)
 - iOS share extension `apple/Share` (target `PaisaShare`, bundle `com.paisapulse.app.share`, App Group): reads images with `ScreenText.read` (Vision, in `Capture.swift`), parses with `ScreenshotParser`, shows editable cards, Save writes `Txn(source: "screenshot")` into the shared SwiftData store. Its sources are `Share`, `Shared`, `App/Import/Capture.swift`, `App/Import/Narration.swift`; `Rx` moved to `Shared/Rx.swift` for that. The user installs over USB (iloader), no SideStore, so app + widget + share = the 3 free slots: ask before adding any other extension.
 - Android: `SEND`/`SEND_MULTIPLE image/*` intent filter on `MainActivity` → `Ui.handleShare` → `Route.Capture("screenshot")` reads `Ui.sharedImages`.

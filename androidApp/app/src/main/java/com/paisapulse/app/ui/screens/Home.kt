@@ -36,11 +36,18 @@ import java.util.Locale
 
   val view = androidx.compose.ui.platform.LocalView.current
   // One tap hides every amount in the app (and in the recent-apps preview).
+  val pendingAlerts by com.paisapulse.app.work.AlertQueue.count.collectAsState()
+  val homeCtx = androidx.compose.ui.platform.LocalContext.current
+  LaunchedEffect(Unit) { com.paisapulse.app.work.AlertQueue.refresh(homeCtx) }
   PScreen(title, leading = { GlassIcon("calendar", "Calendar") { Ui.push(Route.Calendar) } }, actions = {
     GlassIcon(if (Prefs.hideAmounts) "eye.slash" else "eye", if (Prefs.hideAmounts) "Show Amounts" else "Hide Amounts") {
       Haptics.soft(view); Prefs.set("hideAmounts", !Prefs.hideAmounts)
     }
   }) {
+    if (pendingAlerts > 0) group {
+      PRow("$pendingAlerts bank message${if (pendingAlerts == 1) "" else "s"} to review", titleColor = C.accent,
+        leading = { Badge("message.badge.filled.fill", "#34C759") }, chevron = true, onClick = { Ui.push(Route.Capture("alerts")) })
+    }
     HomeSections.order(Prefs.homeOrder).filter { it !in off }.forEach { key ->
       when (key) {
         "trips" -> homeTripsSection(db)

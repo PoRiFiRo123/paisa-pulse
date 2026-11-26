@@ -3,6 +3,8 @@ import SwiftUI
 
 struct HomeView: View {
   @Environment(Router.self) private var router
+  @Environment(\.scenePhase) private var scenePhase
+  @State private var pendingAlerts = 0
   @Environment(\.modelContext) private var context
   @Query(filter: #Predicate<Txn> { $0.deletedAt == nil }, sort: \Txn.occurredAt, order: .reverse) private var txns: [Txn]
   @Query(sort: \Account.sortOrder) private var accounts: [Account]
@@ -34,6 +36,14 @@ struct HomeView: View {
     let month = Periods.month(containing: .now, startDay: monthStartDay)
     let off = HomeSections.hidden(homeHidden)
     List {
+      if pendingAlerts > 0 {
+        Section {
+          Button { router.captureMode = "alerts"; router.capture = true } label: {
+            Label("\(pendingAlerts) bank message\(pendingAlerts == 1 ? "" : "s") to review", systemImage: "message.badge.filled.fill")
+              .font(.subheadline.weight(.semibold))
+          }
+        }
+      }
       ForEach(HomeSections.order(homeOrder).filter { !off.contains($0) }, id: \.self) { key in
         section(key, lookups: lookups, month: month)
       }
@@ -60,6 +70,9 @@ struct HomeView: View {
       }
     }
     .sheet(isPresented: $editingLayout) { NavigationStack { HomeLayoutView() } }
+    .onAppear { pendingAlerts = PendingAlerts.all().count }
+    .onChange(of: scenePhase) { _, p in if p == .active { pendingAlerts = PendingAlerts.all().count } }
+    .onChange(of: router.capture) { _, open in if !open { pendingAlerts = PendingAlerts.all().count } }
   }
 
   @ViewBuilder private func section(_ key: String, lookups: Lookups, month: DateInterval) -> some View {

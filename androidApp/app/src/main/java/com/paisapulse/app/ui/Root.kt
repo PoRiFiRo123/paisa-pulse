@@ -108,6 +108,7 @@ import dev.chrisbanes.haze.hazeSource
     Route.Tags -> TagsScreen()
     is Route.TagDetail -> TagDetailScreen(r.tag)
     is Route.Recap -> RecapScreen(r.offset)
+    is Route.AutoCapture -> AutoCaptureScreen()
   }
 }
 
