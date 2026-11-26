@@ -49,6 +49,7 @@ sealed interface Route {
   data class TagDetail(val tag: String) : Route
   data class Recap(val offset: Int) : Route
   data object AutoCapture : Route
+  data object Bills : Route
 }
 
 sealed interface Sheet {

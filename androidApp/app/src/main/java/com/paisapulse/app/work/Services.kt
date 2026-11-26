@@ -78,6 +78,15 @@ object Services {
         }
       }
     }
+    // Recurring bills (rent, phone, subscriptions): 2 days before.
+    if (Prefs.notifyBills) {
+      val b = Ledger.balances(d.accounts, d.transactions, d.valuations)
+      Bills.upcoming(d.accounts, d.transactions, d.recurringRules, b, days = 3).filter { !it.isCard && Bills.daysLeft(it) in 0..2 }.forEach { bill ->
+        once("${bill.id}-${bill.due}") {
+          notify(bill.id.hashCode(), "${bill.title} ${Bills.dueText(bill).lowercase()}", "${Money.format(bill.amount)}. It'll be added automatically on the day.")
+        }
+      }
+    }
     // Loans: on the day they're due.
     val today = LocalDate.now()
     d.loans.filter { it.closedAt == null && it.remind != false && it.dueAt != null }.forEach { l ->
