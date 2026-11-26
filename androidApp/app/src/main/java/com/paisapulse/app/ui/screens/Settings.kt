@@ -27,7 +27,7 @@ import com.paisapulse.app.work.Updates
 import kotlinx.coroutines.launch
 import java.io.File
 
-@Composable private fun Badge(sym: String, color: String) = CategoryBadge(sym, color, 29.dp)
+@Composable fun Badge(sym: String, color: String) = CategoryBadge(sym, color, 29.dp)
 
 @Composable fun SettingsScreen() {
   val ctx = LocalContext.current
