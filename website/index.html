@@ -1,34 +1,128 @@
 <!doctype html>
-<html lang="en-IN">
+<html lang="en-IN" class="no-js">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Paisa Pulse: every rupee, accounted for</title>
-<meta name="description" content="A free, private money tracker for India. Reads your bank SMS, UPI screenshots and statements on your phone. No sign-up, no ads, no loans.">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Paisa Pulse: free, private expense tracker for India (Android & iPhone)</title>
+<meta name="description" content="Paisa Pulse is a free, private money tracker for India. It reads bank SMS, UPI screenshots and statements on your phone, with budgets, bills, splits and net worth. No sign-up, no ads, no loans.">
+<link rel="canonical" href="https://paisa-pulse-sigma.vercel.app/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Paisa Pulse">
+<meta property="og:locale" content="en_IN">
+<meta property="og:url" content="https://paisa-pulse-sigma.vercel.app/">
 <meta property="og:title" content="Paisa Pulse: every rupee, accounted for">
-<meta property="og:description" content="Free, private money tracking for India. Your data never leaves your phone.">
-<meta name="theme-color" content="#F3EEE4">
+<meta property="og:description" content="Free, private money tracking for India. Reads bank SMS on your phone. No sign-up, no ads.">
+<meta property="og:image" content="https://paisa-pulse-sigma.vercel.app/img/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Paisa Pulse app screens next to the line: Every rupee, accounted for.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Paisa Pulse: every rupee, accounted for">
+<meta name="twitter:description" content="Free, private money tracking for India. Reads bank SMS on your phone. No sign-up, no ads.">
+<meta name="twitter:image" content="https://paisa-pulse-sigma.vercel.app/img/og.jpg">
+<meta name="theme-color" content="#F3EEE4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12110E" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<link rel="alternate" type="text/markdown" title="Paisa Pulse for AI assistants" href="/llms.txt">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/styles.css">
+<script>(function(){var d=document.documentElement;d.className='js';try{var t=localStorage.getItem('theme');if(t)d.dataset.theme=t;}catch(e){}})();</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://paisa-pulse-sigma.vercel.app/#org",
+      "name": "Paisa Pulse",
+      "url": "https://paisa-pulse-sigma.vercel.app/",
+      "logo": "https://paisa-pulse-sigma.vercel.app/img/icon-512.png",
+      "email": "hello@nishitrk.tech",
+      "address": { "@type": "PostalAddress", "addressLocality": "Bengaluru", "addressCountry": "IN" },
+      "sameAs": ["https://github.com/PoRiFiRo123/paisa-pulse"]
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://paisa-pulse-sigma.vercel.app/#website",
+      "url": "https://paisa-pulse-sigma.vercel.app/",
+      "name": "Paisa Pulse",
+      "inLanguage": "en-IN",
+      "publisher": { "@id": "https://paisa-pulse-sigma.vercel.app/#org" }
+    },
+    {
+      "@type": "MobileApplication",
+      "@id": "https://paisa-pulse-sigma.vercel.app/#app",
+      "name": "Paisa Pulse",
+      "description": "A free, private expense and money tracker for India. Reads bank SMS, UPI payment screenshots and bank statements on the phone, with budgets, bills, splits, trips, net worth and monthly reports. No sign-up, no ads, no loans.",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Android, iOS",
+      "inLanguage": "en-IN",
+      "countriesSupported": "IN",
+      "isAccessibleForFree": true,
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+      "downloadUrl": "https://paisa-pulse-sigma.vercel.app/download",
+      "image": "https://paisa-pulse-sigma.vercel.app/img/og.jpg",
+      "screenshot": [
+        "https://paisa-pulse-sigma.vercel.app/img/shots/home-dark.webp",
+        "https://paisa-pulse-sigma.vercel.app/img/shots/activity-light.webp",
+        "https://paisa-pulse-sigma.vercel.app/img/shots/accounts-light.webp",
+        "https://paisa-pulse-sigma.vercel.app/img/shots/add-light.webp"
+      ],
+      "featureList": [
+        "Reads bank SMS and payment notifications (Android) or a Shortcuts automation (iPhone)",
+        "Reads GPay, PhonePe, Paytm, CRED and bank app screenshots on the device",
+        "Imports PDF, CSV and Excel statements from Axis, Bank of Baroda, HDFC, ICICI and SBI",
+        "Monthly and weekly budgets",
+        "Card bills and recurring bills with reminders",
+        "Split expenses with friends, UPI QR requests and settle-up",
+        "Trips in any currency with card forex markup",
+        "Net worth and monthly PDF reports",
+        "Home Screen and Lock Screen widgets",
+        "Encrypted backups; data stays on the phone"
+      ],
+      "publisher": { "@id": "https://paisa-pulse-sigma.vercel.app/#org" }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        { "@type": "Question", "name": "Is Paisa Pulse really free?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Everything listed here is free, with no ads and no limits. A Pro plan for shared extras will come later, and it will be optional." } },
+        { "@type": "Question", "name": "Where is my data stored?", "acceptedAnswer": { "@type": "Answer", "text": "On your phone. Backups go to iCloud Drive or your phone's storage, encrypted with your password if you set one." } },
+        { "@type": "Question", "name": "Does it read all my messages?", "acceptedAnswer": { "@type": "Answer", "text": "Only messages that look like a debit or credit are kept, and only on your phone. OTPs, payment requests and due-date reminders are ignored. On iPhone, you choose which messages to pass along with a Shortcuts automation." } },
+        { "@type": "Question", "name": "Which banks and apps does it understand?", "acceptedAnswer": { "@type": "Answer", "text": "Bank SMS from Axis, Bank of Baroda, HDFC, ICICI, SBI, Kotak and most other Indian banks; screenshots from Google Pay, PhonePe, Paytm, CRED and bank apps; and statements from Axis, Bank of Baroda, HDFC, ICICI and SBI. Other statements work through a column-matching step." } },
+        { "@type": "Question", "name": "Does it work offline?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Reading messages, screenshots and statements all happens on the phone. Internet is only used for optional things: currency rates, merchant logos and splits shared with friends." } },
+        { "@type": "Question", "name": "How do I get it on iPhone?", "acceptedAnswer": { "@type": "Answer", "text": "The iPhone app is in early access and installed outside the App Store for now. The download page has the steps; an App Store version is planned." } },
+        { "@type": "Question", "name": "Can I move between Android and iPhone?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Both apps read and write the same backup file, so your data moves with you." } }
+      ]
+    }
+  ]
+}
+</script>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
 
 <header class="nav">
-  <a class="brand" href="#top" aria-label="Paisa Pulse home">
+  <a class="brand" href="/" aria-label="Paisa Pulse home">
     <svg width="28" height="28" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#1F4D3A"/><path d="M21 19h22M21 27h22M21 19c11 0 15 4 15 8.5S32 36 21 36l17 9" stroke="#F3EEE4" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
     Paisa Pulse
   </a>
   <nav aria-label="Main">
+    <a href="#try">Try it</a>
     <a href="#how">How it works</a>
-    <a href="#index">Features</a>
+    <a href="#screens">The app</a>
     <a href="#privacy">Privacy</a>
     <a href="#pricing">Pricing</a>
   </nav>
-  <a class="btn btn-ink btn-sm" href="#download">Get the app</a>
+  <button class="theme-btn" type="button" aria-label="Switch to dark mode" data-theme-toggle>
+    <svg class="i-moon" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+    <svg class="i-sun" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+  </button>
+  <a class="btn btn-ink btn-sm magnetic" href="/download">Get the app</a>
 </header>
 
 <main id="main">
@@ -39,15 +133,15 @@
       <span class="w" style="--d:1">Every</span> <span class="w" style="--d:2">rupee,</span><br>
       <em class="w accent-word" style="--d:3">accounted for.<svg class="scribble" viewBox="0 0 300 20" preserveAspectRatio="none" aria-hidden="true"><path d="M3 14 C 60 4, 120 18, 180 9 S 270 6, 297 11"/></svg></em>
     </h1>
-    <p class="lede reveal-load" style="--d:5">Paisa Pulse turns bank messages, UPI screenshots and statements into a calm, clear picture of your money. It all happens on your phone, so nobody else ever sees what you spend.</p>
+    <p class="lede reveal-load" style="--d:5">Paisa Pulse is a free expense tracker for India. It turns bank messages, UPI screenshots and statements into a calm, clear picture of your money. It all happens on your phone, so nobody else ever sees what you spend.</p>
     <div class="cta reveal-load" style="--d:6" id="download">
-      <a class="btn btn-ink" href="https://github.com/PoRiFiRo123/paisa-pulse/releases/latest">
+      <a class="btn btn-ink magnetic" href="/download" data-download>
         <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M5 21h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
-        Download for Android
+        <span data-download-label>Download for Android</span>
       </a>
-      <a class="btn btn-line" href="#faq-iphone">iPhone (early access)</a>
+      <a class="btn btn-line magnetic" href="#try">Try it with an SMS</a>
     </div>
-    <p class="fine reveal-load" style="--d:7">Works offline. No account needed. Free, with no ads.</p>
+    <p class="fine reveal-load" style="--d:7">Android and iPhone (early access). Works offline. No account needed.</p>
   </div>
 
   <div class="hero-stage reveal-load" style="--d:3" aria-hidden="true">
@@ -85,8 +179,15 @@
   </div>
 </section>
 
-<section class="problem wrap">
-  <h2 class="display reveal">Three apps, two banks, one card.<br><em>Zero idea where it went.</em></h2>
+<section class="stats wrap" aria-label="Paisa Pulse in numbers">
+  <div class="stat reveal"><b><span class="count" data-from="499" data-to="0" data-prefix="₹">₹0</span></b><span>to use, with no ads</span></div>
+  <div class="stat reveal"><b><span class="count" data-from="524288" data-to="0">0</span> bytes</b><span>of your spending uploaded</span></div>
+  <div class="stat reveal"><b><span class="count" data-to="69">69</span></b><span>Indian merchants recognised by name</span></div>
+  <div class="stat reveal"><b><span class="count" data-to="2">2</span> phones</b><span>Android and iPhone, one backup file</span></div>
+</section>
+
+<section class="problem wrap" aria-labelledby="problem-h">
+  <h2 class="display reveal" id="problem-h">Three apps, two banks, one card.<br><em>Zero idea where it went.</em></h2>
   <div class="problem-grid">
     <article class="reveal">
       <span class="num">01</span>
@@ -106,7 +207,34 @@
   </div>
 </section>
 
-<section class="story" id="how">
+<section class="try" id="try" aria-labelledby="try-h">
+  <div class="wrap try-grid">
+    <div class="try-copy">
+      <p class="eyebrow">Try it live</p>
+      <h2 class="display reveal" id="try-h">Paste a bank SMS. <em>Watch it become a transaction.</em></h2>
+      <p class="try-lede reveal">This box runs the same reader the app uses. It works right here in your browser: nothing you paste is sent anywhere. Pick a sample or paste one of your own.</p>
+      <div class="samples" role="group" aria-label="Sample messages">
+        <button type="button" class="chip" data-sample="axis">Axis UPI</button>
+        <button type="button" class="chip" data-sample="bob">Bank of Baroda</button>
+        <button type="button" class="chip" data-sample="hdfc">HDFC</button>
+        <button type="button" class="chip" data-sample="card">Card spend</button>
+        <button type="button" class="chip" data-sample="salary">Salary</button>
+        <button type="button" class="chip" data-sample="bill">Card bill</button>
+        <button type="button" class="chip" data-sample="otp">An OTP</button>
+      </div>
+    </div>
+    <div class="try-box reveal">
+      <label class="try-label" for="smsInput">Bank message</label>
+      <textarea id="smsInput" rows="4" spellcheck="false" autocomplete="off" placeholder="e.g. INR 450.00 debited from A/c no. XX4321 … Info- UPI/P2M/533012345678/SWIGGY"></textarea>
+      <div class="try-out" id="tryOut" aria-live="polite">
+        <p class="try-empty">Pick a sample above, or paste a message.</p>
+      </div>
+      <p class="try-fine"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg> Read in this page only. Nothing is saved or uploaded.</p>
+    </div>
+  </div>
+</section>
+
+<section class="story" id="how" aria-label="How it works">
   <div class="wrap story-grid">
     <div class="story-steps">
       <p class="eyebrow">How it works</p>
@@ -137,7 +265,7 @@
             <p class="scr-h">Where it went</p>
             <div class="ring"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="48" class="ring-bg"/><circle cx="60" cy="60" r="48" class="ring-fg"/></svg><b>62%</b><small>of budget</small></div>
             <div class="cat"><span>Food</span><i style="--w:78%;--c:#E8A33D"></i><em>₹7,920</em></div>
-            <div class="cat"><span>Transport</span><i style="--w:44%;--c:#1F4D3A"></i><em>₹3,410</em></div>
+            <div class="cat"><span>Transport</span><i style="--w:44%;--c:#2F7A5A"></i><em>₹3,410</em></div>
             <div class="cat"><span>Shopping</span><i style="--w:30%;--c:#D9583B"></i><em>₹2,640</em></div>
           </div>
           <div class="scr scr-2">
@@ -154,9 +282,23 @@
   </div>
 </section>
 
-<section class="index wrap" id="index">
+<section class="gallery" id="screens" aria-labelledby="screens-h">
+  <div class="wrap gallery-head">
+    <h2 class="display reveal" id="screens-h">The real thing.</h2>
+    <p class="reveal">Straight from the latest build. Swipe or drag through it.</p>
+  </div>
+  <div class="carousel" id="carousel" tabindex="0" aria-label="App screenshots">
+    <figure class="shot"><div class="shot-phone"><img class="shot-l" src="/img/shots/home-light.webp" width="603" height="1311" loading="lazy" decoding="async" alt="Paisa Pulse Home: ₹42,250 spent this month, 85% of budget, a month-end forecast and spending by category."><img class="shot-d" src="/img/shots/home-dark.webp" width="603" height="1311" loading="lazy" decoding="async" alt=""></div><figcaption><b>Home</b>Spent, saved, the forecast and where it went.</figcaption></figure>
+    <figure class="shot"><div class="shot-phone"><img class="shot-l" src="/img/shots/activity-light.webp" width="603" height="1311" loading="lazy" decoding="async" alt="Activity: November 2026 transactions grouped by day, with Namma Metro, Swiggy, BigBasket and Starbucks."><img class="shot-d" src="/img/shots/activity-dark.webp" width="603" height="1311" loading="lazy" decoding="async" alt=""></div><figcaption><b>Activity</b>Every payment by day, searchable.</figcaption></figure>
+    <figure class="shot"><div class="shot-phone"><img class="shot-l" src="/img/shots/accounts-light.webp" width="603" height="1311" loading="lazy" decoding="async" alt="Accounts: net worth ₹4,18,190 with Axis, Bank of Baroda, a MyZone credit card and cash shown as a wallet of cards."><img class="shot-d" src="/img/shots/accounts-dark.webp" width="603" height="1311" loading="lazy" decoding="async" alt=""></div><figcaption><b>Accounts</b>Banks, cards and cash, like a wallet.</figcaption></figure>
+    <figure class="shot"><div class="shot-phone"><img class="shot-l" src="/img/shots/add-light.webp" width="603" height="1311" loading="lazy" decoding="async" alt="Quick Add: a new expense with category chips, account, UPI or card, and a keypad that does sums."><img class="shot-d" src="/img/shots/add-dark.webp" width="603" height="1311" loading="lazy" decoding="async" alt=""></div><figcaption><b>Quick Add</b>Two taps, and the keypad does sums.</figcaption></figure>
+    <figure class="shot"><div class="shot-phone"><img class="shot-l" src="/img/shots/settings-light.webp" width="603" height="1311" loading="lazy" decoding="async" alt="Settings: theme, accent colour, app icon, categories, budgets, recurring and subscriptions."><img class="shot-d" src="/img/shots/settings-dark.webp" width="603" height="1311" loading="lazy" decoding="async" alt=""></div><figcaption><b>Make it yours</b>Themes, accent colours and app icons.</figcaption></figure>
+  </div>
+</section>
+
+<section class="index wrap" id="index" aria-labelledby="index-h">
   <div class="index-head">
-    <h2 class="display reveal">The index</h2>
+    <h2 class="display reveal" id="index-h">The index</h2>
     <p class="reveal">Everything in the app today, on Android and iPhone.</p>
   </div>
   <ol class="index-list">
@@ -173,12 +315,12 @@
   </ol>
 </section>
 
-<section class="privacy" id="privacy">
+<section class="privacy" id="privacy" aria-labelledby="privacy-h">
   <div class="wrap privacy-grid">
     <div>
       <p class="eyebrow light">Private by design</p>
-      <h2 class="display light reveal">Your ledger lives on your phone. <em>Full stop.</em></h2>
-      <p class="privacy-lede reveal">There's no Paisa Pulse server holding your spending. An account exists only for what you choose to share, like a split with a friend.</p>
+      <h2 class="display light reveal" id="privacy-h">Your ledger lives on your phone. <em>Full stop.</em></h2>
+      <p class="privacy-lede reveal">There's no Paisa Pulse server holding your spending. An account exists only for what you choose to share, like a split with a friend. <a href="/privacy">Read the privacy policy</a>.</p>
     </div>
     <div class="receipt-wrap">
       <div class="receipt" id="receipt">
@@ -198,31 +340,33 @@
   </div>
 </section>
 
-<section class="pricing wrap" id="pricing">
-  <h2 class="display reveal">Free. <em>Really.</em></h2>
+<section class="pricing wrap" id="pricing" aria-labelledby="pricing-h">
+  <h2 class="display reveal" id="pricing-h">Free. <em>Really.</em></h2>
   <div class="plans">
     <article class="plan reveal">
       <p class="plan-name">Paisa Pulse</p>
       <p class="plan-price">₹0</p>
       <p>Everything on this page, on Android and iPhone. No limits, no ads, no account.</p>
-      <a class="btn btn-ink" href="#download">Get the app</a>
+      <a class="btn btn-ink magnetic" href="/download">Get the app</a>
     </article>
     <article class="plan plan-pro reveal">
       <p class="plan-name">Pro <span class="soon">Coming soon</span></p>
       <p class="plan-price small">Pricing soon</p>
       <p>Optional extras for people you share money with, billed on this website. Join the list to hear first.</p>
-      <a class="btn btn-ink" href="mailto:hello@nishitrk.tech?subject=Paisa%20Pulse%20Pro%20waitlist&body=Please%20tell%20me%20when%20Pro%20opens.">Tell me when it opens</a>
+      <a class="btn btn-ink magnetic" href="mailto:hello@nishitrk.tech?subject=Paisa%20Pulse%20Pro%20waitlist&body=Please%20tell%20me%20when%20Pro%20opens.">Tell me when it opens</a>
       <p class="fine">Opens an email to us. That's the whole list for now.</p>
     </article>
   </div>
 </section>
 
-<section class="faq wrap" id="faq">
-  <h2 class="display reveal">Questions</h2>
-  <details class="reveal"><summary>Is it really free?</summary><p>Yes. Everything listed here is free, with no ads and no limits. A Pro plan for shared extras will come later, and it will be optional.</p></details>
+<section class="faq wrap" id="faq" aria-labelledby="faq-h">
+  <h2 class="display reveal" id="faq-h">Questions</h2>
+  <details class="reveal"><summary>Is Paisa Pulse really free?</summary><p>Yes. Everything listed here is free, with no ads and no limits. A Pro plan for shared extras will come later, and it will be optional.</p></details>
   <details class="reveal"><summary>Where is my data stored?</summary><p>On your phone. Backups go to iCloud Drive or your phone's storage, encrypted with your password if you set one.</p></details>
   <details class="reveal"><summary>Does it read all my messages?</summary><p>Only messages that look like a debit or credit are kept, and only on your phone. OTPs, payment requests and due-date reminders are ignored. On iPhone, you choose which messages to pass along with a Shortcuts automation.</p></details>
-  <details class="reveal" id="faq-iphone"><summary>How do I get it on iPhone?</summary><p>The iPhone app is in early access and installed outside the App Store for now. The latest build is on the releases page; an App Store version is planned.</p></details>
+  <details class="reveal"><summary>Which banks and apps does it understand?</summary><p>Bank SMS from Axis, Bank of Baroda, HDFC, ICICI, SBI, Kotak and most other Indian banks; screenshots from Google Pay, PhonePe, Paytm, CRED and bank apps; and statements from Axis, Bank of Baroda, HDFC, ICICI and SBI. Other statements work through a column-matching step.</p></details>
+  <details class="reveal"><summary>Does it work offline?</summary><p>Yes. Reading messages, screenshots and statements all happens on the phone. Internet is only used for optional things: currency rates, merchant logos and splits shared with friends.</p></details>
+  <details class="reveal" id="faq-iphone"><summary>How do I get it on iPhone?</summary><p>The iPhone app is in early access and installed outside the App Store for now. The <a href="/download#iphone">download page</a> has the steps; an App Store version is planned.</p></details>
   <details class="reveal"><summary>Can I move between Android and iPhone?</summary><p>Yes. Both apps read and write the same backup file, so your data moves with you.</p></details>
 </section>
 </main>
@@ -230,11 +374,14 @@
 <footer class="footer">
   <div class="wrap footer-row">
     <span>© 2026 Paisa Pulse · Made in Bengaluru</span>
-    <span><a href="/privacy">Privacy Policy</a> · <a href="mailto:hello@nishitrk.tech">Contact</a> · <a href="https://github.com/PoRiFiRo123/paisa-pulse/releases/latest">Releases</a></span>
+    <span><a href="/download">Download</a> · <a href="/privacy">Privacy Policy</a> · <a href="mailto:hello@nishitrk.tech">Contact</a> · <a href="https://github.com/PoRiFiRo123/paisa-pulse/releases/latest">Releases</a></span>
   </div>
   <p class="wordmark" aria-hidden="true">paisa pulse</p>
 </footer>
 
+<script src="/js/site.js" defer></script>
+<script src="/js/data.js" defer></script>
+<script src="/js/parser.js" defer></script>
 <script src="/main.js" defer></script>
 </body>
 </html>

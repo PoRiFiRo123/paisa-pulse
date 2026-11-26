@@ -25,6 +25,15 @@ env:
   PAISA_RELEASE_REPO: ${{ github.repository }}
 
 jobs:
+  website:
+    # The website's live SMS demo runs a JavaScript port of BankAlerts; keep it in step with the apps' cases.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: node scripts/gen-website-data.mjs && git diff --exit-code website/js/data.js
+      - run: node --test scripts/website-parser.test.mjs
+
   cloud:
     # Accounts and sharing (Supabase): applies supabase/migrations and hands the project URL and public key
     # to both app builds. Needs the SUPABASE_ACCESS_TOKEN secret; without it the apps build without accounts.
