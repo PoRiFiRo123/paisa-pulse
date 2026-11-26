@@ -8,6 +8,26 @@
 - Many "free" money trackers read SMS, upload spending to a server and then sell loans or credit cards.
 - Typing every expense by hand stops working after a week or two.
 
+## What makes it different
+
+Paisa Pulse does the work of several kinds of app at once. Compared with what each kind usually offers (as of November 2026; individual apps differ):
+
+- SMS trackers read bank SMS on Android only, and many add ads or loan offers. Paisa Pulse captures bank alerts on Android and, through a Shortcuts automation, on iPhone too, with no ads and no account.
+- Bank-linking apps (Account Aggregator) pull your accounts into their service and often charge for extras. Paisa Pulse keeps your spending on your phone and needs no bank login.
+- Split apps often limit how many expenses you can add for free and charge for currency conversion. Paisa Pulse splits without limits, requests money over UPI with a QR code and a pay link, and prices trips with each card's forex markup.
+- Manual trackers make you type everything. Paisa Pulse fills in from SMS, payment screenshots and bank statements.
+
+Features we haven't seen in other Indian money apps:
+
+- Bank SMS capture on iPhone (Shortcuts automation), not just Android.
+- Share a GPay, PhonePe, Paytm, CRED or bank-app payment screenshot and it becomes a transaction, read on the phone.
+- Trips priced with your own card's forex markup plus GST, and kept out of monthly budgets if you like.
+- Statement import (password-protected PDF, Excel, CSV) with no server, one-tap Undo and duplicate detection that works across phones.
+- One backup file, optionally encrypted, that opens on both Android and iPhone.
+- Auto clean-up that deletes old transactions but rolls them into opening balances.
+- Voice entry that understands Indian English ("one fifty", "2 lakh") on Android.
+- A month-end forecast from balances, upcoming bills and usual spending.
+
 ## How it works
 
 1. Capture without typing. On Android, bank SMS and payment notifications become drafts you confirm with one tap. On iPhone, a Shortcuts "Message" automation passes bank messages to the app. Payment screenshots and PDF/CSV/Excel statements can be imported too. Duplicates are skipped using the UPI reference number.
@@ -59,6 +79,8 @@
 - Download page: https://paisa-pulse-sigma.vercel.app/download
 
 ## FAQ
+
+**How is it different from other expense trackers?** It does the work of several apps: automatic capture on Android and iPhone, payment screenshots, statement import, splits with UPI requests, trips priced with your card's forex markup, loans, card bills and net worth. It's free with no ads or limits, needs no account, and your spending stays on your phone.
 
 **Is Paisa Pulse really free?** Yes. Everything listed here is free, with no ads and no limits. A Pro plan for shared extras will come later, and it will be optional.
 

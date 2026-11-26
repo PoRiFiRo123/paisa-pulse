@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Paisa Pulse: free, private expense tracker for India (Android & iPhone)</title>
-<meta name="description" content="Paisa Pulse is a free, private money tracker for India. It reads bank SMS, UPI screenshots and statements on your phone, with budgets, bills, splits and net worth. No sign-up, no ads, no loans.">
+<meta name="description" content="Paisa Pulse is a free, private money app for India: bank SMS capture on Android and iPhone, payment screenshots, statement import, UPI splits, trips with real forex cost, loans, card bills and net worth. No sign-up, no ads.">
 <link rel="canonical" href="https://paisa-pulse-sigma.vercel.app/">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta property="og:type" content="website">
@@ -58,7 +58,7 @@
       "@type": "MobileApplication",
       "@id": "https://paisa-pulse-sigma.vercel.app/#app",
       "name": "Paisa Pulse",
-      "description": "A free, private expense and money tracker for India. Reads bank SMS, UPI payment screenshots and bank statements on the phone, with budgets, bills, splits, trips, net worth and monthly reports. No sign-up, no ads, no loans.",
+      "description": "A free, private money app for India that does far more than track expenses: bank SMS capture on Android and iPhone, payment screenshots, statement import, splits with UPI requests, trips priced with your card's forex markup, loans, card bills, net worth and monthly reports. No sign-up, no ads, no loans; data stays on the phone.",
       "applicationCategory": "FinanceApplication",
       "operatingSystem": "Android, iOS",
       "inLanguage": "en-IN",
@@ -80,7 +80,11 @@
         "Monthly and weekly budgets",
         "Card bills and recurring bills with reminders",
         "Split expenses with friends, UPI QR requests and settle-up",
-        "Trips in any currency with card forex markup",
+        "Trips in any currency with each card's forex markup",
+        "Loans lent and borrowed with reminders",
+        "Month-end forecast",
+        "One encrypted backup file for Android and iPhone",
+        "Voice entry in Indian English (Android)",
         "Net worth and monthly PDF reports",
         "Home Screen and Lock Screen widgets",
         "Encrypted backups; data stays on the phone"
@@ -91,6 +95,7 @@
       "@type": "FAQPage",
       "mainEntity": [
         { "@type": "Question", "name": "Is Paisa Pulse really free?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Everything listed here is free, with no ads and no limits. A Pro plan for shared extras will come later, and it will be optional." } },
+        { "@type": "Question", "name": "How is it different from other expense trackers?", "acceptedAnswer": { "@type": "Answer", "text": "It does the work of several apps: automatic capture on Android and iPhone, payment screenshots, statement import, splits with UPI requests, trips priced with your card's forex markup, loans, card bills and net worth. It's free with no ads or limits, needs no account, and your spending stays on your phone." } },
         { "@type": "Question", "name": "Where is my data stored?", "acceptedAnswer": { "@type": "Answer", "text": "On your phone. Backups go to iCloud Drive or your phone's storage, encrypted with your password if you set one." } },
         { "@type": "Question", "name": "Does it read all my messages?", "acceptedAnswer": { "@type": "Answer", "text": "Only messages that look like a debit or credit are kept, and only on your phone. OTPs, payment requests and due-date reminders are ignored. On iPhone, you choose which messages to pass along with a Shortcuts automation." } },
         { "@type": "Question", "name": "Which banks and apps does it understand?", "acceptedAnswer": { "@type": "Answer", "text": "Bank SMS from Axis, Bank of Baroda, HDFC, ICICI, SBI, Kotak and most other Indian banks; screenshots from Google Pay, PhonePe, Paytm, CRED and bank apps; and statements from Axis, Bank of Baroda, HDFC, ICICI and SBI. Other statements work through a column-matching step." } },
@@ -115,7 +120,7 @@
     <a href="#try">Try it</a>
     <a href="#how">How it works</a>
     <a href="#screens">The app</a>
-    <a href="#tour">Features</a>
+    <a href="#only">Why us</a>
     <a href="#privacy">Privacy</a>
     <a href="#pricing">Pricing</a>
     <a class="nav-cta btn-ink" href="/download">Get the app</a>
@@ -131,12 +136,12 @@
 <main id="main">
 <section class="hero" id="top">
   <div class="hero-copy">
-    <p class="eyebrow reveal-load" style="--d:0">Free · No sign-up · Made in Bengaluru</p>
+    <p class="eyebrow reveal-load" style="--d:0">Tracker · Splits · Trips · Bills · Net worth</p>
     <h1 class="headline" aria-label="Every rupee, accounted for.">
       <span class="w" style="--d:1">Every</span> <span class="w" style="--d:2">rupee,</span><br>
       <em class="w accent-word" style="--d:3">accounted for.<svg class="scribble" viewBox="0 0 300 20" preserveAspectRatio="none" aria-hidden="true"><path d="M3 14 C 60 4, 120 18, 180 9 S 270 6, 297 11"/></svg></em>
     </h1>
-    <p class="lede reveal-load" style="--d:5">Paisa Pulse is a free expense tracker for India. It turns bank messages, UPI screenshots and statements into a calm, clear picture of your money. It all happens on your phone, so nobody else ever sees what you spend.</p>
+    <p class="lede reveal-load" style="--d:5">Paisa Pulse is far more than an expense tracker. It reads your bank SMS and payment screenshots, splits bills over UPI, prices trips with your card's real forex cost, and keeps card bills, loans and net worth in one place. Free, and it all stays on your phone.</p>
     <div class="cta reveal-load" style="--d:6" id="download">
       <a class="btn btn-ink magnetic" href="/download" data-download>
         <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M5 21h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
@@ -186,7 +191,7 @@
   <div class="stat reveal"><b><span class="count" data-from="499" data-to="0" data-prefix="₹">₹0</span></b><span>to use, with no ads</span></div>
   <div class="stat reveal"><b><span class="count" data-from="524288" data-to="0">0</span> bytes</b><span>of your spending uploaded</span></div>
   <div class="stat reveal"><b><span class="count" data-to="69">69</span></b><span>Indian merchants recognised by name</span></div>
-  <div class="stat reveal"><b><span class="count" data-to="2">2</span> phones</b><span>Android and iPhone, one backup file</span></div>
+  <div class="stat reveal"><b><span class="count" data-to="26">26</span> features</b><span>all free, on Android and iPhone</span></div>
 </section>
 
 <section class="problem wrap" aria-labelledby="problem-h">
@@ -206,6 +211,66 @@
       <span class="num">03</span>
       <h3>Typing it all fizzles out</h3>
       <p>Logging every chai and auto works for a week. Then the gaps grow and the numbers stop meaning anything.</p>
+    </article>
+  </div>
+</section>
+
+<section class="only wrap" id="only" aria-labelledby="only-h">
+  <p class="eyebrow">Only in Paisa Pulse</p>
+  <h2 class="display reveal" id="only-h">Things other money apps <em>don't do.</em></h2>
+  <div class="bento">
+    <article class="bx bx-lg bx-ink reveal">
+      <span class="bx-tag">iPhone too</span>
+      <h3>Bank SMS, captured on iPhone as well</h3>
+      <p>SMS trackers only work on Android. Paisa Pulse reads alerts on Android and uses a Shortcuts automation on iPhone, so both phones fill in by themselves.</p>
+      <div class="bx-sms"><b>AX-AXISBK</b>INR 450.00 debited from A/c XX4321 · UPI/SWIGGY<span class="bx-ok">✓ Added as Swiggy, Food</span></div>
+    </article>
+    <article class="bx reveal">
+      <span class="bx-tag">Screenshots</span>
+      <h3>Share a payment screenshot</h3>
+      <p>GPay, PhonePe, Paytm, CRED or your bank app: share the screenshot and it becomes a transaction, read on the phone. Failed payments are flagged.</p>
+    </article>
+    <article class="bx bx-gold reveal">
+      <span class="bx-tag">Trips</span>
+      <h3>Your card's real forex cost</h3>
+      <p>Spend in any currency. Each card keeps its own markup, so €42.50 shows as what it really costs, GST included.</p>
+      <div class="bx-fx"><b>€42.50</b><span>→</span><b>₹4,091</b></div>
+    </article>
+    <article class="bx reveal">
+      <span class="bx-tag">Splits</span>
+      <h3>Splits with no daily limit</h3>
+      <p>Equal, by amount or by shares. Request over UPI with a QR code and a pay link, then tick "Did it go through?".</p>
+    </article>
+    <article class="bx bx-lg bx-green reveal">
+      <span class="bx-tag">Statements</span>
+      <h3>Months of statements, imported without a server</h3>
+      <p>Password-protected PDFs, Excel and CSV from Axis, BoB, HDFC, ICICI and SBI. Card bills and ATM withdrawals become transfers, duplicates are skipped, and one Undo takes it all back.</p>
+      <div class="bx-stats"><span><b>42</b>found</span><span><b>3</b>duplicates skipped</span><span><b>1</b>tap to undo</span></div>
+    </article>
+    <article class="bx reveal">
+      <span class="bx-tag">Switch phones</span>
+      <h3>One backup, both platforms</h3>
+      <p>The same backup file, password-encrypted if you like, opens on Android and iPhone.</p>
+    </article>
+    <article class="bx reveal">
+      <span class="bx-tag">Forecast</span>
+      <h3>What you'll have left at month end</h3>
+      <p>Balances, upcoming bills and your usual spending, worked into one number.</p>
+    </article>
+    <article class="bx reveal">
+      <span class="bx-tag">Voice · Android</span>
+      <h3>Talks like you do</h3>
+      <p>"Spent one fifty on chai and 2 lakh on the car" becomes two entries.</p>
+    </article>
+    <article class="bx reveal">
+      <span class="bx-tag">Loans</span>
+      <h3>Money you lent, kept apart</h3>
+      <p>Lent or borrowed, with part repayments and a reminder on the due date. Separate from bill splits.</p>
+    </article>
+    <article class="bx reveal">
+      <span class="bx-tag">Clean-up</span>
+      <h3>Delete old data, keep balances right</h3>
+      <p>Clear out old transactions monthly, yearly or whenever. They're rolled into opening balances, after a backup.</p>
     </article>
   </div>
 </section>
@@ -379,22 +444,67 @@
   <div class="wrap"><div class="rail-progress" aria-hidden="true"><i id="tourProgress"></i></div></div>
 </section>
 
+<section class="compare" id="compare" aria-labelledby="compare-h">
+  <div class="wrap">
+    <p class="eyebrow">How it compares</p>
+    <h2 class="display reveal" id="compare-h">One app instead of <em>four.</em></h2>
+    <p class="compare-lede reveal">What each kind of app usually offers, next to Paisa Pulse.</p>
+    <p class="compare-hint" aria-hidden="true">Swipe the table sideways →</p>
+  </div>
+  <div class="table-scroll" tabindex="0" role="region" aria-label="Comparison table, scroll sideways for more">
+    <table class="ctable">
+      <thead><tr><th scope="col"><span class="sr">Feature</span></th><th scope="col" class="us">Paisa Pulse</th><th scope="col">SMS trackers</th><th scope="col">Bank-linking apps</th><th scope="col">Split apps</th><th scope="col">Manual trackers</th></tr></thead>
+      <tbody>
+      <tr><th scope="row">Free, with no ads or limits</th><td class="y" aria-label="Yes">✓</td><td class="p">Ads, loan offers</td><td class="p">Paid extras</td><td class="p">Daily limits</td><td class="p">Ads or Pro</td></tr>
+      <tr><th scope="row">Your spending stays on your phone</th><td class="y" aria-label="Yes">✓</td><td class="n" aria-label="No">✗</td><td class="n" aria-label="No">✗</td><td class="n" aria-label="No">✗</td><td class="y" aria-label="Yes">✓</td></tr>
+      <tr><th scope="row">No account or bank login needed</th><td class="y" aria-label="Yes">✓</td><td class="p">Account</td><td class="n" aria-label="No">✗</td><td class="n" aria-label="No">✗</td><td class="y" aria-label="Yes">✓</td></tr>
+      <tr><th scope="row">Fills in automatically on Android</th><td class="y" aria-label="Yes">✓</td><td class="y" aria-label="Yes">✓</td><td class="y" aria-label="Yes">✓</td><td class="n" aria-label="No">✗</td><td class="n" aria-label="No">✗</td></tr>
+      <tr><th scope="row">Fills in automatically on iPhone</th><td class="y" aria-label="Yes">✓</td><td class="n" aria-label="No">✗</td><td class="y" aria-label="Yes">✓</td><td class="n" aria-label="No">✗</td><td class="n" aria-label="No">✗</td></tr>
+      <tr><th scope="row">Payment screenshots → transactions</th><td class="y" aria-label="Yes">✓</td><td class="n" aria-label="No">✗</td><td class="n" aria-label="No">✗</td><td class="n" aria-label="No">✗</td><td class="n" aria-label="No">✗</td></tr>
+      <tr><th scope="row">PDF, Excel and CSV statement import</th><td class="y" aria-label="Yes">✓</td><td class="n" aria-label="No">✗</td><td class="p">Not needed</td><td class="n" aria-label="No">✗</td><td class="p">Some, CSV</td></tr>
+      <tr><th scope="row">Split bills, request over UPI</th><td class="y" aria-label="Yes">✓</td><td class="n" aria-label="No">✗</td><td class="n" aria-label="No">✗</td><td class="p">Limited when free</td><td class="n" aria-label="No">✗</td></tr>
+      <tr><th scope="row">Trips priced with your card's markup</th><td class="y" aria-label="Yes">✓</td><td class="n" aria-label="No">✗</td><td class="n" aria-label="No">✗</td><td class="p">Conversion often paid</td><td class="n" aria-label="No">✗</td></tr>
+      <tr><th scope="row">Loans you lent and borrowed</th><td class="y" aria-label="Yes">✓</td><td class="n" aria-label="No">✗</td><td class="p">Bank loans</td><td class="p">Mixed into splits</td><td class="p">Some</td></tr>
+      <tr><th scope="row">Card bills from your statement</th><td class="y" aria-label="Yes">✓</td><td class="p">Some</td><td class="y" aria-label="Yes">✓</td><td class="n" aria-label="No">✗</td><td class="n" aria-label="No">✗</td></tr>
+      <tr><th scope="row">Works offline</th><td class="y" aria-label="Yes">✓</td><td class="p">Partly</td><td class="n" aria-label="No">✗</td><td class="p">Partly</td><td class="y" aria-label="Yes">✓</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="wrap compare-note">Typical of each kind of app as of November 2026; individual apps differ. "Bank-linking apps" means apps that pull your accounts through the Account Aggregator framework.</p>
+</section>
+
 <section class="index wrap" id="index" aria-labelledby="index-h">
   <div class="index-head">
-    <h2 class="display reveal" id="index-h">The index</h2>
-    <p class="reveal">Everything in the app today, on Android and iPhone.</p>
+    <h2 class="display reveal" id="index-h">Everything in it</h2>
+    <p class="reveal">26 features today, free on Android and iPhone.</p>
   </div>
   <ol class="index-list">
     <li class="reveal"><span class="ix">01</span><b>Auto-capture</b><span class="ixd">Bank SMS and payment notifications on Android; a Shortcuts automation on iPhone.</span></li>
     <li class="reveal"><span class="ix">02</span><b>Screenshots</b><span class="ixd">GPay, PhonePe, Paytm, CRED and bank apps, read on the device. Share straight from the app.</span></li>
-    <li class="reveal"><span class="ix">03</span><b>Statements</b><span class="ixd">PDF, CSV or Excel from Axis, BoB, HDFC, ICICI and SBI.</span></li>
-    <li class="reveal"><span class="ix">04</span><b>Budgets</b><span class="ixd">Monthly or weekly, overall or per category, with alerts at 80% and 100%.</span></li>
-    <li class="reveal"><span class="ix">05</span><b>Bills</b><span class="ixd">Card dues and recurring bills on one timeline, with reminders.</span></li>
-    <li class="reveal"><span class="ix">06</span><b>Splits</b><span class="ixd">Equal, by amount or by shares. Request with a UPI QR and settle up.</span></li>
-    <li class="reveal"><span class="ix">07</span><b>Trips</b><span class="ixd">Any currency, shown in rupees with your card's forex markup.</span></li>
-    <li class="reveal"><span class="ix">08</span><b>Net worth</b><span class="ixd">What you have and owe, month after month.</span></li>
-    <li class="reveal"><span class="ix">09</span><b>Reports</b><span class="ixd">A monthly recap and a full PDF report.</span></li>
-    <li class="reveal"><span class="ix">10</span><b>Widgets</b><span class="ixd">Home and Lock Screen widgets, Siri, and a Quick Settings tile.</span></li>
+    <li class="reveal"><span class="ix">03</span><b>Statements</b><span class="ixd">PDF (even password-protected), Excel or CSV from Axis, BoB, HDFC, ICICI and SBI.</span></li>
+    <li class="reveal"><span class="ix">04</span><b>Voice</b><span class="ixd">Say what you spent in Indian English (Android).</span></li>
+    <li class="reveal"><span class="ix">05</span><b>Quick Add</b><span class="ixd">A keypad that does sums, templates, and the account and payment method in one sheet.</span></li>
+    <li class="reveal"><span class="ix">06</span><b>Budgets</b><span class="ixd">Monthly or weekly, overall or per category, with alerts at 80% and 100%.</span></li>
+    <li class="reveal"><span class="ix">07</span><b>Bills</b><span class="ixd">Card dues and recurring bills on one timeline, with reminders.</span></li>
+    <li class="reveal"><span class="ix">08</span><b>Recurring &amp; subscriptions</b><span class="ixd">Repeating payments added for you; subscriptions found from your history.</span></li>
+    <li class="reveal"><span class="ix">09</span><b>Splits &amp; groups</b><span class="ixd">Equal, by amount or by shares. Request with a UPI QR and settle up.</span></li>
+    <li class="reveal"><span class="ix">10</span><b>Loans</b><span class="ixd">Money lent and borrowed, part repayments and due-date reminders.</span></li>
+    <li class="reveal"><span class="ix">11</span><b>Trips &amp; currencies</b><span class="ixd">Any currency, your card's forex markup, a converter, trip budgets.</span></li>
+    <li class="reveal"><span class="ix">12</span><b>Payment cards</b><span class="ixd">Scan a card to save its network and last 4 digits only. Never the full number.</span></li>
+    <li class="reveal"><span class="ix">13</span><b>Net worth</b><span class="ixd">What you have and owe, investments at their latest value, up to 2 years back.</span></li>
+    <li class="reveal"><span class="ix">14</span><b>Insights &amp; calendar</b><span class="ixd">Where the money went by category, month, quarter or year, and a spending calendar.</span></li>
+    <li class="reveal"><span class="ix">15</span><b>Forecast</b><span class="ixd">What you'll likely have left at month end.</span></li>
+    <li class="reveal"><span class="ix">16</span><b>Reports</b><span class="ixd">A monthly recap of what changed and a full PDF report.</span></li>
+    <li class="reveal"><span class="ix">17</span><b>Goals</b><span class="ixd">Save towards something and celebrate when you get there.</span></li>
+    <li class="reveal"><span class="ix">18</span><b>Search, tags &amp; filters</b><span class="ixd">Find anything, tag it, save the filters you use.</span></li>
+    <li class="reveal"><span class="ix">19</span><b>Bulk edit &amp; Undo</b><span class="ixd">Change many at once; undo deletes, imports and bulk changes.</span></li>
+    <li class="reveal"><span class="ix">20</span><b>Merchant badges</b><span class="ixd">69 Indian brands recognised, with optional logos.</span></li>
+    <li class="reveal"><span class="ix">21</span><b>Widgets &amp; shortcuts</b><span class="ixd">Home and Lock Screen widgets, Siri, Quick Settings tile, app icon shortcuts.</span></li>
+    <li class="reveal"><span class="ix">22</span><b>Make it yours</b><span class="ixd">Themes, any accent colour, 11 app icons, Home sections in your order.</span></li>
+    <li class="reveal"><span class="ix">23</span><b>Privacy</b><span class="ixd">App Lock, hidden amounts, a covered screen in the app switcher.</span></li>
+    <li class="reveal"><span class="ix">24</span><b>Backups</b><span class="ixd">Daily, 14 kept, optionally encrypted; one file for Android and iPhone.</span></li>
+    <li class="reveal"><span class="ix">25</span><b>Clean-up</b><span class="ixd">Delete old transactions on a schedule without breaking balances, or delete everything.</span></li>
+    <li class="reveal"><span class="ix">26</span><b>Any main currency</b><span class="ixd">Use rupees, or switch your main currency and convert everything.</span></li>
   </ol>
 </section>
 
@@ -445,6 +555,7 @@
 <section class="faq wrap" id="faq" aria-labelledby="faq-h">
   <h2 class="display reveal" id="faq-h">Questions</h2>
   <details class="reveal"><summary>Is Paisa Pulse really free?</summary><p>Yes. Everything listed here is free, with no ads and no limits. A Pro plan for shared extras will come later, and it will be optional.</p></details>
+  <details class="reveal"><summary>How is it different from other expense trackers?</summary><p>It does the work of several apps: automatic capture on Android and iPhone, payment screenshots, statement import, splits with UPI requests, trips priced with your card's forex markup, loans, card bills and net worth. It's free with no ads or limits, needs no account, and your spending stays on your phone.</p></details>
   <details class="reveal"><summary>Where is my data stored?</summary><p>On your phone. Backups go to iCloud Drive or your phone's storage, encrypted with your password if you set one.</p></details>
   <details class="reveal"><summary>Does it read all my messages?</summary><p>Only messages that look like a debit or credit are kept, and only on your phone. OTPs, payment requests and due-date reminders are ignored. On iPhone, you choose which messages to pass along with a Shortcuts automation.</p></details>
   <details class="reveal"><summary>Which banks and apps does it understand?</summary><p>Bank SMS from Axis, Bank of Baroda, HDFC, ICICI, SBI, Kotak and most other Indian banks; screenshots from Google Pay, PhonePe, Paytm, CRED and bank apps; and statements from Axis, Bank of Baroda, HDFC, ICICI and SBI. Other statements work through a column-matching step.</p></details>
