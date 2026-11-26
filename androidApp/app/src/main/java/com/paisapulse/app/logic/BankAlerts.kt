@@ -27,11 +27,12 @@ object BankAlerts {
     ri("info[-:\\s]+(?:upi/(?:p2[ma]/)?\\d+/)?([a-z0-9][a-z0-9 .&'_-]{1,40}?)(?:/|\\s+not you|\\.\\s|\\.$|$)"), // Axis
     ri("trf to\\s+([a-z0-9][a-z0-9 .&'_-]{1,40}?)\\s+(?:ref\\w*|on)\\b"),                                      // SBI
     ri(";\\s*([a-z0-9][a-z0-9 .&'_-]{1,40}?)\\s+credited\\b"),                                             // ICICI
+    ri("\\btowards\\s+([a-z][a-z0-9 .&'_-]{1,40}?)\\s+(?:for|on|ref\\w*|umn|via|vide|dt|date)\\b"),             // BoB, UPI mandates
     ri("\\bto[:\\s]+(?:vpa\\s+)?([a-z0-9][a-z0-9 .&'@_-]{1,40}?)\\s+(?:on|ref\\w*|via|upi|from|dt|date)\\b"),   // HDFC, Kotak
     ri("\\bat\\s+([a-z0-9][a-z0-9 .&'*_-]{1,40}?)(?:\\s+on\\b|\\s+avl|\\.\\s|,|\\.$|$)"),                   // card spends
     ri("\\b(?:from|by)\\s+([a-z][a-z0-9 .&'_-]{1,40}?)(?:\\s+on\\b|\\s+ref\\w*|\\s+upi|\\.\\s|\\.$|$)"),         // income
   )
-  private val junkPayee = ri("^(upi|neft|imps|rtgs|your|a/c|acct|account|card|bank|vpa|you|the|net ?banking|atm|pos)\\b|^\\d+$")
+  private val junkPayee = ri("^(upi|neft|imps|rtgs|your|a/c|acct|account|card|bank|vpa|you|the|net ?banking|atm|pos)\\b|^\\d+$|^[0-9a-f]{12,}$|\\d{8,}")
 
   fun amount(text: String): Long? {
     for (m in money.findAll(text)) {
@@ -54,7 +55,8 @@ object BankAlerts {
       if (raw.length < 2 || junkPayee.containsMatchIn(raw)) continue
       return if ('@' in raw) raw.substringBefore('@') else raw
     }
-    return vpa.find(text)?.groupValues?.get(1)?.substringBefore('@')
+    // A VPA's name part, unless it's an ID (UPI mandate numbers look like 01a2079d…@yesg).
+    return vpa.find(text)?.groupValues?.get(1)?.substringBefore('@')?.takeUnless { junkPayee.containsMatchIn(it) }
   }
 
   /** Stable id for this alert, so the same SMS (or its notification copy) is only ever added once. */

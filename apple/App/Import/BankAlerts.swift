@@ -31,11 +31,12 @@ enum BankAlerts {
     Rx("info[-:\\s]+(?:upi/(?:p2[ma]/)?\\d+/)?([a-z0-9][a-z0-9 .&'_-]{1,40}?)(?:/|\\s+not you|\\.\\s|\\.$|$)"), // Axis
     Rx("trf to\\s+([a-z0-9][a-z0-9 .&'_-]{1,40}?)\\s+(?:ref\\w*|on)\\b"),                                    // SBI
     Rx(";\\s*([a-z0-9][a-z0-9 .&'_-]{1,40}?)\\s+credited\\b"),                                             // ICICI
+    Rx("\\btowards\\s+([a-z][a-z0-9 .&'_-]{1,40}?)\\s+(?:for|on|ref\\w*|umn|via|vide|dt|date)\\b"),             // BoB, UPI mandates
     Rx("\\bto[:\\s]+(?:vpa\\s+)?([a-z0-9][a-z0-9 .&'@_-]{1,40}?)\\s+(?:on|ref\\w*|via|upi|from|dt|date)\\b"), // HDFC, Kotak
     Rx("\\bat\\s+([a-z0-9][a-z0-9 .&'*_-]{1,40}?)(?:\\s+on\\b|\\s+avl|\\.\\s|,|\\.$|$)"),                   // card spends
     Rx("\\b(?:from|by)\\s+([a-z][a-z0-9 .&'_-]{1,40}?)(?:\\s+on\\b|\\s+ref\\w*|\\s+upi|\\.\\s|\\.$|$)"),     // income
   ]
-  private static let junkPayee = Rx("^(upi|neft|imps|rtgs|your|a/c|acct|account|card|bank|vpa|you|the|net ?banking|atm|pos)\\b|^\\d+$")
+  private static let junkPayee = Rx("^(upi|neft|imps|rtgs|your|a/c|acct|account|card|bank|vpa|you|the|net ?banking|atm|pos)\\b|^\\d+$|^[0-9a-f]{12,}$|\\d{8,}")
 
   static func amount(_ text: String) -> Int? {
     let ns = text as NSString
@@ -63,7 +64,9 @@ enum BankAlerts {
       if raw.count < 2 || junkPayee.test(raw) { continue }
       return raw.contains("@") ? String(raw.split(separator: "@")[0]) : raw
     }
-    return vpa.first(text).map { String($0[1].split(separator: "@")[0]) }
+    // A VPA's name part, unless it's an ID (UPI mandate numbers look like 01a2079d…@yesg).
+    guard let name = vpa.first(text).map({ String($0[1].split(separator: "@")[0]) }), !junkPayee.test(name) else { return nil }
+    return name
   }
 
   /// Java's String.hashCode, so a key looks the same on both apps.

@@ -56,6 +56,14 @@ final class BankAlertsTests: XCTestCase {
     XCTAssertNil(p("Rs 499.00 will be debited from your A/c XX4321 on 28-11-26 for Netflix e-mandate."))
     XCTAssertNil(p("Transaction of Rs 450.00 failed. Amount will be refunded."))
   }
+  func testBobMandateDebit() {
+    let d = p("Your A/c XX7556 is debited towards Mahanadi Coalfields for Rs. 14960.00 on 2026-11-26 06:13:43 AM UMN 01a2079d9c0470e2abf86e265b4a551c@yesg - Bank Of Baroda")!
+    XCTAssertEqual(d.amount, 1_496_000); XCTAssertEqual(d.type, .expense); XCTAssertEqual(d.accountId, "bob"); XCTAssertEqual(d.payee, "Mahanadi Coalfields")
+    XCTAssertEqual(PaymentMethod.fromText(d.source), .autoDebit)
+  }
+  func testIdIsNotAPayee() {
+    XCTAssertNil(BankAlerts.payee("Rs 50.00 debited from A/c XX4321 UMN 01a2079d9c0470e2abf86e265b4a551c@yesg"))
+  }
   func testSameAlertSameKey() {
     let a = "Rs 99.00 debited from A/c XX4321. Info: SPOTIFY"
     XCTAssertEqual(BankAlerts.key(a, amount: 9_900), BankAlerts.key(a, amount: 9_900))

@@ -42,7 +42,7 @@ enum class PaymentMethod(val id: String, val label: String, val icon: String) {
     fun fromText(text: String): PaymentMethod? {
       val t = text.lowercase()
       return when {
-        Regex("\\b(nach|ecs|mandate|autopay|auto debit|auto-debit|standing instruction|\\bsi\\b)").containsMatchIn(t) -> AutoDebit
+        Regex("\\b(nach|ecs|mandate|autopay|auto debit|auto-debit|standing instruction|\\bsi\\b|\\bumn\\b)").containsMatchIn(t) -> AutoDebit
         Regex("\\brtgs\\b").containsMatchIn(t) -> Rtgs
         Regex("\\bneft\\b").containsMatchIn(t) -> Neft
         Regex("\\bimps\\b").containsMatchIn(t) -> Imps

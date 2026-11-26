@@ -117,7 +117,7 @@
       <div class="draft-card t-${d.type}">
         <div class="dc-top">
           <b class="mono-badge" style="background:${esc(color)}">${esc(mono)}</b>
-          <span class="dc-name">${esc(name)}<small>${esc(typeLabel[d.type])}</small></span>
+          <span class="dc-name"><b title="${esc(name)}">${esc(name)}</b><small>${esc(typeLabel[d.type])}</small></span>
           <em class="dc-amt">₹<span id="dcAmt">0</span></em>
         </div>
         <dl class="dc-rows">${rows.map(([k, v], i) => `<div style="--i:${i}"><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
@@ -140,6 +140,22 @@
     if (r.draft) renderDraft(r.draft); else renderSkip(r.skipped);
   }
   if (input) {
+    // Tapping the box on a phone: once the keyboard is up, park the box just under the top bar so it and the keyboard both show.
+    const vv = window.visualViewport;
+    const park = () => {
+      const nav = document.querySelector('.nav');
+      const top = (nav ? nav.getBoundingClientRect().bottom : 0) + 10;
+      const label = input.previousElementSibling || input;
+      const y = label.getBoundingClientRect().top + scrollY - top;
+      scrollTo({ top: Math.max(0, y), behavior: reduce ? 'auto' : 'smooth' });
+    };
+    input.addEventListener('focus', () => {
+      if (!matchMedia('(pointer: coarse)').matches) return;
+      let done = false;
+      const once = () => { if (done) return; done = true; vv && vv.removeEventListener('resize', once); setTimeout(park, 60); };
+      if (vv) vv.addEventListener('resize', once);
+      setTimeout(once, 450); // in case the keyboard was already open
+    });
     let t;
     input.addEventListener('input', () => { clearTimeout(t); t = setTimeout(run, 180); });
     document.querySelectorAll('[data-sample]').forEach((b) => b.addEventListener('click', async () => {

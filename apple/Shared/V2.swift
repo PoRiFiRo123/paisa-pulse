@@ -60,7 +60,7 @@ enum PaymentMethod: String, CaseIterable, Identifiable {
   static func fromText(_ text: String) -> PaymentMethod? {
     let t = text.lowercased()
     func has(_ p: String) -> Bool { t.range(of: p, options: .regularExpression) != nil }
-    if has("\\b(nach|ecs|mandate|autopay|auto debit|auto-debit|standing instruction|\\bsi\\b)") { return .autoDebit }
+    if has("\\b(nach|ecs|mandate|autopay|auto debit|auto-debit|standing instruction|\\bsi\\b|\\bumn\\b)") { return .autoDebit }
     if has("\\brtgs\\b") { return .rtgs }
     if has("\\bneft\\b") { return .neft }
     if has("\\bimps\\b") { return .imps }
