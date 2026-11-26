@@ -109,10 +109,9 @@ fun shareBitmap(ctx: Context, bmp: Bitmap, title: String, name: String = "upi-qr
   val db by Store.db.collectAsState()
   var s by remember { mutableStateOf(setup) }
   fun set(n: SplitSetup) { s = n; onChange(n) }
-  var addingName by remember { mutableStateOf(false) }
+  var addingPeople by remember { mutableStateOf(false) }
   var savingGroup by remember { mutableStateOf(false) }
   var payerMenu by remember { mutableStateOf(false) }
-  val pickContact = rememberContactPicker { name, phone -> val id = addFriendFromContact(name, phone); if (id !in s.people) set(s.copy(people = s.people + id)) }
   val used = db.splitEntries.groupingBy { it.friendId }.eachCount()
   val ordered = db.friends.sortedWith(compareByDescending<Friend> { used[it.id] ?: 0 }.thenBy { it.name })
   val r = SplitMath.compute(total, s)
@@ -144,11 +143,12 @@ fun shareBitmap(ctx: Context, bmp: Bitmap, title: String, name: String = "upi-qr
                 Spacer(Modifier.width(10.dp)); Avatar(f.name, 30.dp)
               }
             }, value = if (on && total > 0) Money.format(r.shares[f.id] ?: 0) else null,
-              onClick = { set(if (on) s.copy(people = s.people - f.id, payer = if (s.payer == f.id) null else s.payer) else s.copy(people = s.people + f.id)) })
+              onClick = { set(if (on) s.copy(people = s.people - f.id, payer = if (s.payer == f.id) null else s.payer) else s.copy(people = s.people + f.id)) }) {
+              if (f.userId != null) Icon(Sym.of("person.crop.circle.badge.checkmark"), "On Paisa Pulse", tint = C.secondary, modifier = Modifier.padding(start = 6.dp).size(18.dp))
+            }
           }
           if (ordered.isNotEmpty()) Divider()
-          PRow("Add from Contacts", titleColor = C.accent, leading = { Icon2("person.badge.plus") }, onClick = pickContact)
-          Divider(56.dp); PRow("Add by Name", titleColor = C.accent, leading = { Icon2("pencil") }, onClick = { addingName = true })
+          PRow("Add People", titleColor = C.accent, leading = { Icon2("person.badge.plus") }, onClick = { addingPeople = true })
         }
         if (!s.isEmpty) {
           group {
@@ -196,9 +196,7 @@ fun shareBitmap(ctx: Context, bmp: Bitmap, title: String, name: String = "upi-qr
       }
     }
   }
-  if (addingName) NameDialog("Add person", "Name", onDismiss = { addingName = false }) { n ->
-    val f = Friend(name = n); Store.update { it.copy(friends = it.friends + f) }; set(s.copy(people = s.people + f.id)); addingName = false
-  }
+  if (addingPeople) AddPeopleDialog(chosen = s.people.toSet(), onAdd = { f, _ -> if (f.id !in s.people) set(s.copy(people = s.people + f.id)) }, onDismiss = { addingPeople = false })
   if (savingGroup) NameDialog("Name this group", "Flatmates, Goa trip…", onDismiss = { savingGroup = false }) { n ->
     val g = SplitGroup(name = n, memberIds = s.people); Store.update { it.copy(splitGroups = it.splitGroups + g) }; set(s.copy(groupId = g.id)); savingGroup = false
   }
@@ -280,11 +278,10 @@ fun shareBitmap(ctx: Context, bmp: Bitmap, title: String, name: String = "upi-qr
   val db by Store.db.collectAsState()
   val b = Splits.balances(db.splitEntries)
   var adding by remember { mutableStateOf(false) }
-  val pickContact = rememberContactPicker { name, phone -> addFriendFromContact(name, phone) }
   var upi by remember { mutableStateOf(Prefs.myUpiId) }
   var me by remember { mutableStateOf(Prefs.myName) }
   DisposableEffect(Unit) { onDispose { Prefs.set("myUpiId", upi.trim()); Prefs.set("myName", me.trim()) } }
-  PScreen("Splits", back = true, actions = { GlassIcon("person.badge.plus", "Add person") { adding = true } }) {
+  PScreen("Splits", back = true, actions = { GlassIcon("person.badge.plus", "Add people") { adding = true } }) {
     group(footer = "Split an expense from Quick Add › Split. Your share is what counts in your spending.") {
       SummaryCells("You're owed" to (b.values.filter { it > 0 }.sum() to C.income), "You owe" to (-b.values.filter { it < 0 }.sum() to C.expense))
     }
@@ -297,21 +294,29 @@ fun shareBitmap(ctx: Context, bmp: Bitmap, title: String, name: String = "upi-qr
       if (db.splitGroups.isNotEmpty()) Divider()
       PRow("New Group", titleColor = C.accent, leading = { Icon2("plus") }, onClick = { Ui.sheet = Sheet.GroupForm(null) })
     }
-    group("People") {
-      if (db.friends.isEmpty()) PRow("Add the people you split with", titleColor = C.secondary)
-      db.friends.sortedBy { it.name }.forEachIndexed { i, f ->
+    group("People", footer = "People with the badge are on Paisa Pulse: splits with them show up on their phone too.") {
+      if (db.friends.isEmpty()) Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text("No one yet", style = T.headline, color = C.label)
+        Text("Add the people you split with: by name, from your contacts, or by their Paisa Pulse @username.", style = T.subhead, color = C.secondary)
+      }
+      // People you owe or who owe you first, then everyone else by name.
+      db.friends.sortedWith(compareBy<Friend>({ (b[it.id] ?: 0L) == 0L }, { -kotlin.math.abs(b[it.id] ?: 0L) }, { it.name.lowercase() })).forEachIndexed { i, f ->
         if (i > 0) Divider(64.dp)
-        PRow(f.name, leading = { Avatar(f.name) }, chevron = true, onClick = { Ui.push(Route.Friend(f.id)) }) { BalanceLabel(b[f.id] ?: 0) }
+        val bal = b[f.id] ?: 0L
+        PRow(f.name, subtitle = if (bal > 0) "Owes you" else if (bal < 0) "You owe" else "Settled up", leading = { Avatar(f.name) }, chevron = true, onClick = { Ui.push(Route.Friend(f.id)) }) {
+          if (f.userId != null) Icon(Sym.of("person.crop.circle.badge.checkmark"), "On Paisa Pulse", tint = C.secondary, modifier = Modifier.padding(end = 8.dp).size(18.dp))
+          BalanceLabel(bal)
+        }
       }
       Divider()
-      PRow("Add from Contacts", titleColor = C.accent, leading = { Icon2("person.badge.plus") }, onClick = pickContact)
+      PRow("Add People", titleColor = C.accent, leading = { Icon2("person.badge.plus") }, onClick = { adding = true })
     }
     group("For requests", footer = "Requests include a link to a pay page and a QR code for this UPI ID. It stays on this phone.") {
       FieldRow(me, { me = it }, "Your name")
       Divider(); FieldRow(upi, { upi = it }, "Your UPI ID, e.g. you@okaxis")
     }
   }
-  if (adding) NameDialog("Add person", "Name", onDismiss = { adding = false }) { n -> Store.update { it.copy(friends = it.friends + Friend(name = n)) }; adding = false }
+  if (adding) AddPeopleDialog(onAdd = { _, _ -> }, onDismiss = { adding = false })
 }
 
 @Composable fun BalanceLabel(bal: Long) {

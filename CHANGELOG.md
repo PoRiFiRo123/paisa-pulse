@@ -4,6 +4,7 @@ Newest first. Every push to `main` becomes a GitHub Release `build-<number>` wit
 `PaisaPulse.apk` (Android) and `PaisaPulse.ipa` (iPhone, free Apple ID). See [docs/INSTALL.md](docs/INSTALL.md).
 
 ## [Unreleased]
+- Splits: one Add People screen on both apps — search a name, a Paisa Pulse @username, email or phone, or your contacts in one box; contacts on Paisa Pulse are linked automatically. People list shows who owes whom first. Fixed contact search on iPhone and two build errors.
 
 - Both apps: add someone already on Paisa Pulse straight from a group or plan ("Find Someone on Paisa Pulse": @username, email or phone), add new people by name there too, a badge on people who are on Paisa Pulse, and "Add People" on a group. iPhone: no more freeze after creating your first plan (or archiving a plan/account, or finishing a loan) while its screen is open; editing a plan no longer clears its destinations.
 - Website: no gap above the hero on tall screens; the screenshot carousel shows the next phones on mobile, has dots and arrows, and nudges once so it's clear you can swipe.
