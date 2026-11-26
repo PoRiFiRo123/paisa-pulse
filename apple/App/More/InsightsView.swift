@@ -221,15 +221,28 @@ struct NetWorthView: View {
   @Query private var accounts: [Account]
   @Query(filter: #Predicate<Txn> { $0.deletedAt == nil }) private var txns: [Txn]
   @Query private var valuations: [Valuation]
+  @State private var months = 12
 
   var body: some View {
-    let points: [(Date, Int)] = (0..<12).reversed().map { i in
+    let points: [(Date, Int)] = (0..<months).reversed().map { i in
       let end = Calendar.current.date(byAdding: .month, value: -i, to: .now)!
       let b = Ledger.balances(accounts: accounts, txns: txns, valuations: valuations, asOf: end)
       return (end, Ledger.netWorth(accounts: accounts, balances: b))
     }
+    let now = NetWorth.breakdown(accounts: accounts, balances: Ledger.balances(accounts: accounts, txns: txns, valuations: valuations))
+    let change = points.count > 1 ? points[points.count - 1].1 - points[points.count - 2].1 : 0
     List {
       Section {
+        VStack(alignment: .leading, spacing: 4) {
+          Text(Money.format(now.total)).font(.system(size: 36, weight: .bold, design: .rounded)).rolling(now.total)
+            .foregroundStyle(now.total < 0 ? Color.expense : .primary)
+          if change != 0 {
+            Label("\(change > 0 ? "Up" : "Down") \(Money.format(abs(change))) since last month", systemImage: change > 0 ? "arrow.up.right" : "arrow.down.right")
+              .font(.subheadline.weight(.medium)).foregroundStyle(change > 0 ? Color.income : Color.expense)
+          }
+        }
+        .padding(.vertical, 6)
+        Picker("Range", selection: $months) { Text("6M").tag(6); Text("1Y").tag(12); Text("2Y").tag(24) }.pickerStyle(.segmented)
         Chart(points, id: \.0) { p in
           AreaMark(x: .value("Month", p.0), y: .value("Net worth", Double(p.1) / 100))
             .foregroundStyle(LinearGradient(colors: [Color.accentColor.opacity(0.35), .clear], startPoint: .top, endPoint: .bottom))
@@ -238,11 +251,18 @@ struct NetWorthView: View {
             .interpolationMethod(.catmullRom)
         }
         .chartYAxis { AxisMarks { v in AxisGridLine(); AxisValueLabel { if let d = v.as(Double.self) { Text(Money.compact(Int(d * 100))) } } } }
-        .frame(height: 240).padding(.vertical, 8)
+        .frame(height: 220).padding(.vertical, 8).animation(.quick, value: months)
       } footer: {
         Text("Rebuilt from your transactions, each account's starting balance and the values you record for investments (Accounts › + › Investments).")
       }
-      Section {
+      Section("What you have and owe") {
+        LabeledContent("You have") { Text(Money.format(now.assets)).foregroundStyle(Color.income) }
+        LabeledContent("You owe") { Text(Money.format(now.owed)).foregroundStyle(now.owed > 0 ? Color.expense : .secondary) }
+        ForEach(now.byType.indices, id: \.self) { i in
+          LabeledContent(now.byType[i].label) { Text(Money.format(now.byType[i].amount)).foregroundStyle(.secondary) }.font(.subheadline)
+        }
+      }
+      Section("By month") {
         ForEach(points.reversed().prefix(6), id: \.0) { p in
           LabeledContent(p.0.formatted(.dateTime.month(.wide).year())) {
             Text(Money.format(p.1)).foregroundStyle(p.1 < 0 ? Color.expense : .primary)

@@ -144,7 +144,7 @@ The user chose to rewrite iOS in SwiftUI; Android stays on this Expo app. Code i
 - `apple/Shared` (app + widget): SwiftData models mirroring this repo's tables (ids as strings, paise ints), `Ledger`/`Periods`/`Budgets`/`Recurrence`/`Splits`/`Cards` pure maths, `Money` (en_IN, **never a minus sign**), `AppGroup` (ALTAppGroups), `Store` (DB in the App Group).
 - `apple/App`: screens. Backups use this app's v4 JSON (`BackupCodec`), plus `friends`, `splitEntries`, `goals`, `txnSplitShares` keys the RN app ignores.
 - **No minus signs anywhere** (user decision, both apps): expense soft red (#E5484D / #FF6B6B), income green, transfers grey, account below zero reads "₹X due".
-- Not ported yet: statement import, voice, screenshot capture, currencies, merchant logos, alternate icons, saved filters.
+- Since ported (see the sections below): statement import, screenshot capture, currencies, merchant logos, alternate icons, saved filters. Voice stays Android-only.
 - CI `ios` job: build, unit tests (`apple/Tests`), simulator screenshots (launch args `-PaisaDemo YES -PaisaTab <tab>` / `-PaisaAdd YES`) pushed to the `ci-screenshots` branch (read them with `gh api repos/PoRiFiRo123/paisa-pulse/contents/<name>.png?ref=ci-screenshots`).
 
 ## Two native apps, one product (decided with the user, 22 Nov 2026)
@@ -197,6 +197,11 @@ The user chose to rewrite iOS in SwiftUI; Android stays on this Expo app. Code i
 
 ### Bills (Nov 2026, both apps)
 - `Bills.upcoming` (Swift `Shared/Bills.swift`, Kotlin `logic/Bills.kt`; tests `BillsTest`/`BillsTests`): card bills (last statement's unpaid amount, else what's owed; next due day) + active recurring expenses within N days. Screens iOS `More/BillsView.swift`, Android `ui/screens/Bills.kt`. Reminders under `notifyBills`: cards 3 days before (existing), recurring 2 days before.
+
+### Net worth + monthly report (Nov 2026, both apps)
+- `NetWorth.breakdown` (Swift `Shared/NetWorth.swift`, Kotlin `logic/NetWorth.kt`): have / owe / by account type. Net Worth screen: total with change since last month, 6M/1Y/2Y chart, breakdown.
+- `Report.rows/movers/biggest` (Swift `Shared/Report.swift`, Kotlin `logic/Report.kt`; tests on both): Recap gains "What changed" and **Full Report (PDF)** (iOS `More/ReportPDF.swift` with UIGraphicsPDFRenderer, Android `ui/screens/ReportPdf.kt` with PdfDocument; A4, same layout).
+- Perf: core sums take ~1–35 ms on a desktop JVM with 20k transactions; Android remembers the net-worth history per (db, range).
 
 ### Share a screenshot (Nov 2026, both apps)
 - iOS share extension `apple/Share` (target `PaisaShare`, bundle `com.paisapulse.app.share`, App Group): reads images with `ScreenText.read` (Vision, in `Capture.swift`), parses with `ScreenshotParser`, shows editable cards, Save writes `Txn(source: "screenshot")` into the shared SwiftData store. Its sources are `Share`, `Shared`, `App/Import/Capture.swift`, `App/Import/Narration.swift`; `Rx` moved to `Shared/Rx.swift` for that. The user installs over USB (iloader), no SideStore, so app + widget + share = the 3 free slots: ask before adding any other extension.

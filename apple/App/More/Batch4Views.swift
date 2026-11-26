@@ -155,6 +155,7 @@ struct RecapView: View {
   @AppStorage(PrefKey.monthStartDay, store: AppGroup.defaults) private var monthStartDay = 1
   @Environment(\.displayScale) private var scale
   @State private var shareImage: ShareImage?
+  @State private var shareFile: ShareFile?
 
   var body: some View {
     let lookups = Lookups(accounts: accounts, categories: categories)
@@ -173,9 +174,38 @@ struct RecapView: View {
       }
       .buttonStyle(.borderedProminent).controlSize(.large).padding(.horizontal)
       Text("The picture shows totals only, no account names.").font(.caption).foregroundStyle(.secondary).padding(.top, 4)
+      let rows = Report.rows(txns: txns, categories: lookups.categories, month: month, previous: Periods.month(offset: offset - 1, startDay: monthStartDay))
+      let movers = Report.movers(rows)
+      if !movers.up.isEmpty || !movers.down.isEmpty {
+        VStack(alignment: .leading, spacing: 10) {
+          Text("What changed").font(.headline)
+          ForEach(movers.up + movers.down, id: \.categoryId) { row in
+            let c = lookups.categories[row.categoryId]
+            HStack(spacing: 12) {
+              CategoryBadge(icon: c?.icon ?? "questionmark.circle", color: c?.color ?? "#8E8E93", size: 30)
+              Text(c?.name ?? "Uncategorised").lineLimit(1)
+              Spacer()
+              Text("\(Money.format(abs(row.diff))) \(row.diff > 0 ? "more" : "less")").font(.subheadline.weight(.semibold))
+                .foregroundStyle(row.diff > 0 ? Color.expense : Color.income)
+            }
+          }
+        }
+        .padding().background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .padding(.horizontal).padding(.top, 16)
+      }
+      Button {
+        let title = month.start.formatted(.dateTime.month(.wide).year())
+        shareFile = ReportPDF.make(title: title, recap: r, rows: rows, biggest: Report.biggest(txns: txns, month: month), lookups: lookups).map(ShareFile.init)
+      } label: {
+        Label("Full Report (PDF)", systemImage: "doc.richtext").frame(maxWidth: .infinity)
+      }
+      .buttonStyle(.bordered).controlSize(.large).padding(.horizontal).padding(.vertical, 16)
     }
     .sheet(item: $shareImage) { item in
       ActivitySheet(items: [item.image]).presentationDetents([.medium, .large])
+    }
+    .sheet(item: $shareFile) { item in
+      ActivitySheet(items: [item.url]).presentationDetents([.medium, .large])
     }
     .background(Color(.systemGroupedBackground))
     .navigationTitle("Recap")
@@ -195,6 +225,7 @@ struct RecapView: View {
 }
 
 struct ShareImage: Identifiable { let id = UUID(); let image: UIImage }
+struct ShareFile: Identifiable { let id = UUID(); let url: URL }
 
 /// The system share sheet for things SwiftUI's ShareLink can't take directly (a freshly drawn picture).
 struct ActivitySheet: UIViewControllerRepresentable {
