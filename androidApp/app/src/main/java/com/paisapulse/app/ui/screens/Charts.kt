@@ -185,14 +185,25 @@ import kotlin.math.sqrt
 
 @Composable fun NetWorthScreen() {
   val db by Store.db.collectAsState()
-  val pts = (11 downTo 0).map { i ->
-    val end = LocalDate.now().minusMonths(i.toLong()).plusDays(1).ms()
-    end to Ledger.netWorth(db.accounts, Ledger.balances(db.accounts, db.transactions, db.valuations, asOf = end))
+  var months by remember { mutableIntStateOf(12) }
+  val pts = remember(db, months) {
+    (months - 1 downTo 0).map { i ->
+      val end = LocalDate.now().minusMonths(i.toLong()).plusDays(1).ms()
+      end to Ledger.netWorth(db.accounts, Ledger.balances(db.accounts, db.transactions, db.valuations, asOf = end))
+    }
   }
+  val now = remember(db) { NetWorth.breakdown(db.accounts, Ledger.balances(db.accounts, db.transactions, db.valuations)) }
+  val change = if (pts.size > 1) pts[pts.size - 1].second - pts[pts.size - 2].second else 0L
   val accent = C.accent
   PScreen("Net Worth", back = true) {
     group(footer = "Rebuilt from your transactions, each account's starting balance and the values you enter for investments.") {
-      Canvas(Modifier.fillMaxWidth().height(240.dp).padding(20.dp)) {
+      Column(Modifier.padding(start = 16.dp, end = 16.dp, top = 14.dp)) {
+        RollingText(Money.format(now.total), T.amount(36, FontWeight.Bold), if (now.total < 0) C.expense else C.label)
+        if (change != 0L) Text("${if (change > 0) "Up" else "Down"} ${Money.format(kotlin.math.abs(change))} since last month",
+          style = T.subhead.copy(fontWeight = FontWeight.Medium), color = if (change > 0) C.income else C.expense)
+        Segmented(listOf("6M", "1Y", "2Y"), listOf(6, 12, 24).indexOf(months), Modifier.padding(top = 12.dp)) { months = listOf(6, 12, 24)[it] }
+      }
+      Canvas(Modifier.fillMaxWidth().height(220.dp).padding(20.dp)) {
         val min = pts.minOf { it.second }.toFloat(); val max = pts.maxOf { it.second }.toFloat(); val span = (max - min).coerceAtLeast(1f)
         val step = size.width / (pts.size - 1)
         val line = Path(); val area = Path()
@@ -205,7 +216,12 @@ import kotlin.math.sqrt
         drawPath(line, accent, style = Stroke(3.dp.toPx()))
       }
     }
-    group {
+    group("What you have and owe") {
+      PRow("You have", value = Money.format(now.assets), valueColor = C.income)
+      Divider(); PRow("You owe", value = Money.format(now.owed), valueColor = if (now.owed > 0) C.expense else C.secondary)
+      now.byType.forEach { g -> Divider(); PRow(g.label, value = Money.format(g.amount), valueColor = C.secondary) }
+    }
+    group("By month") {
       pts.reversed().take(6).forEachIndexed { i, (t, v) ->
         if (i > 0) Divider()
         PRow(t.toDate().minusDays(1).let { it.month.getDisplayName(TextStyle.FULL, Locale.ENGLISH) + " " + it.year }, value = Money.format(v), valueColor = if (v < 0) C.expense else C.label)

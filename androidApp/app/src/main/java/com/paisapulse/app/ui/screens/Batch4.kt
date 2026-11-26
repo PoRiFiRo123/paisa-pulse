@@ -178,7 +178,24 @@ import java.util.Locale
           colors = ButtonDefaults.buttonColors(containerColor = C.accent), modifier = Modifier.fillMaxWidth().height(50.dp)) {
           Icon(Sym.of("square.and.arrow.up"), null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Share", style = T.headline)
         }
-        Text("The picture shows totals only, no account names.", style = T.caption, color = C.secondary, modifier = Modifier.padding(top = 6.dp, bottom = 24.dp))
+        Text("The picture shows totals only, no account names.", style = T.caption, color = C.secondary, modifier = Modifier.padding(top = 6.dp, bottom = 16.dp))
+      }
+    }
+    val rows = Report.rows(db.liveTxns, l.categories, month, Periods.month(offset - 1, Prefs.monthStartDay))
+    val (up, down) = Report.movers(rows)
+    if (up.isNotEmpty() || down.isNotEmpty()) group("What changed") {
+      (up + down).forEachIndexed { i, row ->
+        if (i > 0) Divider(56.dp)
+        val c = l.categories[row.categoryId]
+        PRow(c?.name ?: "Uncategorised", leading = { CategoryBadge(c?.icon ?: "questionmark.circle", c?.color ?: "#8E8E93", 30.dp) },
+          value = "${Money.format(kotlin.math.abs(row.diff))} ${if (row.diff > 0) "more" else "less"}", valueColor = if (row.diff > 0) C.expense else C.income)
+      }
+    }
+    item {
+      OutlinedButton({ ReportPdf.share(ctx, title, r, rows, Report.biggest(db.liveTxns, month), l) },
+        modifier = Modifier.fillMaxWidth().padding(16.dp).height(50.dp)) {
+        Icon(Sym.of("doc.richtext"), null, modifier = Modifier.size(18.dp), tint = C.accent); Spacer(Modifier.width(8.dp))
+        Text("Full Report (PDF)", style = T.headline, color = C.accent)
       }
     }
   }
