@@ -26,7 +26,7 @@ enum Bills {
       return Bill(id: "card-\(a.id)", title: "\(a.name) bill", icon: a.icon, color: a.color, amount: owed,
                   due: Cards.nextDue(dueDay: a.dueDay!, from: now, calendar: calendar), accountId: a.id, isCard: true)
     }
-    let recurring: [Bill] = rules.filter { $0.type == .expense && $0.pausedAt == nil && $0.nextAt <= until && ($0.endAt.map { e in $0.nextAt <= e } ?? true) }
+    let recurring: [Bill] = rules.filter { r in r.type == .expense && r.pausedAt == nil && r.nextAt <= until && (r.endAt.map { e in r.nextAt <= e } ?? true) }
       .map { r in Bill(id: "rule-\(r.id)", title: r.payee ?? r.note ?? "Recurring bill", icon: "repeat", color: "#30B0C7",
                        amount: r.amount, due: r.nextAt, accountId: r.accountId, ruleId: r.id) }
     return (cards + recurring).filter { $0.due <= until }.sorted { $0.due < $1.due }

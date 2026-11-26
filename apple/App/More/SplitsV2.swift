@@ -30,38 +30,6 @@ enum QRCode {
   }
 }
 
-/// The system contact picker (no Contacts permission needed: you only share the people you pick).
-struct ContactPicker: UIViewControllerRepresentable {
-  var onPick: ([(name: String, phone: String?)]) -> Void
-
-  func makeUIViewController(context: Context) -> Host { Host(onPick: onPick) }
-  func updateUIViewController(_ vc: Host, context: Context) {}
-
-  final class Host: UIViewController, CNContactPickerDelegate {
-    let onPick: ([(name: String, phone: String?)]) -> Void
-    private var shown = false
-    init(onPick: @escaping ([(name: String, phone: String?)]) -> Void) { self.onPick = onPick; super.init(nibName: nil, bundle: nil) }
-    required init?(coder: NSCoder) { fatalError() }
-    override func viewDidAppear(_ animated: Bool) {
-      super.viewDidAppear(animated)
-      guard !shown else { return }
-      shown = true
-      let picker = CNContactPickerViewController()
-      picker.delegate = self
-      picker.displayedPropertyKeys = [CNContactPhoneNumbersKey]
-      present(picker, animated: true)
-    }
-    func contactPicker(_ picker: CNContactPickerViewController, didSelect contacts: [CNContact]) {
-      onPick(contacts.map { c in
-        let name = [c.givenName, c.familyName].filter { !$0.isEmpty }.joined(separator: " ")
-        return (name.isEmpty ? (c.organizationName.isEmpty ? "Friend" : c.organizationName) : name, c.phoneNumbers.first?.value.stringValue)
-      })
-      dismiss(animated: false)
-    }
-    func contactPickerDidCancel(_ picker: CNContactPickerViewController) { onPick([]); dismiss(animated: false) }
-  }
-}
-
 /// Messages composer with recipients and text filled in.
 struct MessageComposer: UIViewControllerRepresentable {
   var recipients: [String]
@@ -129,9 +97,7 @@ struct SplitEditorView: View {
   @Query private var entries: [SplitEntry]
   @Query(sort: \SplitGroup.createdAt) private var groups: [SplitGroup]
   @Environment(\.modelContext) private var context
-  @State private var pickingContacts = false
-  @State private var newName = ""
-  @State private var addingName = false
+  @State private var addingPeople = false
   @State private var savingGroup = false
   @State private var groupName = ""
 
@@ -174,14 +140,16 @@ struct SplitEditorView: View {
                 .foregroundStyle(on ? Color.accentColor : Color.secondary)
               Avatar(name: f.name, size: 30)
               Text(f.name).foregroundStyle(.primary)
+              if f.userId != nil { Image(systemName: "person.crop.circle.badge.checkmark").font(.caption).foregroundStyle(.secondary).accessibilityLabel("On Paisa Pulse") }
               Spacer()
               if on, total > 0 { Text(Money.format(result.shares[f.id] ?? 0)).font(.subheadline).foregroundStyle(.secondary) }
             }
           }
         }
-        Button { pickingContacts = true } label: { Label("Add from Contacts", systemImage: "person.crop.circle.badge.plus") }
-        Button { addingName = true } label: { Label("Add by Name", systemImage: "character.cursor.ibeam") }
-      } header: { Text("With") }
+        Button { addingPeople = true } label: { Label("Add People", systemImage: "person.badge.plus") }
+      } header: { Text("With") } footer: {
+        if friends.isEmpty { Text("Add by name, from your contacts, or find someone on Paisa Pulse by @username.") }
+      }
 
       if !setup.people.isEmpty {
         Section {
@@ -240,30 +208,10 @@ struct SplitEditorView: View {
     }
     .navigationTitle("Split")
     .toolbar { if !setup.people.isEmpty { ToolbarItem(placement: .destructiveAction) { Button("Clear") { setup = SplitSetup() } } } }
-    .sheet(isPresented: $pickingContacts) {
-      ContactPicker { picked in
-        pickingContacts = false
-        for c in picked {
-          if let f = friends.first(where: { $0.name.caseInsensitiveCompare(c.name) == .orderedSame }) {
-            if f.phone == nil { f.phone = c.phone }
-            if !setup.people.contains(f.id) { setup.people.append(f.id) }
-          } else {
-            let f = Friend(name: c.name, phone: c.phone)
-            context.insert(f)
-            setup.people.append(f.id)
-          }
-        }
-        try? context.save()
+    .sheet(isPresented: $addingPeople) {
+      NavigationStack {
+        AddPeopleSheet(chosen: Set(setup.people)) { f, _ in if !setup.people.contains(f.id) { setup.people.append(f.id) } }
       }
-      .ignoresSafeArea()
-    }
-    .alert("Add person", isPresented: $addingName) {
-      TextField("Name", text: $newName)
-      Button("Add") {
-        if let n = newName.nilIfEmpty { let f = Friend(name: n); context.insert(f); try? context.save(); setup.people.append(f.id) }
-        newName = ""
-      }
-      Button("Cancel", role: .cancel) { newName = "" }
     }
     .alert("Name this group", isPresented: $savingGroup) {
       TextField("Flatmates, Goa trip…", text: $groupName)
@@ -396,9 +344,7 @@ struct SplitsView: View {
   @AppStorage(PrefKey.myUpiId, store: AppGroup.defaults) private var myUpi = ""
   @AppStorage(PrefKey.myName, store: AppGroup.defaults) private var myName = ""
   @Environment(\.modelContext) private var context
-  @State private var newName = ""
-  @State private var addingFriend = false
-  @State private var pickingContacts = false
+  @State private var addingPeople = false
   @State private var addingGroup = false
 
   var body: some View {
@@ -429,19 +375,39 @@ struct SplitsView: View {
         }
         Button { addingGroup = true } label: { Label("New Group", systemImage: "plus") }
       }
-      Section("People") {
-        if friends.isEmpty { Text("Add the people you split with").foregroundStyle(.secondary) }
-        ForEach(friends) { f in
+      Section {
+        if friends.isEmpty {
+          VStack(alignment: .leading, spacing: 6) {
+            Text("No one yet").font(.headline)
+            Text("Add the people you split with: by name, from your contacts, or by their Paisa Pulse @username.").font(.subheadline).foregroundStyle(.secondary)
+          }
+          .padding(.vertical, 4)
+        }
+        // People you owe or who owe you first, then everyone else by name.
+        let sorted = friends.sorted { a, b in
+          let x = abs(balances[a.id] ?? 0), y = abs(balances[b.id] ?? 0)
+          return (x == 0) != (y == 0) ? x != 0 : (x != y ? x > y : a.name.lowercased() < b.name.lowercased())
+        }
+        ForEach(sorted) { f in
           NavigationLink(value: NavRoute.friend(f.id)) {
-            HStack {
+            HStack(spacing: 12) {
               Avatar(name: f.name)
-              Text(f.name)
+              VStack(alignment: .leading, spacing: 1) {
+                HStack(spacing: 4) {
+                  Text(f.name)
+                  if f.userId != nil { Image(systemName: "person.crop.circle.badge.checkmark").font(.caption).foregroundStyle(.secondary).accessibilityLabel("On Paisa Pulse") }
+                }
+                let b = balances[f.id] ?? 0
+                Text(b > 0 ? "Owes you" : b < 0 ? "You owe" : "Settled up").font(.caption).foregroundStyle(.secondary)
+              }
               Spacer()
               BalanceLabel(balance: balances[f.id] ?? 0)
             }
           }
         }
-        Button { pickingContacts = true } label: { Label("Add from Contacts", systemImage: "person.crop.circle.badge.plus") }
+        Button { addingPeople = true } label: { Label("Add People", systemImage: "person.badge.plus") }
+      } header: { Text("People") } footer: {
+        Text("People with the badge are on Paisa Pulse: splits with them show up on their phone too.")
       }
       Section {
         TextField("Your name", text: $myName)
@@ -452,22 +418,8 @@ struct SplitsView: View {
       }
     }
     .navigationTitle("Splits")
-    .toolbar { ToolbarItem(placement: .topBarTrailing) { Button { addingFriend = true } label: { Image(systemName: "person.badge.plus") } } }
-    .alert("Add person", isPresented: $addingFriend) {
-      TextField("Name", text: $newName)
-      Button("Add") { if let n = newName.nilIfEmpty { context.insert(Friend(name: n)); try? context.save() }; newName = "" }
-      Button("Cancel", role: .cancel) { newName = "" }
-    }
-    .sheet(isPresented: $pickingContacts) {
-      ContactPicker { picked in
-        pickingContacts = false
-        for c in picked where !friends.contains(where: { $0.name.caseInsensitiveCompare(c.name) == .orderedSame }) {
-          context.insert(Friend(name: c.name, phone: c.phone))
-        }
-        try? context.save()
-      }
-      .ignoresSafeArea()
-    }
+    .toolbar { ToolbarItem(placement: .topBarTrailing) { Button { addingPeople = true } label: { Image(systemName: "person.badge.plus") }.accessibilityLabel("Add people") } }
+    .sheet(isPresented: $addingPeople) { NavigationStack { AddPeopleSheet(title: "Add People") { _, _ in } } }
     .sheet(isPresented: $addingGroup) { NavigationStack { GroupFormView(group: nil) } }
   }
 }
@@ -725,7 +677,6 @@ struct MemberPicker: View {
   var onChange: () -> Void = {}
   @Query(sort: \Friend.name) private var friends: [Friend]
   @Environment(\.modelContext) private var context
-  @State private var newName = ""
   @State private var finding = false
 
   var body: some View {
@@ -745,22 +696,15 @@ struct MemberPicker: View {
         }
       }
     }
-    HStack {
-      TextField("Add someone by name", text: $newName).onSubmit(add)
-      Button("Add", action: add).disabled(newName.trimmingCharacters(in: .whitespaces).isEmpty)
-    }
-    Button { finding = true } label: { Label("Find Someone on Paisa Pulse", systemImage: "person.crop.circle.badge.plus") }
+    Button { finding = true } label: { Label("Add People", systemImage: "person.badge.plus") }
       .sheet(isPresented: $finding) {
         NavigationStack {
-          PeopleView(onPick: { f in if !members.contains(f.id) { members.append(f.id) }; onChange() })
-            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Done") { finding = false } } }
+          AddPeopleSheet(chosen: Set(members)) { f, isNew in
+            if !members.contains(f.id) { members.append(f.id) }
+            if isNew { created.append(f) }
+            onChange()
+          }
         }
       }
-  }
-
-  private func add() {
-    let n = newName.trimmingCharacters(in: .whitespaces); guard !n.isEmpty else { return }
-    let f = Friend(name: n); context.insert(f); created.append(f); members.append(f.id); newName = ""
-    onChange()
   }
 }
