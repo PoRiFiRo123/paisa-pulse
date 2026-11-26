@@ -145,10 +145,13 @@
     document.querySelectorAll('[data-sample]').forEach((b) => b.addEventListener('click', async () => {
       document.querySelectorAll('[data-sample]').forEach((x) => x.classList.toggle('on', x === b));
       const text = samples[b.dataset.sample];
-      if (reduce) { input.value = text; run(); return; }
+      if (reduce) { input.value = text; run(); out.scrollIntoView({ block: 'nearest' }); return; }
       input.value = '';
       for (let i = 0; i <= text.length; i += 4) { input.value = text.slice(0, i); await sleep(8); }
       input.value = text; run();
+      // On phones the result sits below the chips: bring it into view.
+      const r = out.getBoundingClientRect();
+      if (r.bottom > innerHeight) out.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
     }));
   }
 
