@@ -24,6 +24,35 @@
   const nav = document.querySelector('.nav');
   if (nav) addEventListener('scroll', () => nav.classList.toggle('scrolled', scrollY > 8), { passive: true });
 
+  // Phone menu: opens under the pill; closes on a link, Escape, a tap outside, or growing the window.
+  const menuBtn = document.querySelector('[data-menu]');
+  if (nav && menuBtn) {
+    const setOpen = (open) => {
+      nav.classList.toggle('open', open);
+      menuBtn.setAttribute('aria-expanded', String(open));
+      menuBtn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    };
+    menuBtn.addEventListener('click', (e) => { e.stopPropagation(); setOpen(!nav.classList.contains('open')); });
+    nav.querySelectorAll('nav a').forEach((a) => a.addEventListener('click', () => setOpen(false)));
+    addEventListener('keydown', (e) => { if (e.key === 'Escape' && nav.classList.contains('open')) { setOpen(false); menuBtn.focus(); } });
+    document.addEventListener('click', (e) => { if (!nav.contains(e.target)) setOpen(false); });
+    matchMedia('(min-width: 861px)').addEventListener('change', () => setOpen(false));
+    addEventListener('scroll', () => { if (nav.classList.contains('open') && Math.abs(scrollY - (nav._y ?? scrollY)) > 60) setOpen(false); nav._y = nav.classList.contains('open') ? (nav._y ?? scrollY) : undefined; }, { passive: true });
+  }
+
+  // Highlight the section you're reading in the pill.
+  const links = [...document.querySelectorAll('.nav nav a[href^="#"]')];
+  const targets = links.map((a) => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  if (targets.length) {
+    const seen = new Map();
+    const so = new IntersectionObserver((es) => {
+      es.forEach((e) => seen.set(e.target, e.isIntersecting));
+      const cur = targets.find((t) => seen.get(t));
+      links.forEach((a) => a.classList.toggle('on', !!cur && a.getAttribute('href') === '#' + cur.id));
+    }, { rootMargin: '-45% 0px -50% 0px' });
+    targets.forEach((t) => so.observe(t));
+  }
+
   // Which phone is this? Download buttons go straight to the right thing.
   const ua = navigator.userAgent;
   const device = /android/i.test(ua) ? 'android' : /iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ? 'iphone' : 'desktop';
