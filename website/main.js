@@ -74,7 +74,7 @@
   }
   if (sms) {
     if (reduce) body.innerHTML = highlight(msgs[0].text, msgs[0].marks);
-    else setTimeout(loop, 1300);
+    else setTimeout(loop, 450); // the phone comes in first, so start right away
   }
 
   // Counters tick to their value when they scroll into view (the zeros count down).
@@ -255,6 +255,37 @@
       if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
       e.preventDefault(); step(rail, e.key === 'ArrowRight' ? 1 : -1);
     });
+  });
+
+  // Feature tiles: small looping scenes. Each .demo lists step times; step N adds class stN (cumulative).
+  // Scenes play only while on screen; with Reduce Motion they show their last frame.
+  const nf = new Intl.NumberFormat('en-IN');
+  document.querySelectorAll('.demo[data-steps]').forEach((demo) => {
+    const steps = demo.dataset.steps.split(',').map(Number);
+    const loopMs = +demo.dataset.loop || 6000;
+    const counters = [...demo.querySelectorAll('[data-count-to]')];
+    let timers = [], running = false;
+    const setStep = (n) => {
+      for (let i = 1; i <= steps.length; i++) demo.classList.toggle('st' + i, i <= n);
+      counters.forEach((c) => {
+        const at = +c.dataset.at, to = +c.dataset.countTo;
+        if (n === at && !reduce) tween(900, (k) => { c.textContent = nf.format(Math.round(to * k)); });
+        else if (n >= at) c.textContent = nf.format(to);
+        else c.textContent = '0';
+      });
+    };
+    const clear = () => { timers.forEach(clearTimeout); timers = []; };
+    const cycle = () => {
+      clear(); setStep(0);
+      steps.forEach((t, i) => timers.push(setTimeout(() => setStep(i + 1), t)));
+      timers.push(setTimeout(() => { if (running) cycle(); }, loopMs));
+    };
+    if (reduce) { setStep(steps.length); return; }
+    new IntersectionObserver((es) => es.forEach((e) => {
+      if (e.isIntersecting && !running) { running = true; cycle(); }
+      else if (!e.isIntersecting && running) { running = false; clear(); }
+    }), { threshold: 0.35 }).observe(demo);
+    document.addEventListener('visibilitychange', () => { if (document.hidden) { running = false; clear(); } });
   });
 
   // Receipt prints as it scrolls into view.
