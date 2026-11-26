@@ -73,6 +73,16 @@ class BankAlertsTest {
     assertNull(p("Transaction of Rs 450.00 failed. Amount will be refunded."))
   }
 
+  @Test fun bobMandateDebit() {
+    val d = p("Your A/c XX7556 is debited towards Mahanadi Coalfields for Rs. 14960.00 on 2026-11-26 06:13:43 AM UMN 01a2079d9c0470e2abf86e265b4a551c@yesg - Bank Of Baroda")!!
+    assertEquals(1_496_000L, d.amount); assertEquals("expense", d.type); assertEquals("bob", d.accountId); assertEquals("Mahanadi Coalfields", d.payee)
+    assertEquals(PaymentMethod.AutoDebit, PaymentMethod.fromText(d.source))
+  }
+
+  @Test fun idIsNotAPayee() {
+    assertNull(BankAlerts.payee("Rs 50.00 debited from A/c XX4321 UMN 01a2079d9c0470e2abf86e265b4a551c@yesg"))
+  }
+
   @Test fun sameAlertSameKey() {
     val a = "Rs 99.00 debited from A/c XX4321. Info: SPOTIFY"
     assertEquals(BankAlerts.key(a, 9_900), BankAlerts.key(a, 9_900))

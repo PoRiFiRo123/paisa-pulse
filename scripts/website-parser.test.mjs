@@ -54,6 +54,14 @@ test('ignores OTPs, dues, requests', () => {
     'Transaction of Rs 450.00 failed. Amount will be refunded.',
   ]) assert.ok(P.parse(t).skipped, t);
 });
+test('BoB UPI mandate debit', () => {
+  const x = d('Your A/c XX7556 is debited towards Mahanadi Coalfields for Rs. 14960.00 on 2026-11-26 06:13:43 AM UMN 01a2079d9c0470e2abf86e265b4a551c@yesg - Bank Of Baroda');
+  assert.equal(x.amount, 1496000); assert.equal(x.type, 'expense'); assert.equal(x.payee, 'Mahanadi Coalfields');
+  assert.equal(x.last4, '7556'); assert.equal(x.bank, 'Bank of Baroda'); assert.equal(x.method, 'Auto-debit');
+});
+test('an ID is not a payee', () => {
+  assert.equal(P.payee('Rs 50.00 debited from A/c XX4321 UMN 01a2079d9c0470e2abf86e265b4a551c@yesg'), null);
+});
 test('key matches the Kotlin hash', () => {
   const a = 'Rs 99.00 debited from A/c XX4321. Info: SPOTIFY';
   assert.equal(P.key(a, 9900), P.key(a, 9900));

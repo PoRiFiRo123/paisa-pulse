@@ -5,6 +5,7 @@ Newest first. Every push to `main` becomes a GitHub Release `build-<number>` wit
 
 ## [Unreleased]
 
+- Both apps + website: bank messages that say "debited towards <name> for Rs …" (Bank of Baroda, UPI mandates) now get the right payee instead of the mandate ID, and UPI mandate debits (UMN) count as Auto-debit. Website: long payee names wrap instead of overlapping the amount, and tapping the SMS box on a phone keeps the box and keyboard both on screen.
 - Website: **Try it live** (paste a bank SMS and see the transaction, read in the browser with the apps' own rules), real app screenshots in a 3D carousel, night mode, a download page that picks Android, iPhone or a QR code, link preview image, smoother motion (counters, buttons that follow the cursor, page transitions), and search/AI readiness (structured data, sitemap, robots.txt, llms.txt).
 - Store readiness: privacy policy (website /privacy, linked from Settings on both apps) and an account deletion page (/delete-account); iOS privacy manifest and encryption declaration; App Store build switch (`PAISA_DISTRIBUTION=appstore`) and a Google Play build (`PaisaPulse-play.aab`) without self-update, SideStore links or the SMS permission; "why we ask" screens before contacts, SMS and notification access on Android; sign-in data left out of Android backups. Submission notes in `docs/STORE.md`.
 - Both: **Net Worth** shows today's total and the change since last month, a 6M / 1Y / 2Y chart, and what you have vs owe by account type.

@@ -23,11 +23,12 @@
     ri("info[-:\\s]+(?:upi/(?:p2[ma]/)?\\d+/)?([a-z0-9][a-z0-9 .&'_-]{1,40}?)(?:/|\\s+not you|\\.\\s|\\.$|$)"), // Axis
     ri("trf to\\s+([a-z0-9][a-z0-9 .&'_-]{1,40}?)\\s+(?:ref\\w*|on)\\b"), // SBI
     ri(";\\s*([a-z0-9][a-z0-9 .&'_-]{1,40}?)\\s+credited\\b"), // ICICI
+    ri("\\btowards\\s+([a-z][a-z0-9 .&'_-]{1,40}?)\\s+(?:for|on|ref\\w*|umn|via|vide|dt|date)\\b"), // BoB, UPI mandates
     ri("\\bto[:\\s]+(?:vpa\\s+)?([a-z0-9][a-z0-9 .&'@_-]{1,40}?)\\s+(?:on|ref\\w*|via|upi|from|dt|date)\\b"), // HDFC, Kotak
     ri("\\bat\\s+([a-z0-9][a-z0-9 .&'*_-]{1,40}?)(?:\\s+on\\b|\\s+avl|\\.\\s|,|\\.$|$)"), // card spends
     ri("\\b(?:from|by)\\s+([a-z][a-z0-9 .&'_-]{1,40}?)(?:\\s+on\\b|\\s+ref\\w*|\\s+upi|\\.\\s|\\.$|$)"), // income
   ];
-  const junkPayee = ri('^(upi|neft|imps|rtgs|your|a/c|acct|account|card|bank|vpa|you|the|net ?banking|atm|pos)\\b|^\\d+$');
+  const junkPayee = ri('^(upi|neft|imps|rtgs|your|a/c|acct|account|card|bank|vpa|you|the|net ?banking|atm|pos)\\b|^\\d+$|^[0-9a-f]{12,}$|\\d{8,}');
 
   const BANKS = [
     [/axis/i, 'Axis Bank'], [/bank of baroda|\bbob\b|baroda/i, 'Bank of Baroda'], [/hdfc/i, 'HDFC Bank'], [/icici/i, 'ICICI Bank'],
@@ -68,8 +69,10 @@
       if (raw.length < 2 || junkPayee.test(raw)) continue;
       return raw.includes('@') ? raw.split('@')[0] : raw;
     }
+    // A VPA's name part, unless it's an ID (UPI mandate numbers look like 01a2079d…@yesg).
     const v = vpa.exec(text);
-    return v ? v[1].split('@')[0] : null;
+    const name = v ? v[1].split('@')[0] : null;
+    return name && !junkPayee.test(name) ? name : null;
   }
 
   // Java's String.hashCode, so keys match the apps' keys.
@@ -88,7 +91,7 @@
 
   function method(text) {
     const t = text.toLowerCase();
-    if (/\b(nach|ecs|mandate|autopay|auto debit|auto-debit|standing instruction|\bsi\b)/.test(t)) return 'Auto-debit';
+    if (/\b(nach|ecs|mandate|autopay|auto debit|auto-debit|standing instruction|\bsi\b|\bumn\b)/.test(t)) return 'Auto-debit';
     if (/\brtgs\b/.test(t)) return 'RTGS';
     if (/\bneft\b/.test(t)) return 'NEFT';
     if (/\bimps\b/.test(t)) return 'IMPS';
