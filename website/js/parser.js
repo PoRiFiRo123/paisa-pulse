@@ -26,8 +26,9 @@
     ri("\\btowards\\s+([a-z][a-z0-9 .&'_-]{1,40}?)\\s+(?:for|on|ref\\w*|umn|via|vide|dt|date)\\b"), // BoB, UPI mandates
     ri("\\bto[:\\s]+(?:vpa\\s+)?([a-z0-9][a-z0-9 .&'@_-]{1,40}?)\\s+(?:on|ref\\w*|via|upi|from|dt|date)\\b"), // HDFC, Kotak
     ri("\\bat\\s+([a-z0-9][a-z0-9 .&'*_-]{1,40}?)(?:\\s+on\\b|\\s+avl|\\.\\s|,|\\.$|$)"), // card spends
-    ri("\\b(?:from|by)\\s+([a-z][a-z0-9 .&'_-]{1,40}?)(?:\\s+on\\b|\\s+ref\\w*|\\s+upi|\\.\\s|\\.$|$)"), // income
+    ri("\\b(?:from|by)\\s+(?:(?:neft|imps|rtgs|upi|transfer)\\s+(?:from\\s+)?)?([a-z][a-z0-9 .&'_-]{1,40}?)(?:\\s+on\\b|\\s+ref\\w*|\\s+upi|\\.\\s|\\.$|$)"), // income
   ];
+  const companySuffix = ri('\\s+(?:(?:pvt|private)\\.?\\s*)?(?:ltd|limited)\\.?$|\\s+(?:pvt|private)\\.?$');
   const junkPayee = ri('^(upi|neft|imps|rtgs|your|a/c|acct|account|card|bank|vpa|you|the|net ?banking|atm|pos)\\b|^\\d+$|^[0-9a-f]{12,}$|\\d{8,}');
 
   const BANKS = [
@@ -67,7 +68,8 @@
       if (!m) continue;
       const raw = m[1].trim().replace(/[.\-/]+$/, '');
       if (raw.length < 2 || junkPayee.test(raw)) continue;
-      return raw.includes('@') ? raw.split('@')[0] : raw;
+      const name = raw.includes('@') ? raw.split('@')[0] : raw;
+      return name.replace(companySuffix, '') || name;
     }
     // A VPA's name part, unless it's an ID (UPI mandate numbers look like 01a2079d…@yesg).
     const v = vpa.exec(text);

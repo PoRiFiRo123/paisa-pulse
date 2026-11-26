@@ -36,7 +36,7 @@ test('card spend', () => {
 });
 test('salary credit', () => {
   const x = d('INR 90,000.00 credited to A/c no. XX4321 on 01-11-26 by NEFT from BOOMI SOFTWARE PVT LTD. Avl Bal INR 1,02,345.00 - Axis Bank');
-  assert.equal(x.amount, 9000000); assert.equal(x.type, 'income'); assert.equal(x.method, 'NEFT');
+  assert.equal(x.amount, 9000000); assert.equal(x.type, 'income'); assert.equal(x.method, 'NEFT'); assert.equal(x.payee, 'Boomi Software');
 });
 test('balance is not the amount', () => {
   assert.equal(d('Avl Bal: Rs 5,000.00. Rs 120.00 debited from A/c XX4321 towards UPI/533000001111/ZEPTO').amount, 12000);

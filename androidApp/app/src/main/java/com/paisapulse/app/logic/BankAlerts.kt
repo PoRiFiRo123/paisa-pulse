@@ -30,8 +30,9 @@ object BankAlerts {
     ri("\\btowards\\s+([a-z][a-z0-9 .&'_-]{1,40}?)\\s+(?:for|on|ref\\w*|umn|via|vide|dt|date)\\b"),             // BoB, UPI mandates
     ri("\\bto[:\\s]+(?:vpa\\s+)?([a-z0-9][a-z0-9 .&'@_-]{1,40}?)\\s+(?:on|ref\\w*|via|upi|from|dt|date)\\b"),   // HDFC, Kotak
     ri("\\bat\\s+([a-z0-9][a-z0-9 .&'*_-]{1,40}?)(?:\\s+on\\b|\\s+avl|\\.\\s|,|\\.$|$)"),                   // card spends
-    ri("\\b(?:from|by)\\s+([a-z][a-z0-9 .&'_-]{1,40}?)(?:\\s+on\\b|\\s+ref\\w*|\\s+upi|\\.\\s|\\.$|$)"),         // income
+    ri("\\b(?:from|by)\\s+(?:(?:neft|imps|rtgs|upi|transfer)\\s+(?:from\\s+)?)?([a-z][a-z0-9 .&'_-]{1,40}?)(?:\\s+on\\b|\\s+ref\\w*|\\s+upi|\\.\\s|\\.$|$)"),         // income
   )
+  private val companySuffix = ri("\\s+(?:(?:pvt|private)\\.?\\s*)?(?:ltd|limited)\\.?$|\\s+(?:pvt|private)\\.?$")
   private val junkPayee = ri("^(upi|neft|imps|rtgs|your|a/c|acct|account|card|bank|vpa|you|the|net ?banking|atm|pos)\\b|^\\d+$|^[0-9a-f]{12,}$|\\d{8,}")
 
   fun amount(text: String): Long? {
@@ -53,7 +54,8 @@ object BankAlerts {
     for (p in payeePatterns) {
       val raw = p.find(text)?.groupValues?.get(1)?.trim()?.trimEnd('.', '-', '/') ?: continue
       if (raw.length < 2 || junkPayee.containsMatchIn(raw)) continue
-      return if ('@' in raw) raw.substringBefore('@') else raw
+      val name = if ('@' in raw) raw.substringBefore('@') else raw
+      return name.replace(companySuffix, "").ifBlank { name }
     }
     // A VPA's name part, unless it's an ID (UPI mandate numbers look like 01a2079d…@yesg).
     return vpa.find(text)?.groupValues?.get(1)?.substringBefore('@')?.takeUnless { junkPayee.containsMatchIn(it) }

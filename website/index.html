@@ -115,6 +115,7 @@
     <a href="#try">Try it</a>
     <a href="#how">How it works</a>
     <a href="#screens">The app</a>
+    <a href="#tour">Features</a>
     <a href="#privacy">Privacy</a>
     <a href="#pricing">Pricing</a>
     <a class="nav-cta btn-ink" href="/download">Get the app</a>
@@ -287,15 +288,95 @@
 <section class="gallery" id="screens" aria-labelledby="screens-h">
   <div class="wrap gallery-head">
     <h2 class="display reveal" id="screens-h">The real thing.</h2>
-    <p class="reveal">Straight from the latest build. Swipe or drag through it.</p>
+    <div class="gallery-side reveal">
+      <p>Straight from the latest builds. Swipe or drag through it.</p>
+      <div class="seg" role="tablist" aria-label="Platform">
+        <button type="button" role="tab" aria-selected="true" aria-controls="carousel-ios" data-platform="ios">iPhone</button>
+        <button type="button" role="tab" aria-selected="false" aria-controls="carousel-android" data-platform="android">Android</button>
+      </div>
+    </div>
   </div>
-  <div class="carousel" id="carousel" tabindex="0" aria-label="App screenshots">
+  <div class="carousel" id="carousel-ios" role="tabpanel" tabindex="0" aria-label="iPhone screenshots">
     <figure class="shot"><div class="shot-phone"><img class="shot-l" src="/img/shots/home-light.webp" width="603" height="1311" loading="lazy" decoding="async" alt="Paisa Pulse Home: ₹42,250 spent this month, 85% of budget, a month-end forecast and spending by category."><img class="shot-d" src="/img/shots/home-dark.webp" width="603" height="1311" loading="lazy" decoding="async" alt=""></div><figcaption><b>Home</b>Spent, saved, the forecast and where it went.</figcaption></figure>
     <figure class="shot"><div class="shot-phone"><img class="shot-l" src="/img/shots/activity-light.webp" width="603" height="1311" loading="lazy" decoding="async" alt="Activity: November 2026 transactions grouped by day, with Namma Metro, Swiggy, BigBasket and Starbucks."><img class="shot-d" src="/img/shots/activity-dark.webp" width="603" height="1311" loading="lazy" decoding="async" alt=""></div><figcaption><b>Activity</b>Every payment by day, searchable.</figcaption></figure>
     <figure class="shot"><div class="shot-phone"><img class="shot-l" src="/img/shots/accounts-light.webp" width="603" height="1311" loading="lazy" decoding="async" alt="Accounts: net worth ₹4,18,190 with Axis, Bank of Baroda, a MyZone credit card and cash shown as a wallet of cards."><img class="shot-d" src="/img/shots/accounts-dark.webp" width="603" height="1311" loading="lazy" decoding="async" alt=""></div><figcaption><b>Accounts</b>Banks, cards and cash, like a wallet.</figcaption></figure>
     <figure class="shot"><div class="shot-phone"><img class="shot-l" src="/img/shots/add-light.webp" width="603" height="1311" loading="lazy" decoding="async" alt="Quick Add: a new expense with category chips, account, UPI or card, and a keypad that does sums."><img class="shot-d" src="/img/shots/add-dark.webp" width="603" height="1311" loading="lazy" decoding="async" alt=""></div><figcaption><b>Quick Add</b>Two taps, and the keypad does sums.</figcaption></figure>
     <figure class="shot"><div class="shot-phone"><img class="shot-l" src="/img/shots/settings-light.webp" width="603" height="1311" loading="lazy" decoding="async" alt="Settings: theme, accent colour, app icon, categories, budgets, recurring and subscriptions."><img class="shot-d" src="/img/shots/settings-dark.webp" width="603" height="1311" loading="lazy" decoding="async" alt=""></div><figcaption><b>Make it yours</b>Themes, accent colours and app icons.</figcaption></figure>
   </div>
+  <div class="carousel" id="carousel-android" role="tabpanel" tabindex="0" aria-label="Android screenshots" hidden>
+    <figure class="shot android"><div class="shot-phone"><img src="/img/shots/android-home-light.webp" width="600" height="1300" loading="lazy" decoding="async" alt="Android Home: ₹42,250 spent, 85% of budget, month-end forecast, the MyZone card bill due in 9 days, and spending by category."></div><figcaption><b>Home</b>Same layout as iPhone, built for Android.</figcaption></figure>
+    <figure class="shot android"><div class="shot-phone"><img src="/img/shots/android-activity-dark.webp" width="600" height="1300" loading="lazy" decoding="async" alt="Android Activity in dark mode: payments grouped by day with brand badges for Swiggy, BigBasket, Starbucks, Netflix and Uber."></div><figcaption><b>Activity</b>Brand badges for the places you pay.</figcaption></figure>
+    <figure class="shot android"><div class="shot-phone"><img src="/img/shots/android-accounts-dark.webp" width="600" height="1300" loading="lazy" decoding="async" alt="Android Accounts: net worth ₹4,18,190 with Axis, BoB, MyZone and cash cards stacked like a wallet."></div><figcaption><b>Accounts</b>Your wallet, stacked.</figcaption></figure>
+    <figure class="shot android"><div class="shot-phone"><img src="/img/shots/android-add-dark.webp" width="600" height="1300" loading="lazy" decoding="async" alt="Android Quick Add: expense, income or transfer, category chips, account, payment method, date and a keypad."></div><figcaption><b>Quick Add</b>Account, paid with and date, in one sheet.</figcaption></figure>
+    <figure class="shot android"><div class="shot-phone"><img src="/img/shots/android-home-dark.webp" width="600" height="1300" loading="lazy" decoding="async" alt="Android Home in dark mode."></div><figcaption><b>Dark mode</b>Easy on the eyes at night.</figcaption></figure>
+    <figure class="shot android"><div class="shot-phone"><img src="/img/shots/android-settings-light.webp" width="600" height="1300" loading="lazy" decoding="async" alt="Android Settings: Home Screen layout, theme, accent colour, app icon, categories, budgets, recurring, subscriptions, templates, goals and loans."></div><figcaption><b>Settings</b>Templates, goals, loans and more.</figcaption></figure>
+  </div>
+</section>
+
+<section class="tour" id="tour" aria-labelledby="tour-h">
+  <div class="wrap tour-head">
+    <div>
+      <p class="eyebrow">A closer look</p>
+      <h2 class="display reveal" id="tour-h">Ten things it does <em>for you.</em></h2>
+    </div>
+    <div class="rail-ctrl">
+      <button type="button" class="rail-btn" data-rail-prev="tourRail" aria-label="Previous"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <button type="button" class="rail-btn" data-rail-next="tourRail" aria-label="Next"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </div>
+  </div>
+  <ol class="rail" id="tourRail" tabindex="0" aria-label="Features, swipe for more">
+    <li class="tcard">
+      <div class="mini"><div class="m-notif"><b>AX-AXISBK</b><span>INR 450.00 debited from A/c XX4321 · UPI/SWIGGY</span></div><div class="m-arrow">↓</div><div class="m-row"><i style="background:#FC8019">S</i><span>Swiggy<small>Food · Axis ••4321</small></span><em>₹450</em></div><div class="m-btn">Tap to add</div></div>
+      <h3>Auto-capture</h3><p>Bank SMS and payment alerts become drafts you confirm with one tap.</p>
+      <ul><li>Android reads alerts on the phone</li><li>iPhone: a Shortcuts automation</li><li>OTPs and reminders are ignored</li></ul>
+    </li>
+    <li class="tcard">
+      <div class="mini"><div class="m-receipt"><small>Google Pay</small><b>₹1,200</b><span>Paid to Ravi Kumar</span><span class="ok">✓ Completed</span></div><div class="m-arrow">↓</div><div class="m-row"><i style="background:#5E5A52">R</i><span>Ravi Kumar<small>UPI · today</small></span><em>₹1,200</em></div></div>
+      <h3>Screenshots</h3><p>Share a payment screenshot and it's read on your phone.</p>
+      <ul><li>GPay, PhonePe, Paytm, CRED, bank apps</li><li>Failed or pending payments are flagged</li><li>Already-logged payments are skipped</li></ul>
+    </li>
+    <li class="tcard">
+      <div class="mini"><div class="m-file"><b>PDF</b><span>Axis_Statement_Nov.pdf<small>Password-protected · opened</small></span></div><div class="m-stat"><b>42</b><span>found</span><b>3</b><span>duplicates skipped</span></div><div class="m-row"><i style="background:#8A8377">₹</i><span>Card bill<small>Transfer, not spending</small></span><em class="tr">₹6,400</em></div></div>
+      <h3>Statement import</h3><p>Bring in months of history at once, with one Undo.</p>
+      <ul><li>PDF, CSV and Excel</li><li>Axis, BoB, HDFC, ICICI, SBI templates</li><li>Card bills and ATM become transfers</li></ul>
+    </li>
+    <li class="tcard">
+      <div class="mini"><p class="m-h">November budgets</p><div class="m-bar"><span>Overall</span><i style="--w:62%;--c:#2F7A5A"></i><em>62%</em></div><div class="m-bar"><span>Food</span><i style="--w:84%;--c:#E8A33D"></i><em>84%</em></div><div class="m-bar"><span>Shopping</span><i style="--w:101%;--c:#D9583B"></i><em>101%</em></div><div class="m-bar"><span>Weekly fun</span><i style="--w:40%;--c:#5E5CE6"></i><em>40%</em></div></div>
+      <h3>Budgets</h3><p>See how much is left before the month runs out.</p>
+      <ul><li>Monthly or weekly</li><li>Overall or per category</li><li>Alerts at 80% and 100%</li></ul>
+    </li>
+    <li class="tcard">
+      <div class="mini"><p class="m-h">Coming up</p><div class="m-tl"><b>2 Dec</b><span>Gym<small>in 2 days</small></span><em>₹1,500</em></div><div class="m-tl hot"><b>5 Dec</b><span>MyZone card<small>Statement due</small></span><em>₹6,400</em></div><div class="m-tl"><b>7 Dec</b><span>Netflix<small>Recurring</small></span><em>₹649</em></div></div>
+      <h3>Bills</h3><p>Card dues and recurring bills on one timeline.</p>
+      <ul><li>Card bill from your last statement</li><li>Reminders before each is due</li><li>Record a payment in one tap</li></ul>
+    </li>
+    <li class="tcard">
+      <div class="mini"><p class="m-h">Goa dinner · ₹3,600</p><div class="m-people"><i style="background:#E8A33D">R</i><i style="background:#5E5CE6">A</i><i style="background:#2F7A5A">You</i></div><div class="m-row"><i style="background:#E8A33D">R</i><span>Rahul<small>owes you</small></span><em class="in">₹1,200</em></div><div class="m-qr" aria-hidden="true"></div><div class="m-btn">Request with UPI</div></div>
+      <h3>Splits</h3><p>Split with friends and get paid back over UPI.</p>
+      <ul><li>Equal, by amount or by shares</li><li>Groups with settle-up</li><li>QR code and a pay link</li></ul>
+    </li>
+    <li class="tcard">
+      <div class="mini"><p class="m-h">Lisbon trip ✈︎</p><div class="m-fx"><b>€42.50</b><span>→</span><b>₹4,091</b></div><p class="m-note">Includes your card's 3.5% markup + 18% GST</p><div class="m-bar"><span>Trip budget</span><i style="--w:55%;--c:#5E5CE6"></i><em>55%</em></div></div>
+      <h3>Trips &amp; currencies</h3><p>Spend in any currency, see it in rupees.</p>
+      <ul><li>Live rates, works offline too</li><li>Forex markup per card</li><li>Keep trips out of monthly budgets</li></ul>
+    </li>
+    <li class="tcard">
+      <div class="mini"><p class="m-h">Net worth</p><b class="m-big">₹4,18,190</b><svg class="m-spark" viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden="true"><path d="M0 50 L25 46 L50 48 L75 38 L100 34 L125 36 L150 24 L175 18 L200 10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="m-split"><span>Have<b>₹4,24,590</b></span><span>Owe<b>₹6,400</b></span></div></div>
+      <h3>Net worth &amp; reports</h3><p>Everything you have and owe, month after month.</p>
+      <ul><li>6 months to 2 years of history</li><li>Investments at their latest value</li><li>Monthly recap and a PDF report</li></ul>
+    </li>
+    <li class="tcard">
+      <div class="mini m-home"><div class="w-sm"><small>Spent</small><b>₹42,250</b><i></i></div><div class="w-sm w-dark"><small>Left</small><b>₹7,750</b><i></i></div><div class="w-wide"><span>+ Add expense</span></div></div>
+      <h3>Widgets &amp; shortcuts</h3><p>Your numbers without opening the app.</p>
+      <ul><li>Home and Lock Screen widgets</li><li>Siri and Shortcuts on iPhone</li><li>Quick Settings tile on Android</li></ul>
+    </li>
+    <li class="tcard">
+      <div class="mini"><div class="m-lock"><svg width="34" height="34" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></div><div class="m-tl"><b>Today</b><span>Backup<small>Encrypted · 2:00 AM</small></span><em>✓</em></div><div class="m-tl"><b>Yesterday</b><span>Backup<small>Encrypted · 2:00 AM</small></span><em>✓</em></div><p class="m-note">Same file opens on Android and iPhone</p></div>
+      <h3>Private backups</h3><p>Your data stays yours, and moves with you.</p>
+      <ul><li>Daily backups, 14 kept</li><li>Optional password encryption</li><li>App Lock and hidden amounts</li></ul>
+    </li>
+  </ol>
+  <div class="wrap"><div class="rail-progress" aria-hidden="true"><i id="tourProgress"></i></div></div>
 </section>
 
 <section class="index wrap" id="index" aria-labelledby="index-h">

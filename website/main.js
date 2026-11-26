@@ -184,13 +184,32 @@
   steps.forEach((s) => so.observe(s));
   if (steps.length) setStep(0);
 
-  // Screenshot carousel: phones turn in 3D as they move away from the centre; drag with a mouse, swipe on touch.
-  const car = $('#carousel');
-  if (car) {
+  // Mouse drag for anything that scrolls sideways (touch already swipes).
+  const draggable = (el) => {
+    let down = null, moved = false;
+    el.addEventListener('pointerdown', (e) => { if (e.pointerType !== 'mouse') return; down = { x: e.clientX, s: el.scrollLeft }; moved = false; });
+    addEventListener('pointermove', (e) => {
+      if (!down) return;
+      if (Math.abs(e.clientX - down.x) > 4) { moved = true; el.classList.add('dragging'); }
+      el.scrollLeft = down.s - (e.clientX - down.x);
+    });
+    addEventListener('pointerup', () => { if (!down) return; down = null; requestAnimationFrame(() => el.classList.remove('dragging')); });
+    el.addEventListener('click', (e) => { if (moved) { e.preventDefault(); e.stopPropagation(); moved = false; } }, true);
+  };
+  const step = (el, dir) => {
+    const item = el.firstElementChild;
+    const w = item ? item.getBoundingClientRect().width + parseFloat(getComputedStyle(el).columnGap || getComputedStyle(el).gap || 0) : el.clientWidth * 0.8;
+    el.scrollBy({ left: dir * w, behavior: reduce ? 'auto' : 'smooth' });
+  };
+
+  // Screenshot carousels: phones turn in 3D as they move away from the centre. iPhone / Android switch.
+  const carousels = [...document.querySelectorAll('.carousel')];
+  carousels.forEach((car) => {
     const shots = [...car.querySelectorAll('.shot')];
     let raf = 0;
     const update = () => {
       raf = 0;
+      if (car.hidden) return;
       const mid = car.getBoundingClientRect().left + car.clientWidth / 2;
       shots.forEach((s) => {
         const r = s.getBoundingClientRect();
@@ -199,22 +218,44 @@
         s.classList.toggle('centre', Math.abs(off) < 0.5);
       });
     };
-    const queue = () => { if (!raf) raf = requestAnimationFrame(update); };
-    car.addEventListener('scroll', queue, { passive: true });
-    addEventListener('resize', queue);
-    // Start on the second phone so there's something either side.
-    requestAnimationFrame(() => { car.scrollLeft = shots[1] ? shots[1].offsetLeft - (car.clientWidth - shots[1].offsetWidth) / 2 : 0; update(); });
-    // Mouse drag
-    let down = null;
-    car.addEventListener('pointerdown', (e) => { if (e.pointerType !== 'mouse') return; down = { x: e.clientX, s: car.scrollLeft }; car.classList.add('dragging'); });
-    addEventListener('pointermove', (e) => { if (down) car.scrollLeft = down.s - (e.clientX - down.x); });
-    addEventListener('pointerup', () => { if (down) { down = null; car.classList.remove('dragging'); } });
+    car._update = () => { if (!raf) raf = requestAnimationFrame(update); };
+    car._centre = (i) => { const s = shots[i]; if (s) car.scrollLeft = s.offsetLeft - (car.clientWidth - s.offsetWidth) / 2; update(); };
+    car.addEventListener('scroll', car._update, { passive: true });
+    addEventListener('resize', car._update);
+    requestAnimationFrame(() => car._centre(1));
+    draggable(car);
     car.addEventListener('keydown', (e) => {
       if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
-      e.preventDefault();
-      car.scrollBy({ left: (e.key === 'ArrowRight' ? 1 : -1) * shots[0].offsetWidth, behavior: reduce ? 'auto' : 'smooth' });
+      e.preventDefault(); step(car, e.key === 'ArrowRight' ? 1 : -1);
     });
-  }
+  });
+  document.querySelectorAll('[data-platform]').forEach((tab) => tab.addEventListener('click', () => {
+    document.querySelectorAll('[data-platform]').forEach((t) => t.setAttribute('aria-selected', String(t === tab)));
+    carousels.forEach((c) => { c.hidden = c.id !== 'carousel-' + tab.dataset.platform; });
+    const shown = document.getElementById('carousel-' + tab.dataset.platform);
+    if (shown) requestAnimationFrame(() => shown._centre(1));
+  }));
+
+  // Feature rail: buttons, keyboard, drag and a progress bar.
+  document.querySelectorAll('.rail').forEach((rail) => {
+    draggable(rail);
+    const prev = document.querySelector(`[data-rail-prev="${rail.id}"]`), next = document.querySelector(`[data-rail-next="${rail.id}"]`);
+    const bar = rail.id === 'tourRail' ? document.getElementById('tourProgress') : null;
+    const sync = () => {
+      const max = rail.scrollWidth - rail.clientWidth;
+      const k = max > 0 ? rail.scrollLeft / max : 1;
+      if (bar) bar.style.transform = `scaleX(${Math.max(0.08, Math.min(1, k))})`;
+      if (prev) prev.disabled = rail.scrollLeft < 8;
+      if (next) next.disabled = rail.scrollLeft > max - 8;
+    };
+    rail.addEventListener('scroll', sync, { passive: true }); addEventListener('resize', sync); sync();
+    if (prev) prev.addEventListener('click', () => step(rail, -1));
+    if (next) next.addEventListener('click', () => step(rail, 1));
+    rail.addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      e.preventDefault(); step(rail, e.key === 'ArrowRight' ? 1 : -1);
+    });
+  });
 
   // Receipt prints as it scrolls into view.
   const receipt = $('#receipt');
