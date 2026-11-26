@@ -35,6 +35,8 @@ object Prefs {
   var converterCurrencies by mutableStateOf("USD,EUR,GBP,AED"); private set
   /** Hex colour used when accent == "custom". */
   var customAccent by mutableStateOf("#5E5CE6"); private set
+  /** Turn bank SMS / payment notifications into drafts to review. */
+  var autoCapture by mutableStateOf(false); private set
 
   fun init(ctx: Context) {
     sp = ctx.getSharedPreferences("paisa", Context.MODE_PRIVATE)
@@ -50,6 +52,7 @@ object Prefs {
     homeOrder = sp.getString("homeOrder", "")!!; homeHidden = sp.getString("homeHidden", "")!!
     baseCurrency = sp.getString("baseCurrency", "INR")!!; com.paisapulse.app.logic.Money.base = baseCurrency
     converterCurrencies = sp.getString("converterCurrencies", "USD,EUR,GBP,AED")!!; customAccent = sp.getString("customAccent", "#5E5CE6")!!
+    autoCapture = sp.getBoolean("autoCapture", false)
   }
 
   fun set(key: String, v: Any) {
@@ -69,6 +72,7 @@ object Prefs {
       "homeOrder" -> homeOrder = v as String; "homeHidden" -> homeHidden = v as String
       "baseCurrency" -> { baseCurrency = v as String; com.paisapulse.app.logic.Money.base = v }
       "converterCurrencies" -> converterCurrencies = v as String; "customAccent" -> customAccent = v as String
+      "autoCapture" -> autoCapture = v as Boolean
     }
   }
 

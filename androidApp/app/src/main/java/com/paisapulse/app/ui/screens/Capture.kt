@@ -43,6 +43,7 @@ import kotlin.coroutines.resume
   var reading by remember { mutableStateOf(false) }
   var sentence by remember { mutableStateOf("") }
   val voice = mode == "voice"
+  val alerts = mode == "alerts"
   fun context() = CaptureDrafts.context(Store.value, Prefs.lastAccountId.ifEmpty { null })
   fun looksLogged(d: CaptureDraft) = Store.value.liveTxns.any { it.amount == d.amount && Math.abs(it.occurredAt - d.occurredAt) <= 86_400_000L }
 
@@ -72,6 +73,14 @@ import kotlin.coroutines.resume
   LaunchedEffect(Ui.sharedImages) {
     if (!voice && Ui.sharedImages.isNotEmpty()) { val u = Ui.sharedImages; Ui.sharedImages = emptyList(); readUris(u) }
   }
+  // Bank SMS / notifications kept by auto-capture.
+  LaunchedEffect(alerts) {
+    if (!alerts) return@LaunchedEffect
+    val c = context(); val known = Store.value.transactions.mapNotNull { it.externalId }.toSet(); val seen = HashSet<String>()
+    drafts = com.paisapulse.app.work.AlertQueue.all(ctx).mapNotNull { BankAlerts.parse(it, c) }.filter { it.key !in known && seen.add(it.key) }
+      .map { if (looksLogged(it)) it.copy(include = false, warning = "Looks like you've already added this one.") else it }
+    if (drafts.isEmpty()) com.paisapulse.app.work.AlertQueue.save(ctx, emptyList())
+  }
   fun parseSentence(text: String) {
     if (text.isBlank()) return
     val (d, s) = VoiceParser.parse(text, context())
@@ -91,18 +100,20 @@ import kotlin.coroutines.resume
   fun commit() {
     val add = drafts.filter { it.include && it.accountId != null }.map { d ->
       Txn(type = d.type, amount = d.amount, accountId = d.accountId!!, toAccountId = if (d.type == "transfer") d.toAccountId else null,
-        categoryId = if (d.type == "transfer") null else d.categoryId, payee = d.payee, note = d.note, occurredAt = d.occurredAt, source = if (voice) "voice" else "screenshot",
-        paymentMethod = if (voice || d.type == "transfer") null else "upi")
+        categoryId = if (d.type == "transfer") null else d.categoryId, payee = d.payee, note = d.note, occurredAt = d.occurredAt,
+        source = if (voice) "voice" else if (alerts) "sms" else "screenshot", externalId = if (alerts) d.key else null,
+        paymentMethod = if (voice || d.type == "transfer") null else if (alerts) (PaymentMethod.fromText(d.source)?.id ?: "upi") else "upi")
     }
     val ids = add.map { it.id }.toSet()
     Store.update { it.copy(transactions = it.transactions + add) }
+    if (alerts) com.paisapulse.app.work.AlertQueue.save(ctx, emptyList()) // everything shown has been reviewed
     Services.refreshWidget()
     Ui.pop()
     Ui.show("Added ${add.size}") { Store.update { d -> d.copy(transactions = d.transactions.map { if (it.id in ids) it.copy(deletedAt = now()) else it }) }; Services.refreshWidget() }
   }
   val count = drafts.count { it.include && it.accountId != null }
 
-  PScreen(if (voice) "Say It" else "From Screenshots", back = true, actions = {
+  PScreen(if (voice) "Say It" else if (alerts) "Bank Messages" else "From Screenshots", back = true, actions = {
     Text("Add $count", style = T.body.copy(fontWeight = FontWeight.SemiBold), color = if (count == 0) C.tertiary else C.accent,
       modifier = Modifier.glass(CircleShape).combinedClickableCompat({ if (count > 0) commit() }, {}).padding(horizontal = 16.dp, vertical = 11.dp))
   }) {
@@ -122,6 +133,9 @@ import kotlin.coroutines.resume
         }
       }
       if (skipped.isNotEmpty()) item { Text("Didn't catch an amount in: ${skipped.joinToString(", ")}", style = T.footnote, color = C.secondary, modifier = Modifier.padding(horizontal = 32.dp)) }
+    } else if (alerts) {
+      if (drafts.isEmpty()) item { EmptyHint("All caught up", "tray", "No bank messages waiting. Turn on auto-capture in Settings › Auto-capture.") }
+      else item { Text("From your bank messages. Tick the ones to add.", style = T.footnote, color = C.secondary, modifier = Modifier.padding(horizontal = 32.dp)) }
     } else {
       group(footer = if (unread > 0) "$unread screenshot${if (unread == 1) "" else "s"} had no amount we could read." else "Payment screens from GPay, PhonePe, Paytm, BHIM, CRED, Amazon Pay, WhatsApp, Navi or your bank. Read on this phone. Tip: share a screenshot straight from any UPI app to Paisa Pulse.") {
         Button({ photos.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }, enabled = !reading,

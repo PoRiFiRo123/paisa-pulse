@@ -50,7 +50,7 @@ object Sym {
     "square.and.arrow.down" to Icons.Rounded.FileDownload, "delete.left" to Icons.AutoMirrored.Rounded.Backspace,
     "pause" to Icons.Rounded.Pause, "play" to Icons.Rounded.PlayArrow, "checkmark.circle" to Icons.Rounded.CheckCircleOutline,
     "checkmark.circle.fill" to Icons.Rounded.CheckCircle, "circle" to Icons.Rounded.RadioButtonUnchecked,
-    "tray" to Icons.Rounded.Inbox, "chevron.up" to Icons.Rounded.KeyboardArrowUp, "chevron.down" to Icons.Rounded.KeyboardArrowDown,
+    "tray" to Icons.Rounded.Inbox, "message.badge.filled.fill" to Icons.Rounded.Sms, "message.badge" to Icons.Rounded.Sms, "bell.badge" to Icons.Rounded.NotificationsActive, "chevron.up" to Icons.Rounded.KeyboardArrowUp, "chevron.down" to Icons.Rounded.KeyboardArrowDown,
     "chevron.up.chevron.down" to Icons.Rounded.UnfoldMore,
     "bookmark" to Icons.Rounded.BookmarkBorder, "bookmark.fill" to Icons.Rounded.Bookmark,
     "arrow.triangle.2.circlepath" to Icons.Rounded.Sync, "arrow.up.arrow.down" to Icons.Rounded.SwapVert,

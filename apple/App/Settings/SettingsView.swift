@@ -73,6 +73,12 @@ struct SettingsView: View {
         NavigationLink { HomeLayoutView() } label: { row("Home Screen", "square.grid.2x2.fill", "#5E5CE6") }
       }
 
+      Section {
+        NavigationLink { AutoCaptureView() } label: { row("Auto-capture", "message.badge.filled.fill", "#34C759") }
+      } footer: {
+        Text("Turn bank SMS into transactions with a Shortcuts automation.")
+      }
+
       Section("See") {
         NavigationLink { PlanningView() } label: { row("Planning", "airplane", "#2563EB") }
         NavigationLink { InsightsView() } label: { row("Insights", "chart.bar.xaxis", "#AF52DE") }

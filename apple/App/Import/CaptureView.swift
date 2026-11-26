@@ -6,6 +6,8 @@ import Vision
 /// Read payment screenshots (GPay, PhonePe, Paytm, CRED, bank apps) with on-device text recognition,
 /// then review and add them. Same flow as the Android app's screenshot capture.
 struct CaptureView: View {
+  /// "screenshot", or "alerts": bank messages queued by the Log Bank Message shortcut.
+  var mode = "screenshot"
   @Query(sort: \Account.sortOrder) private var accounts: [Account]
   @Query(sort: \Category.sortOrder) private var categories: [Category]
   @Query(filter: #Predicate<Txn> { $0.deletedAt == nil }) private var txns: [Txn]
@@ -21,6 +23,11 @@ struct CaptureView: View {
   var body: some View {
     let lookups = Lookups(accounts: accounts, categories: categories)
     List {
+      if mode == "alerts" {
+        Section {} footer: {
+          Text(drafts.isEmpty ? "No bank messages waiting. Set up the automation in Settings › Auto-capture." : "From your bank messages. Tick the ones to add.")
+        }
+      } else {
       Section {
         PhotosPicker(selection: $items, maxSelectionCount: 20, matching: .screenshots) {
           Label(reading ? "Reading…" : drafts.isEmpty ? "Choose Screenshots" : "Choose More", systemImage: "photo.on.rectangle")
@@ -36,9 +43,11 @@ struct CaptureView: View {
         EmptyHint(title: "Snap it, log it", icon: "camera.viewfinder",
                   message: "Take a screenshot after you pay, then pick it here. Amount, payee, date and account are filled in.")
       }
+      }
       ForEach($drafts) { $d in DraftRow(draft: $d, lookups: lookups, accounts: accounts.filter { $0.archivedAt == nil }, categories: categories) }
     }
-    .navigationTitle("From Screenshots")
+    .navigationTitle(mode == "alerts" ? "Bank Messages" : "From Screenshots")
+    .task { if mode == "alerts" { loadAlerts() } }
     .toolbar {
       ToolbarItem(placement: .confirmationAction) {
         let n = drafts.filter { $0.include && $0.accountId != nil }.count
@@ -67,6 +76,20 @@ struct CaptureView: View {
     unread = missed
   }
 
+  private func loadAlerts() {
+    let ctx = CaptureDrafts.context(accounts: accounts, categories: categories, txns: Array(txns),
+                                    defaultAccountId: lastAccountId.isEmpty ? nil : lastAccountId)
+    let known = Set(txns.compactMap(\.externalId))
+    var seen = Set<String>()
+    drafts = PendingAlerts.all().compactMap { BankAlerts.parse($0, ctx: ctx) }.compactMap { d in
+      guard !known.contains(d.key), seen.insert(d.key).inserted else { return nil }
+      var d = d
+      if looksLogged(d) { d.include = false; d.warning = "Looks like you've already added this one." }
+      return d
+    }
+    if drafts.isEmpty { PendingAlerts.save([]) }
+  }
+
   private func looksLogged(_ d: CaptureDraft) -> Bool {
     txns.contains { $0.amount == d.amount && abs($0.occurredAt.timeIntervalSince(d.occurredAt)) <= 86_400 }
   }
@@ -77,13 +100,15 @@ struct CaptureView: View {
     var added: [Txn] = []
     for d in drafts where d.include {
       guard let accountId = d.accountId else { continue }
+      let alert = mode == "alerts"
       let t = Txn(type: d.type, amount: d.amount, accountId: accountId, toAccountId: d.toAccountId, categoryId: d.categoryId,
-                  payee: d.payee, note: d.note, occurredAt: d.occurredAt, source: "screenshot")
-      if d.type != .transfer { t.paymentMethod = PaymentMethod.upi.rawValue }
+                  payee: d.payee, note: d.note, occurredAt: d.occurredAt, source: alert ? "sms" : "screenshot", externalId: alert ? d.key : nil)
+      if d.type != .transfer { t.paymentMethod = alert ? (PaymentMethod.fromText(d.source) ?? .upi).rawValue : PaymentMethod.upi.rawValue }
       context.insert(t)
       added.append(t)
     }
     try? context.save()
+    if mode == "alerts" { PendingAlerts.save([]) } // everything shown has been reviewed
     WidgetRefresh.now()
     dismiss()
     router.show("Added \(added.count)") {
