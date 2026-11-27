@@ -139,4 +139,26 @@ class CloudTest {
     assertEquals(listOf("Ritwik", "Someone"), b.people.map { it.label })
     assertEquals("t2", b.since)
   }
+
+  @Test fun duplicatesFoldIntoTheLinkedFriend() {
+    val linked = Friend(id = rit, name = "Ritwik", userId = rit)
+    val loose = Friend(id = "f-local", name = "ritwik", phone = "9845011111")
+    val other = Friend(id = "f-chai", name = "Chai")
+    val db = Db(friends = listOf(linked, loose, other),
+      splitEntries = listOf(SplitEntry(id = "e1", friendId = "f-local", amount = 500)),
+      splitGroups = listOf(SplitGroup(id = "g", name = "Goa", memberIds = listOf("f-local", rit))),
+      loans = listOf(Loan(id = "l", person = "ritwik", friendId = "f-local", amount = 100)))
+    val out = CloudLogic.mergeDuplicates(db, listOf(Person(rit, "ritwik", "Ritwik", null, true)))
+    assertEquals(listOf(rit, "f-chai"), out.friends.map { it.id })
+    assertEquals("9845011111", out.friends.first().phone)
+    assertEquals(rit, out.splitEntries.single().friendId)
+    assertEquals(listOf(rit), out.splitGroups.single().memberIds)
+    assertEquals(rit, out.loans.single().friendId)
+    // No linked row yet: the name-only friend becomes the linked one, keeping its id.
+    val linkedOnly = CloudLogic.mergeDuplicates(Db(friends = listOf(loose)), listOf(Person(rit, "ritwik", "Ritwik", null, true)))
+    assertEquals(rit, linkedOnly.friends.single().userId)
+    // Two name-only matches: don't guess.
+    val two = Db(friends = listOf(linked, loose, loose.copy(id = "f-2")))
+    assertEquals(3, CloudLogic.mergeDuplicates(two, listOf(Person(rit, "ritwik", "Ritwik", null, true))).friends.size)
+  }
 }

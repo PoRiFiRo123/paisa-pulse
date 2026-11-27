@@ -124,4 +124,21 @@ final class CloudTests: XCTestCase {
     XCTAssertEqual(s.pendingShares(me).count, 1)
     XCTAssertEqual(s.pendingSettlements(me).count, 1)
   }
+
+  func testDuplicatesFoldIntoTheLinkedFriend() throws {
+    let context = Store.makeContainer(inMemory: true).mainContext
+    context.insert(Friend(id: rit, name: "Ritwik", userId: rit))
+    context.insert(Friend(id: "f-local", name: "ritwik", phone: "9845011111"))
+    context.insert(Friend(id: "f-chai", name: "Chai"))
+    context.insert(SplitEntry(id: "e1", friendId: "f-local", amount: 500))
+    context.insert(SplitGroup(id: "g", name: "Goa", memberIds: ["f-local", rit]))
+    try context.save()
+    CloudLogic.mergeDuplicates([CloudLogic.Person(id: rit, username: "ritwik", name: "Ritwik", upiId: nil, connected: true)], context: context)
+    try context.save()
+    let friends = try context.fetch(FetchDescriptor<Friend>()).map(\.id).sorted()
+    XCTAssertEqual(friends, [rit, "f-chai"].sorted())
+    XCTAssertEqual(try context.fetch(FetchDescriptor<Friend>()).first { $0.id == rit }?.phone, "9845011111")
+    XCTAssertEqual(try context.fetch(FetchDescriptor<SplitEntry>()).first?.friendId, rit)
+    XCTAssertEqual(try context.fetch(FetchDescriptor<SplitGroup>()).first?.memberIds, [rit])
+  }
 }
