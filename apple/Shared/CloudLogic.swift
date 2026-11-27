@@ -181,10 +181,45 @@ enum CloudLogic {
 
   // ------------------------------------------------------------ mirror
 
+  /// A name as people type it: lowercase, no leading @, single spaces.
+  static func key(_ n: String) -> String {
+    var t = n.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    if t.hasPrefix("@") { t.removeFirst() }
+    return t.split(whereSeparator: \.isWhitespace).joined(separator: " ")
+  }
+
+  /// One person, one row. A friend you added just by name (no account) who has the same name or @username as
+  /// someone you're connected to is that person: link them (no linked row yet) or fold them into the linked row,
+  /// moving their splits, group places and loans. Only when exactly one unlinked friend matches, so two
+  /// different people called the same aren't joined by a guess. Same as Android's `mergeDuplicates`.
+  @MainActor
+  static func mergeDuplicates(_ people: [Person], context: ModelContext) {
+    for p in people {
+      let names = Set([p.name.isEmpty ? nil : p.name, p.username].compactMap { $0 }.map(key))
+      if names.isEmpty { continue }
+      let friends = (try? context.fetch(FetchDescriptor<Friend>())) ?? []
+      let loose = friends.filter { $0.userId == nil && names.contains(key($0.name)) }
+      guard loose.count == 1, let c = loose.first else { continue }
+      guard let linked = friends.first(where: { $0.userId == p.id }) else {
+        c.userId = p.id; if c.upiId == nil { c.upiId = p.upiId }; continue
+      }
+      if linked.phone == nil { linked.phone = c.phone }
+      if linked.upiId == nil { linked.upiId = c.upiId }
+      let cid = c.id, lid = linked.id
+      for e in (try? context.fetch(FetchDescriptor<SplitEntry>(predicate: #Predicate { $0.friendId == cid }))) ?? [] { e.friendId = lid }
+      for g in (try? context.fetch(FetchDescriptor<SplitGroup>())) ?? [] where g.memberIds.contains(cid) {
+        var seen = Set<String>(); g.memberIds = g.memberIds.map { $0 == cid ? lid : $0 }.filter { seen.insert($0).inserted }
+      }
+      for l in (try? context.fetch(FetchDescriptor<Loan>())) ?? [] where l.friendId == cid { l.friendId = lid }
+      context.delete(c)
+    }
+  }
+
   /// Brings what others shared into your data. `toBase` converts another currency to your main one (nil: wait).
   @MainActor
   static func mirror(_ s: State, me: String, base: String, context: ModelContext,
                      toBase: (Int, String) -> Int? = { a, c in c == Money.base ? a : nil }) {
+    mergeDuplicates(s.people, context: context)
     let friends = (try? context.fetch(FetchDescriptor<Friend>())) ?? []
     var friendOf: [String: String] = [:]
     for f in friends { if let u = f.userId, friendOf[u] == nil { friendOf[u] = f.id } }

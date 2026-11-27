@@ -149,7 +149,40 @@ object CloudLogic {
    * Brings what others shared into your data. [toBase] converts an amount in another currency to your
    * main currency (null when no rate: such rows wait).
    */
-  fun mirror(db: Db, s: State, me: String, base: String, toBase: (Long, String) -> Long? = { a, c -> if (c == base) a else null }): Db {
+  /** A name as people type it: lowercase, no leading @, single spaces. */
+  private fun key(n: String) = n.trim().removePrefix("@").lowercase().replace(Regex("\\s+"), " ")
+
+  /**
+   * One person, one row. A friend you added just by name (no account) who has the same name or @username as
+   * someone you're connected to is that person: link them (no linked row yet) or fold them into the linked row,
+   * moving their splits, group places and loans. Only when exactly one unlinked friend matches, so two
+   * different people called the same aren't joined by a guess.
+   */
+  fun mergeDuplicates(db: Db, people: List<Person>): Db {
+    var d = db
+    people.forEach { p ->
+      val names = listOfNotNull(p.name.takeIf { it.isNotBlank() }, p.username).map(::key).toSet()
+      if (names.isEmpty()) return@forEach
+      val loose = d.friends.filter { it.userId == null && key(it.name) in names }
+      if (loose.size != 1) return@forEach
+      val c = loose.single()
+      val linked = d.friends.firstOrNull { it.userId == p.id }
+      d = if (linked == null) d.copy(friends = d.friends.map { if (it.id == c.id) it.copy(userId = p.id, upiId = it.upiId ?: p.upiId) else it })
+      else {
+        val keep = linked.copy(phone = linked.phone ?: c.phone, upiId = linked.upiId ?: c.upiId)
+        d.copy(
+          friends = d.friends.filter { it.id != c.id }.map { if (it.id == linked.id) keep else it },
+          splitEntries = d.splitEntries.map { if (it.friendId == c.id) it.copy(friendId = linked.id) else it },
+          splitGroups = d.splitGroups.map { g -> if (c.id in g.memberIds) g.copy(memberIds = g.memberIds.map { if (it == c.id) linked.id else it }.distinct()) else g },
+          loans = d.loans.map { if (it.friendId == c.id) it.copy(friendId = linked.id) else it },
+        )
+      }
+    }
+    return d
+  }
+
+  fun mirror(db0: Db, s: State, me: String, base: String, toBase: (Long, String) -> Long? = { a, c -> if (c == base) a else null }): Db {
+    val db = mergeDuplicates(db0, s.people)
     var friends = db.friends
     val friendOf = mutableMapOf<String, String>()
     friends.forEach { f -> f.userId?.let { friendOf.putIfAbsent(it, f.id) } }
