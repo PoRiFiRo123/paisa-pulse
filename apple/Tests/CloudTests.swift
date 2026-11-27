@@ -126,7 +126,9 @@ final class CloudTests: XCTestCase {
   }
 
   func testDuplicatesFoldIntoTheLinkedFriend() throws {
-    let context = Store.makeContainer(inMemory: true).mainContext
+    // Keep the container alive: a context whose container is gone crashes.
+    let container = Store.makeContainer(inMemory: true)
+    let context = container.mainContext
     context.insert(Friend(id: rit, name: "Ritwik", userId: rit))
     context.insert(Friend(id: "f-local", name: "ritwik", phone: "9845011111"))
     context.insert(Friend(id: "f-chai", name: "Chai"))
@@ -140,5 +142,6 @@ final class CloudTests: XCTestCase {
     XCTAssertEqual(try context.fetch(FetchDescriptor<Friend>()).first { $0.id == rit }?.phone, "9845011111")
     XCTAssertEqual(try context.fetch(FetchDescriptor<SplitEntry>()).first?.friendId, rit)
     XCTAssertEqual(try context.fetch(FetchDescriptor<SplitGroup>()).first?.memberIds, [rit])
+    withExtendedLifetime(container) {}
   }
 }
